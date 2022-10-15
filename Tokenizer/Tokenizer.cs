@@ -147,7 +147,9 @@ public class Tokenizer
         else if (currentChar == '$') return StoreTokenWithoutConsume(GetDollarToken());
         else if (currentChar == '@') return StoreTokenWithoutConsume(GetAtToken());
         else if (currentChar == '=') return StoreTokenWithoutConsume(GetAssignToken());
+
         Console.WriteLine($"Parse stopped at line {_lines[_currentLineIndex]}");
+        Environment.Exit(-1);
         throw new ArgumentException("Tokenizer error: weird token!");
     }
 

@@ -1,0 +1,6 @@
+1. Automate testing
+
+
+2. add a line length restrictor
+3. add an identifier checker (check if that works!)
+4. add the Mrs Malaprop (should be easy)

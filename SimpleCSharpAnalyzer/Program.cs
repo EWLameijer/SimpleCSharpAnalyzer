@@ -1,8 +1,16 @@
 ﻿using CSharpParser;
 using Tokenizing;
 
-Console.Write("Geef de naam van de directory waarvan je de code-regels wilt tellen: ");
-string pathname = Console.ReadLine()!;
+string pathname;
+if (args.Length == 0)
+{
+    Console.Write("Geef de naam van de directory waarvan je de code-regels wilt tellen: ");
+    pathname = Console.ReadLine()!;
+}
+else
+{
+    pathname = args[0];
+}
 
 List<string> csFiles = Directory.GetFiles(pathname, "*.cs", SearchOption.AllDirectories).ToList();
 csFiles.ForEach(Console.WriteLine);
