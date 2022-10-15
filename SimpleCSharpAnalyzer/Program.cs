@@ -1,4 +1,5 @@
 ﻿using CSharpParser;
+using SimpleCSharpAnalyzer;
 using Tokenizing;
 
 string pathname;
@@ -21,11 +22,12 @@ IEnumerable<string> relevantFileNames = csFiles.Where(
 Report totalReport = new();
 foreach (string relevantFileName in relevantFileNames)
 {
-    string[] lines = File.ReadAllLines(relevantFileName);
-    Tokenizer tokenizer = new(lines.ToList());
-    string dirName = new DirectoryInfo(Path.GetDirectoryName(relevantFileName)!).Name;
-    string filename = $"{dirName}\\{Path.GetFileName(relevantFileName)}";
-    Console.WriteLine($"\n***{filename}***");
+
+    FileData fileData = new(relevantFileName);
+
+    Tokenizer tokenizer = new(fileData.Lines);
+
+    Console.WriteLine($"\n***{fileData.ContextedFilename}***");
 
     while (tokenizer.HasNextToken())
     {
@@ -33,6 +35,7 @@ foreach (string relevantFileName in relevantFileNames)
     }
     LineCounter counter = new(tokenizer.Results());
     Report report = counter.CreateReport();
+    LineLengthChecker.AddWarnings(fileData, report);
     report.Show();
     totalReport.Add(report);
 }

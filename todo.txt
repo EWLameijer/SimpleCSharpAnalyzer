@@ -1,6 +1,6 @@
-1. Automate testing
+1. add an identifier checker (check if that works!)
+2. add the Mrs Malaprop (should be easy)
+3. add method length checker
 
-
-2. add a line length restrictor
-3. add an identifier checker (check if that works!)
-4. add the Mrs Malaprop (should be easy)
+DONE
+1. add line length checker

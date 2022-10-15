@@ -35,7 +35,14 @@ internal class LineCounter
             }
         }
         if (lineTokens.Count == 0) emptyLines++; else ClassifyLine(lineTokens, openingBraceEncountered);
-        return new Report { SetupLines = _setupLines, EmptyLines = emptyLines, BraceLines = _braceLines, CommentLines = _commentLines, CodeLines = _codeLines };
+        return new Report
+        {
+            SetupLines = _setupLines,
+            EmptyLines = emptyLines,
+            BraceLines = _braceLines,
+            CommentLines = _commentLines,
+            CodeLines = _codeLines
+        };
     }
 
     private void ClassifyLine(List<Token> lineTokens, bool openingBraceEncountered)
@@ -46,7 +53,9 @@ internal class LineCounter
         else
         {
             TokenType firstTokenType = lineTokens[0].TokenType;
-            if (firstTokenType == TokenType.Namespace || firstTokenType == TokenType.Using) _setupLines++; else _codeLines++;
+            if (firstTokenType == TokenType.Namespace || firstTokenType == TokenType.Using)
+                _setupLines++;
+            else _codeLines++;
         }
     }
 }

@@ -10,6 +10,8 @@ internal class Report
 
     public int TotalLines => SetupLines + EmptyLines + BraceLines + CodeLines + CommentLines;
 
+    public List<string> Warnings { get; set; } = new();
+
     public void Add(Report other)
     {
         SetupLines += other.SetupLines;
@@ -17,6 +19,7 @@ internal class Report
         BraceLines += other.BraceLines;
         CodeLines += other.CodeLines;
         CommentLines += other.CommentLines;
+        Warnings.AddRange(other.Warnings);
     }
 
     public void Show()
@@ -27,9 +30,11 @@ internal class Report
         ShowPadded("Brace lines", BraceLines);
         ShowPadded("Codelines", CodeLines);
         ShowPadded("Total lines", TotalLines);
+        Console.WriteLine();
+        foreach (string warning in Warnings) Console.WriteLine(warning);
     }
 
-    private void ShowPadded(string text, int number)
+    private static void ShowPadded(string text, int number)
     {
         Console.Write((text + ":").PadRight(22));
         Console.WriteLine(number.ToString().PadLeft(4));
