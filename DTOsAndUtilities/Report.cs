@@ -1,6 +1,6 @@
-﻿namespace CSharpParser;
+﻿namespace DTOsAndUtilities;
 
-internal class Report
+public class Report
 {
     public int SetupLines { get; set; }
     public int EmptyLines { get; set; }
@@ -31,7 +31,11 @@ internal class Report
         ShowPadded("Codelines", CodeLines);
         ShowPadded("Total lines", TotalLines);
         Console.WriteLine();
-        foreach (string warning in Warnings) Console.WriteLine(warning);
+        for (int i = 0; i < Warnings.Count; i++)
+        {
+            Console.WriteLine($"{i + 1}. {Warnings[i]}\n");
+        }
+        Console.WriteLine(Warnings.Count + " warnings in total");
     }
 
     private static void ShowPadded(string text, int number)

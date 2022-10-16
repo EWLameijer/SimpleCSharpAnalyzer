@@ -1,10 +1,11 @@
-﻿using Tokenizing;
+﻿using DTOsAndUtilities;
+using Tokenizing;
 
 namespace CSharpParser;
 
 internal class LineCounter
 {
-    private readonly IReadOnlyList<Token> tokens;
+    private readonly IReadOnlyList<Token> _tokens;
     private int _codeLines;
     private int _commentLines;
     private int _braceLines;
@@ -12,7 +13,7 @@ internal class LineCounter
 
     public LineCounter(IReadOnlyList<Token> tokens)
     {
-        this.tokens = tokens;
+        _tokens = tokens;
     }
 
     internal Report CreateReport()
@@ -21,7 +22,7 @@ internal class LineCounter
         int emptyLines = 0;
         bool openingBraceEncountered = false;
 
-        foreach (Token token in tokens)
+        foreach (Token token in _tokens)
         {
             if (token.TokenType == TokenType.NewLine)
             {

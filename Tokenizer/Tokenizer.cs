@@ -186,7 +186,7 @@ public class Tokenizer
                 if (ch == '\n')
                 {
                     _currentLineIndex++;
-                    _nextCharIndex = 0;
+                    _nextCharIndex = -1;
                     _parsedTokens.Add(new ComplexToken { TokenType = BlockCommentMiddle, Info = result.ToString() });
                     _parsedTokens.Add(new Token { TokenType = NewLine });
                     break;
@@ -482,14 +482,16 @@ public class Tokenizer
             else if (ch == '{' && !isEscapeMode)
             {
                 _parsedTokens.Add(new ComplexToken { TokenType = tokenType, Info = result.ToString() });
-                tokenType = TokenType.InterpolatedStringMiddle;
+                result.Clear();
+                tokenType = InterpolatedStringMiddle;
                 result.Clear();
                 _nextCharIndex++;
                 Token nextToken;
                 do
                 {
                     nextToken = Get()!;
-                } while (nextToken.TokenType != TokenType.BracesClose);
+                } while (nextToken.TokenType != BracesClose);
+                _parsedTokens.RemoveAt(_parsedTokens.Count - 1);// get rid of }
                 _nextCharIndex--; // so won't skip " or such
                 // get all characters (also on next line) until
             }
@@ -500,8 +502,7 @@ public class Tokenizer
             }
         } while (true);
         _nextCharIndex++;
-        string stringContents = _lines[_currentLineIndex].Substring(initCharIndex, _nextCharIndex - initCharIndex - 1);
-        return new ComplexToken { TokenType = TokenType.String, Info = stringContents };
+        return new ComplexToken { TokenType = InterpolatedStringEnd, Info = result.ToString() };
     }
 
     private Token GetSingleQuotedStringToken()

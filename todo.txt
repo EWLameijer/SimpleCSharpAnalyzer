@@ -1,6 +1,52 @@
-1. add an identifier checker (check if that works!)
+phase 1: create release 1.2 
+
+phase 7: check parameters
+phase 8: Mrs Malaprop
+phase 9: methodlengths 
+phase 10: method names 
+    private with X or x 
+phase 11: ?
+
+
+
+
+-handle FileData
+
+
+?variable-declarations in for-loops?
+? check parameters?
 2. add the Mrs Malaprop (should be easy)
 3. add method length checker
 
 DONE
+phase 6: eliminate attributes (in early stage? So ; or {/ } before [])
+phase 4: deliberately test wrong properties and names 
+phase 3: classify variables, warn when incorrect 
+phase 2: recognize protected & public & const  // -> Pascal 
+phase 1: recognize properties // -> Pascal
 1. add line length checker
+
+--
+using CSharpParser;         => using CSharpParser; OK
+using DTOsAndUtilities;     => using DTOsAndUtilities; 
+using SimpleCSharpAnalyzer;
+using TokenBasedChecking;
+using Tokenizing;
+
+string pathname;
+if (args.Length == 0)
+{
+    Console.Write("Geef de naam van de directory waarvan je de code-regels wilt tellen: ");
+    pathname = Console.ReadLine()!;
+}
+else
+{
+    pathname = args[0];
+}
+
+Test();
+
+void Test()
+{
+    const string test = "D:\\Development\\ITvitae\\C#\\SimpleCSharpAnalyzer\\SimpleCSharpAnalyzer\\SimpleCSharpAnalyzer\\Program.cs";
+    FileData fileData = new(test);

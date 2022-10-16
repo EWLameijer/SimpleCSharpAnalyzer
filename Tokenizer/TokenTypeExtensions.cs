@@ -15,9 +15,44 @@ public static class TokenTypeExtensions
         return commentTypes.Contains(tokenType);
     }
 
+    public static bool IsSkippable(this TokenType tokenType)
+    {
+        return tokenType == NewLine || tokenType.IsCommentType();
+    }
+
     public static bool IsBraceType(this TokenType tokenType)
     {
         List<TokenType> braceTypes = new() { BracesClose, BracesOpen };
         return braceTypes.Contains(tokenType);
+    }
+
+    public static bool IsClosingType(this TokenType tokenType)
+    {
+        List<TokenType> closeTypes = new() { BracesClose, BracketsClose, ParenthesesClose, Greater };
+        return closeTypes.Contains(tokenType);
+    }
+
+    public static bool IsOpeningType(this TokenType tokenType)
+    {
+        List<TokenType> openTypes = new() { BracesOpen, BracketsOpen, ParenthesesOpen, Less };
+        return openTypes.Contains(tokenType);
+    }
+
+    public static bool IsModifier(this TokenType tokenType)
+    {
+        List<TokenType> openTypes = new() { Const, Readonly, Public, Private, Protected, Static, Using };
+        return openTypes.Contains(tokenType);
+    }
+
+    public static bool IsDeclarer(this TokenType tokenType)
+    {
+        List<TokenType> openTypes = new() { Namespace, Using };
+        return openTypes.Contains(tokenType);
+    }
+
+    public static bool IsTypeType(this TokenType tokenType)
+    {
+        List<TokenType> typeTypes = new() { Class, Record, Struct };
+        return typeTypes.Contains(tokenType);
     }
 }

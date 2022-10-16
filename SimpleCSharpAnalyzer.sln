@@ -3,7 +3,7 @@ Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio Version 17
 VisualStudioVersion = 17.3.32901.215
 MinimumVisualStudioVersion = 10.0.40219.1
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "SimpleCSharpAnalyzer", "SimpleCSharpAnalyzer\SimpleCSharpAnalyzer.csproj", "{E8151ABE-8CB3-4955-BC09-37C6D65C6A50}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "SimpleCSharpAnalyzer", "SimpleCSharpAnalyzer\SimpleCSharpAnalyzer.csproj", "{E8151ABE-8CB3-4955-BC09-37C6D65C6A50}"
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Tokenizing", "Tokenizer\Tokenizing.csproj", "{B63EF08C-F9D1-4F21-9715-69C03DA577EA}"
 EndProject
@@ -11,6 +11,12 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution 
 	ProjectSection(SolutionItems) = preProject
 		todo.txt = todo.txt
 	EndProjectSection
+EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "TokenBasedChecking", "TokenBasedChecking\TokenBasedChecking.csproj", "{F8ECEABE-4999-4524-B7C0-3BAFDD15FB82}"
+EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "DTOsAndUtilities", "DTOsAndUtilities\DTOsAndUtilities.csproj", "{39CA3C66-D593-4156-A761-C403A2F60ACF}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "SimpleCSharpAnalyzer.Tests", "SimpleCSharpAnalyzer.Tests\SimpleCSharpAnalyzer.Tests.csproj", "{B1049A70-0CE4-4E67-B436-50FE26663AC2}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -26,6 +32,18 @@ Global
 		{B63EF08C-F9D1-4F21-9715-69C03DA577EA}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{B63EF08C-F9D1-4F21-9715-69C03DA577EA}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{B63EF08C-F9D1-4F21-9715-69C03DA577EA}.Release|Any CPU.Build.0 = Release|Any CPU
+		{F8ECEABE-4999-4524-B7C0-3BAFDD15FB82}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{F8ECEABE-4999-4524-B7C0-3BAFDD15FB82}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{F8ECEABE-4999-4524-B7C0-3BAFDD15FB82}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{F8ECEABE-4999-4524-B7C0-3BAFDD15FB82}.Release|Any CPU.Build.0 = Release|Any CPU
+		{39CA3C66-D593-4156-A761-C403A2F60ACF}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{39CA3C66-D593-4156-A761-C403A2F60ACF}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{39CA3C66-D593-4156-A761-C403A2F60ACF}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{39CA3C66-D593-4156-A761-C403A2F60ACF}.Release|Any CPU.Build.0 = Release|Any CPU
+		{B1049A70-0CE4-4E67-B436-50FE26663AC2}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{B1049A70-0CE4-4E67-B436-50FE26663AC2}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{B1049A70-0CE4-4E67-B436-50FE26663AC2}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{B1049A70-0CE4-4E67-B436-50FE26663AC2}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

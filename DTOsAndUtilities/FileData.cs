@@ -1,4 +1,6 @@
-﻿internal class FileData
+﻿namespace DTOsAndUtilities;
+
+public class FileData
 {
     public string ContextedFilename { get; init; }
 
