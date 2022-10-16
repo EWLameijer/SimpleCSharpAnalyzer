@@ -2,6 +2,7 @@
 using Tokenizing;
 
 namespace TokenBasedChecking;
+
 public class MalapropAnalyzer
 {
     private readonly IReadOnlyList<Token> _tokens;

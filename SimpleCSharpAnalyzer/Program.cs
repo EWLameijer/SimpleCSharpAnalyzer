@@ -46,6 +46,7 @@ foreach (string relevantFileName in relevantFileNames)
     LineLengthChecker.AddWarnings(fileData, report, maxLineLength);
     new IdentifierAnalyzer(fileTokenData, report).AddWarnings();
     new MalapropAnalyzer(fileTokenData, report).AddWarnings();
+    new MethodLengthAnalyzer(fileTokenData, report).AddWarnings();
     report.Show();
     totalReport.Add(report);
 }

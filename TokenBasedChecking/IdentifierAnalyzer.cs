@@ -4,14 +4,6 @@ using static Tokenizing.TokenType;
 
 namespace TokenBasedChecking;
 
-internal enum ScopeType
-{
-    ScopeTypeNotSet, File, Namespace, ClassRecordStruct, Method,
-    If, While, Do, For, Foreach, New, Else
-}
-
-internal record Scope(ScopeType Type, string Name);
-
 public class IdentifierAnalyzer
 {
     private readonly string _contextedFilename;
