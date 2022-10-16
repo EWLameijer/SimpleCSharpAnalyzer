@@ -39,7 +39,7 @@ foreach (string relevantFileName in relevantFileNames)
         tokenizer.Get();
     }
     IReadOnlyList<Token> tokens = tokenizer.Results();
-    IReadOnlyList<Token> tokensWithoutAttributes = FilterOutAttributes(tokens);
+    IReadOnlyList<Token> tokensWithoutAttributes = HandleDecimalLiterals(FilterOutAttributes(tokens));
     LineCounter counter = new(tokens);
     FileTokenData fileTokenData = new(fileData.ContextedFilename, tokensWithoutAttributes);
     Report report = counter.CreateReport();
@@ -48,6 +48,28 @@ foreach (string relevantFileName in relevantFileNames)
     report.Show();
     totalReport.Add(report);
 }
+
+IReadOnlyList<Token> HandleDecimalLiterals(IReadOnlyList<Token> tokens)
+{
+    List<Token> output = new();
+    for (int i = 0; i < tokens.Count; i++)
+    {
+        Token current = tokens[i];
+        int lastOutputIndex = output.Count - 1;
+        if (current.TokenType == TokenType.Identifier &&
+            ((ComplexToken)current).Info.ToLower() == "m"
+            && output[lastOutputIndex].TokenType == TokenType.Number)
+        {
+            output[lastOutputIndex].TokenType = TokenType.DecimalLiteral;
+        }
+        else
+        {
+            output.Add(current);
+        }
+    }
+    return output;
+}
+
 Console.WriteLine($"\n***TOTAL ({pathname})***");
 totalReport.Show();
 

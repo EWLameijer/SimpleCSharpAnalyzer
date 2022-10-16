@@ -112,7 +112,6 @@ public class IdentifierAnalyzer
             }
         }
         // type IS BracesOpen
-        //Console.WriteLine("FINISHED!");
     }
 
     private void AddScope(List<Token> currentStatement)
@@ -146,8 +145,6 @@ public class IdentifierAnalyzer
         if (possibleScopeType != ScopeType.ScopeTypeNotSet) scopeType = possibleScopeType;
 
         _scopes.Add(new Scope(scopeType, name));
-        // Console.WriteLine($"Adding scope: {scopeType} {name}");
-        // ShowScopes();
     }
 
     private void ProcessPossibleIdentifier(List<Token> currentStatement)
@@ -165,7 +162,7 @@ public class IdentifierAnalyzer
             currentStatement.Clear();
             return;
         }
-        //Show(currentStatement);
+        // "Show(currentStatement);"
         List<TokenType> newBracesStack = new();
         List<TokenType> possibleTypeStack = new();
         for (int i = 0; i < currentStatement.Count; i++)
@@ -197,7 +194,7 @@ public class IdentifierAnalyzer
                         string warning = $"Invalid {varType} name: " +
                             $"{((ComplexToken)currentStatement[i]).Info} (in {_contextedFilename} - " +
                             $"{PrettyPrint(currentScope)}).";
-                        Console.WriteLine("***" + warning);
+                        // Console.WriteLine("***" + warning);
                         _report.Warnings.Add(warning);
                     }
                 }
@@ -207,7 +204,7 @@ public class IdentifierAnalyzer
         currentStatement.Clear();
     }
 
-    private string PrettyPrint(ScopeType scopeType) => scopeType switch
+    private static string PrettyPrint(ScopeType scopeType) => scopeType switch
     {
         ScopeType.File => "top-level-scope",
         ScopeType.ClassRecordStruct => "class/record/struct",
@@ -226,17 +223,14 @@ public class IdentifierAnalyzer
         else return char.IsLower(identifierName[0]);
     }
 
-    private bool SuggestsUpperCase(TokenType tokenType)
-    {
-        return tokenType == Public || tokenType == Protected || tokenType == Const;
-    }
+    private static bool SuggestsUpperCase(TokenType tokenType) =>
+        tokenType == Public || tokenType == Protected || tokenType == Const;
 
-    // Assert(Id) . True(Id) ( id2(Id) Greater Number )
-    private void CheckForwardBraces(TokenType tokenType, List<TokenType> bracesStack)
+    private static void CheckForwardBraces(TokenType tokenType, List<TokenType> bracesStack)
     {
         TokenType topBrace = bracesStack.Last();
         int lastIndex = bracesStack.Count - 1;
-        if (tokenType == Greater && topBrace != Less) return; // (just something like Assert.True(a>b);
+        if (tokenType == Greater && topBrace != Less) return; // something like "Assert.True(a>b)"
         while (topBrace == Less && tokenType != Greater)
         {
             bracesStack.RemoveAt(lastIndex);
@@ -252,7 +246,7 @@ public class IdentifierAnalyzer
         }
         else
         {
-            throw new Exception("Parsing error! ");
+            throw new ArgumentException("Parsing error! ");
         }
     }
 
@@ -261,6 +255,13 @@ public class IdentifierAnalyzer
         if (i == currentStatement.Count - 1) return false;
         TokenType nextType = currentStatement[i + 1].TokenType;
         return nextType == ParenthesesOpen || nextType == Period;
+    }
+
+    private bool IsDirectCall(List<Token> currentStatement, int i)
+    {
+        if (i == currentStatement.Count - 1) return false;
+        TokenType nextType = currentStatement[i + 1].TokenType;
+        return nextType == ParenthesesOpen;
     }
 
     private static void Show(List<Token> currentStatement)
@@ -285,9 +286,12 @@ public class IdentifierAnalyzer
                 if (newBracesStack.Count == 0 && (possibleTypeStack.Count(t => t == Identifier) > 1 ||
                     possibleTypeStack.Count(t => t == Identifier) == 1 && RepresentsClassName(currentStatement[i]))
                     &&
-                IsCall(currentStatement, i) && tokenType == Identifier)
+                IsDirectCall(currentStatement, i) && tokenType == Identifier)
                 {
-                    // Console.WriteLine($"Candidate method: {((ComplexToken)currentStatement[i]).Info}");
+                    string methodName = ((ComplexToken)currentStatement[i]).Info;
+                    // Console.WriteLine($"Candidate method: {methodName}");
+                    if (!char.IsUpper(methodName[0])) _report.Warnings.Add(
+                        $"Invalid method name: {methodName} (in {_contextedFilename}).");
                     return true;
                 }
                 if (tokenType == Assign) break;

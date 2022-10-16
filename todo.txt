@@ -1,11 +1,13 @@
+phase 0: refactor 
+    
 phase 1: check parameters
 phase 2: Mrs Malaprop
 phase 3: method lengths 
-phase 4: method names 
 phase 5: ?
 
 
 DONE
+phase 4: method names 
 phase 6: eliminate attributes (in early stage? So ; or {/ } before [])
 phase 4: deliberately test wrong properties and names 
 phase 3: classify variables, warn when incorrect 
