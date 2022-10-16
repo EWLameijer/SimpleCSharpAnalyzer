@@ -10,35 +10,35 @@ internal enum ScopeType
     If, While, Do, For, Foreach, New, Else
 }
 
-internal record Scope(ScopeType type, string name);
+internal record Scope(ScopeType Type, string Name);
 
-public static class IdentifierAnalyzer
+public class IdentifierAnalyzer
 {
-    private static string _contextedFilename;
-    private static IReadOnlyList<Token> _tokens;
-    private static Report _report;
-    private static int _currentIndex = 0;
-    private static List<Scope> _scopes;
+    private readonly string _contextedFilename;
+    private readonly IReadOnlyList<Token> _tokens;
+    private readonly Report _report;
+    private int _currentIndex = 0;
+    private readonly List<Scope> _scopes = new();
 
     private enum FileModus
     { FileModusNotSet, TopLevel, FileScoped, Traditional }
 
-    private static FileModus _fileModus;
-
-    public static void AddWarnings(FileTokenData fileData, Report report)
+    public IdentifierAnalyzer(FileTokenData fileData, Report report)
     {
         _contextedFilename = fileData.ContextedFilename;
         _tokens = fileData.Tokens;
 
         // is this a top level file?
-        _fileModus = GetFileModus();
-        Console.WriteLine($"{_contextedFilename} is {_fileModus}.");
+        Console.WriteLine($"{_contextedFilename} is {GetFileModus()}.");
         _report = report;
-        Clear();
+    }
+
+    public void AddWarnings()
+    {
         ScanVariables();
     }
 
-    private static FileModus GetFileModus()
+    private FileModus GetFileModus()
     {
         if (!_tokens.Any(t => t.TokenType == Namespace)) return FileModus.TopLevel;
         int tokenIndex = _tokens.TakeWhile(t => t.TokenType != Namespace).Count();
@@ -52,13 +52,7 @@ public static class IdentifierAnalyzer
         return nextTokenType == BracesOpen ? FileModus.Traditional : FileModus.FileScoped;
     }
 
-    private static void Clear()
-    {
-        _currentIndex = 0;
-        _scopes = new();
-    }
-
-    private static void ScanVariables()
+    private void ScanVariables()
     {
         List<Token> currentStatement = new();
         bool postBraces = false;
@@ -121,7 +115,7 @@ public static class IdentifierAnalyzer
         //Console.WriteLine("FINISHED!");
     }
 
-    private static void AddScope(List<Token> currentStatement)
+    private void AddScope(List<Token> currentStatement)
     {
         ScopeType scopeType = ScopeType.ScopeTypeNotSet;
         string name = "unknown";
@@ -156,14 +150,9 @@ public static class IdentifierAnalyzer
         // ShowScopes();
     }
 
-    private static void ShowScopes()
+    private void ProcessPossibleIdentifier(List<Token> currentStatement)
     {
-        Console.WriteLine("Scopes: " + string.Join(", ", _scopes));
-    }
-
-    private static void ProcessPossibleIdentifier(List<Token> currentStatement)
-    {
-        // can be empty through return {};
+        // can be empty through "return {..;"
         if (currentStatement.Count < 2)
         {
             currentStatement.Clear();
@@ -193,12 +182,12 @@ public static class IdentifierAnalyzer
                 && tokenType == Identifier && currentStatement[i - 1].TokenType != Period
                 && !currentStatement.Take(i).Any(t => t.TokenType == Where))
                 {
-                    ScopeType currentScope = _scopes.Count > 0 ? _scopes.Last().type : ScopeType.File;
+                    ScopeType currentScope = _scopes.Count > 0 ? _scopes.Last().Type : ScopeType.File;
                     int scopeIndex = _scopes.Count - 1;
                     while (scopeIndex >= 0 && currentScope == ScopeType.ScopeTypeNotSet)
                     {
-                        if (_scopes[scopeIndex].type != ScopeType.ScopeTypeNotSet)
-                            currentScope = _scopes[scopeIndex].type;
+                        if (_scopes[scopeIndex].Type != ScopeType.ScopeTypeNotSet)
+                            currentScope = _scopes[scopeIndex].Type;
                         scopeIndex--;
                     }
                     TokenType nextType = currentStatement[i + 1].TokenType;
@@ -218,14 +207,14 @@ public static class IdentifierAnalyzer
         currentStatement.Clear();
     }
 
-    private static string PrettyPrint(ScopeType scopeType) => scopeType switch
+    private string PrettyPrint(ScopeType scopeType) => scopeType switch
     {
         ScopeType.File => "top-level-scope",
         ScopeType.ClassRecordStruct => "class/record/struct",
         _ => "method"
     };
 
-    private static bool CapitalizationCheck(int i, List<Token> currentStatement, ScopeType scope)
+    private bool CapitalizationCheck(int i, List<Token> currentStatement, ScopeType scope)
     {
         string identifierName = ((ComplexToken)currentStatement[i]).Info;
         TokenType nextTokenType = currentStatement[i + 1].TokenType;
@@ -237,13 +226,13 @@ public static class IdentifierAnalyzer
         else return char.IsLower(identifierName[0]);
     }
 
-    private static bool SuggestsUpperCase(TokenType tokenType)
+    private bool SuggestsUpperCase(TokenType tokenType)
     {
         return tokenType == Public || tokenType == Protected || tokenType == Const;
     }
 
     // Assert(Id) . True(Id) ( id2(Id) Greater Number )
-    private static void CheckForwardBraces(TokenType tokenType, List<TokenType> bracesStack)
+    private void CheckForwardBraces(TokenType tokenType, List<TokenType> bracesStack)
     {
         TokenType topBrace = bracesStack.Last();
         int lastIndex = bracesStack.Count - 1;
@@ -267,7 +256,7 @@ public static class IdentifierAnalyzer
         }
     }
 
-    private static bool IsCall(List<Token> currentStatement, int i)
+    private bool IsCall(List<Token> currentStatement, int i)
     {
         if (i == currentStatement.Count - 1) return false;
         TokenType nextType = currentStatement[i + 1].TokenType;
@@ -280,7 +269,7 @@ public static class IdentifierAnalyzer
         Console.WriteLine("STATEMENT: " + string.Join(" ", readable));
     }
 
-    private static bool CanBeMethod(List<Token> currentStatement)
+    private bool CanBeMethod(List<Token> currentStatement)
     {
         List<TokenType> newBracesStack = new();
         List<TokenType> possibleTypeStack = new();
@@ -307,13 +296,13 @@ public static class IdentifierAnalyzer
         return false;
     }
 
-    private static bool RepresentsClassName(Token token)
+    private bool RepresentsClassName(Token token)
     {
         if (token.TokenType != Identifier) return false;
         string id = ((ComplexToken)token).Info;
         for (int i = _scopes.Count - 1; i >= 0; i--)
         {
-            if (_scopes[i].type == ScopeType.ClassRecordStruct) return _scopes[i].name == id;
+            if (_scopes[i].Type == ScopeType.ClassRecordStruct) return _scopes[i].Name == id;
         }
         return false;
     }

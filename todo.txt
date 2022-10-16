@@ -1,22 +1,9 @@
-phase 1: create release 1.2 
+phase 1: check parameters
+phase 2: Mrs Malaprop
+phase 3: method lengths 
+phase 4: method names 
+phase 5: ?
 
-phase 7: check parameters
-phase 8: Mrs Malaprop
-phase 9: methodlengths 
-phase 10: method names 
-    private with X or x 
-phase 11: ?
-
-
-
-
--handle FileData
-
-
-?variable-declarations in for-loops?
-? check parameters?
-2. add the Mrs Malaprop (should be easy)
-3. add method length checker
 
 DONE
 phase 6: eliminate attributes (in early stage? So ; or {/ } before [])
