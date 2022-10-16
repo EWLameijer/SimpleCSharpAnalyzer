@@ -107,6 +107,7 @@ public class IdentifierAnalyzer
                 AddScope(currentStatement);
                 ProcessPossibleIdentifier(currentStatement);
                 _currentIndex++;
+                currentStatement.Clear();
                 ScanVariables();
                 postBraces = true;
             }
@@ -127,7 +128,7 @@ public class IdentifierAnalyzer
         {
             scopeType = ScopeType.New;
         }
-        if (CanBeMethod(currentStatement)) scopeType = ScopeType.Method;
+        if (CanBeMethod(currentStatement) != null) scopeType = ScopeType.Method;
         ScopeType possibleScopeType = ScopeType.ScopeTypeNotSet;
         if (currentStatement.Count > 0)
         {
@@ -162,7 +163,25 @@ public class IdentifierAnalyzer
             currentStatement.Clear();
             return;
         }
-        // "Show(currentStatement);"
+        //Show(currentStatement);
+        int? pos = CanBeMethod(currentStatement);
+        if (pos != null)
+        {
+            int openParenthesisPos = (int)pos + 1;
+            List<Token> parameters = GetParameters(currentStatement, openParenthesisPos + 1);
+            for (int index = parameters.Count - 1; index > 0; index--)
+            {
+                Token parameter = parameters[index];
+                if (parameter.TokenType == Identifier && (
+                    index == parameters.Count - 1 || parameters[index + 1].TokenType == Comma))
+                {
+                    string paramName = ((ComplexToken)parameter).Info;
+                    if (!char.IsLower(paramName[0])) _report.Warnings.Add($"Invalid parameter name: " +
+                            $"{paramName} (in {_contextedFilename}).");
+                }
+            }
+            return;
+        }
         List<TokenType> newBracesStack = new();
         List<TokenType> possibleTypeStack = new();
         for (int i = 0; i < currentStatement.Count; i++)
@@ -202,6 +221,22 @@ public class IdentifierAnalyzer
             }
         }
         currentStatement.Clear();
+    }
+
+    private List<Token> GetParameters(List<Token> currentStatement, int openingPos)
+    {
+        int depth = 0;
+        int currentPos = openingPos;
+        List<Token> parameters = new();
+        while (currentStatement[currentPos].TokenType != ParenthesesClose || depth > 0)
+        {
+            TokenType currentType = currentStatement[currentPos].TokenType;
+            if (currentType == ParenthesesOpen) depth++;
+            if (currentType == ParenthesesClose) depth--;
+            if (depth == 0 && !currentType.IsSkippable()) parameters.Add(currentStatement[currentPos]);
+            currentPos++;
+        }
+        return parameters;
     }
 
     private static string PrettyPrint(ScopeType scopeType) => scopeType switch
@@ -270,7 +305,7 @@ public class IdentifierAnalyzer
         Console.WriteLine("STATEMENT: " + string.Join(" ", readable));
     }
 
-    private bool CanBeMethod(List<Token> currentStatement)
+    private int? CanBeMethod(List<Token> currentStatement)
     {
         List<TokenType> newBracesStack = new();
         List<TokenType> possibleTypeStack = new();
@@ -283,21 +318,22 @@ public class IdentifierAnalyzer
             else if (tokenType.IsClosingType()) CheckForwardBraces(tokenType, newBracesStack);
             else
             {
+                TokenType? prevTokenType = i > 0 ? currentStatement[i - 1].TokenType : null;
                 if (newBracesStack.Count == 0 && (possibleTypeStack.Count(t => t == Identifier) > 1 ||
                     possibleTypeStack.Count(t => t == Identifier) == 1 && RepresentsClassName(currentStatement[i]))
                     &&
-                IsDirectCall(currentStatement, i) && tokenType == Identifier)
+                IsDirectCall(currentStatement, i) && tokenType == Identifier && prevTokenType != Period)
                 {
                     string methodName = ((ComplexToken)currentStatement[i]).Info;
-                    // Console.WriteLine($"Candidate method: {methodName}");
+                    //Console.WriteLine($"Candidate method: {methodName}");
                     if (!char.IsUpper(methodName[0])) _report.Warnings.Add(
                         $"Invalid method name: {methodName} (in {_contextedFilename}).");
-                    return true;
+                    return i;
                 }
                 if (tokenType == Assign) break;
             }
         }
-        return false;
+        return null;
     }
 
     private bool RepresentsClassName(Token token)
