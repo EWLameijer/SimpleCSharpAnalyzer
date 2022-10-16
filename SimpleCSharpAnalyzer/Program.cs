@@ -45,6 +45,7 @@ foreach (string relevantFileName in relevantFileNames)
     Report report = counter.CreateReport();
     LineLengthChecker.AddWarnings(fileData, report, maxLineLength);
     new IdentifierAnalyzer(fileTokenData, report).AddWarnings();
+    new MalapropAnalyzer(fileTokenData, report).AddWarnings();
     report.Show();
     totalReport.Add(report);
 }
