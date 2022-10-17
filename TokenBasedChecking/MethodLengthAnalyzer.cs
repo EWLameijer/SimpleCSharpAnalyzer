@@ -168,11 +168,11 @@ public class MethodLengthAnalyzer
             if (tokenType.IsModifier() || tokenType.IsDeclarer()) continue;
             possibleTypeStack.Add(tokenType);
             if (tokenType.IsOpeningType()) newBracesStack.Add(tokenType);
-            else if (tokenType.IsClosingType()) CheckForwardBraces(tokenType, newBracesStack);
+            else if (tokenType.IsClosingType()) SharedUtils.CheckForwardBraces(tokenType, newBracesStack);
             else
             {
                 if (newBracesStack.Count == 0 && possibleTypeStack.Count(t => t == Identifier) > 1 &&
-                !IsCall(currentStatement, i)
+                !SharedUtils.IsCall(currentStatement, i)
                 && tokenType == Identifier && currentStatement[i - 1].TokenType != Period
                 && !currentStatement.Take(i).Any(t => t.TokenType == Where))
                 {
@@ -236,12 +236,12 @@ public class MethodLengthAnalyzer
             if (tokenType.IsModifier() || tokenType.IsDeclarer()) continue;
             possibleTypeStack.Add(tokenType);
             if (tokenType.IsOpeningType()) newBracesStack.Add(tokenType);
-            else if (tokenType.IsClosingType()) CheckForwardBraces(tokenType, newBracesStack);
+            else if (tokenType.IsClosingType()) SharedUtils.CheckForwardBraces(tokenType, newBracesStack);
             else
             {
                 TokenType? prevTokenType = i > 0 ? currentStatement[i - 1].TokenType : null;
                 if (newBracesStack.Count == 0 && (possibleTypeStack.Count(t => t == Identifier) > 1 ||
-                    possibleTypeStack.Count(t => t == Identifier) == 1 && RepresentsClassName(currentStatement[i]))
+                    possibleTypeStack.Count(t => t == Identifier) == 1 && SharedUtils.RepresentsClassName(currentStatement[i], _scopes))
                     &&
                 IsDirectCall(currentStatement, i) && tokenType == Identifier && prevTokenType != Period)
                 {
@@ -262,47 +262,5 @@ public class MethodLengthAnalyzer
         if (i == currentStatement.Count - 1) return false;
         TokenType nextType = currentStatement[i + 1].TokenType;
         return nextType == ParenthesesOpen;
-    }
-
-    private bool RepresentsClassName(Token token)
-    {
-        if (token.TokenType != Identifier) return false;
-        string id = ((ComplexToken)token).Info;
-        for (int i = _scopes.Count - 1; i >= 0; i--)
-        {
-            if (_scopes[i].Type == ScopeType.ClassRecordStruct) return _scopes[i].Name == id;
-        }
-        return false;
-    }
-
-    private static void CheckForwardBraces(TokenType tokenType, List<TokenType> bracesStack)
-    {
-        TokenType topBrace = bracesStack.Last();
-        int lastIndex = bracesStack.Count - 1;
-        if (tokenType == Greater && topBrace != Less) return; // something like "Assert.True(a>b)"
-        while (topBrace == Less && tokenType != Greater)
-        {
-            bracesStack.RemoveAt(lastIndex);
-            topBrace = bracesStack.Last();
-            lastIndex = bracesStack.Count - 1;
-        }
-        if ((tokenType == ParenthesesClose && topBrace == ParenthesesOpen) ||
-            (tokenType == BracketsClose && topBrace == BracketsOpen) ||
-            (tokenType == BracesClose && topBrace == BracesOpen) ||
-            (tokenType == Greater && topBrace == Less))
-        {
-            bracesStack.RemoveAt(lastIndex);
-        }
-        else
-        {
-            throw new ArgumentException("Parsing error! ");
-        }
-    }
-
-    private static bool IsCall(List<Token> currentStatement, int i)
-    {
-        if (i == currentStatement.Count - 1) return false;
-        TokenType nextType = currentStatement[i + 1].TokenType;
-        return nextType == ParenthesesOpen || nextType == Period;
     }
 }
