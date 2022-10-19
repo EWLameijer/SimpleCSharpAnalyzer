@@ -90,6 +90,10 @@ public class MethodLengthAnalyzer
                 _methodNames.RemoveAt(_methodNames.Count - 1);
                 _scopes.RemoveAt(_scopes.Count - 1);
                 _currentIndex++;
+                // duplicate code!
+                while (_currentIndex < _tokens.Count && (_tokens[_currentIndex].TokenType.IsSkippable() ||
+                    _tokens[_currentIndex].TokenType == ParenthesesClose))
+                    _currentIndex++;
                 return;
             }
             else // opening braces

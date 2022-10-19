@@ -92,6 +92,10 @@ public class IdentifierAnalyzer
             {
                 _scopes.RemoveAt(_scopes.Count - 1);
                 _currentIndex++;
+                // handle }). // fluent interface after lambda...
+                while (_currentIndex < _tokens.Count && (_tokens[_currentIndex].TokenType.IsSkippable() ||
+                    _tokens[_currentIndex].TokenType == ParenthesesClose))
+                    _currentIndex++;
                 return;
             }
             else // opening braces

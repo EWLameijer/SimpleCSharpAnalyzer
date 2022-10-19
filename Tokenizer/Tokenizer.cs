@@ -467,6 +467,7 @@ public class Tokenizer
         return new ComplexToken { TokenType = TokenType.String, Info = stringContents };
     }
 
+    // TODO: {{ escapes {, so 
     private Token GetInterpolatedStringToken()
     {
         bool isEscapeMode = false;
@@ -481,12 +482,18 @@ public class Tokenizer
             else if (ch == '"' && !isEscapeMode) break;
             else if (ch == '{' && !isEscapeMode)
             {
+                Token nextToken;
+                if (_lines[_currentLineIndex][_nextCharIndex + 1] == '{')
+                {
+                    _nextCharIndex += 2;
+                    result.Append(ch);
+                    continue;
+                }
                 _parsedTokens.Add(new ComplexToken { TokenType = tokenType, Info = result.ToString() });
                 result.Clear();
                 tokenType = InterpolatedStringMiddle;
                 result.Clear();
                 _nextCharIndex++;
-                Token nextToken;
                 do
                 {
                     nextToken = Get()!;
