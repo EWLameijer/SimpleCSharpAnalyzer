@@ -26,6 +26,7 @@ internal static class Keywords
         ["null"] = TokenType.Null,
         ["out"] = TokenType.Out,
         ["override"] = TokenType.Override,
+        ["partial"] = TokenType.Partial,
         ["private"] = TokenType.Private,
         ["protected"] = TokenType.Protected,
         ["public"] = TokenType.Public,

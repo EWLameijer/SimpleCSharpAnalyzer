@@ -16,7 +16,7 @@ public enum TokenType
     InterPolatedStringStart, InterpolatedStringWhole, Less,
     LineComment, LogicAnd, LogicOr, Minus, Modulus,
     Namespace, New, NewLine, Null,
-    Number, Out, Override, ParenthesesClose, ParenthesesOpen, Plus,
+    Number, Out, Override, ParenthesesClose, ParenthesesOpen, Partial, Plus,
     Period, Private, Protected, Public, QuestionMark, Readonly, Record, Return, SemiColon, Set,
     SingleQuotedString, Static,
     String, Struct, Switch,
