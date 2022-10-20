@@ -175,7 +175,16 @@ public class IdentifierAnalyzer
                     string paramName = ((ComplexToken)parameter).Info;
                     char startChar = paramName[0];
                     if (startChar == '@')
+                    {
+                        string normalName = paramName.Substring(1);
+                        if (!AllCSharpKeywords.KeyWords.Contains(normalName))
+                        {
+                            _report.Warnings.Add($"Unnecessary '@' in front of {paramName} " +
+                                $"(in {_contextedFilename}).");
+                            return;
+                        }
                         startChar = paramName[1];
+                    }
                     if (!char.IsLower(startChar))
                         _report.Warnings.Add($"Invalid parameter name: " +
                             $"{paramName} (in {_contextedFilename}).");
@@ -260,7 +269,16 @@ public class IdentifierAnalyzer
         {
             char startChar = identifierName[0];
             if (startChar == '@')
+            {
+                string normalName = identifierName.Substring(1);
+                if (!AllCSharpKeywords.KeyWords.Contains(normalName))
+                {
+                    _report.Warnings.Add($"Unnecessary '@' in front of {identifierName} " +
+                        $"(in {_contextedFilename}).");
+                    return true; // don't give second warning
+                }
                 startChar = identifierName[1];
+            }
             return char.IsLower(startChar);
         }
     }

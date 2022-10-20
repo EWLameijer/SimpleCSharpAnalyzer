@@ -40,15 +40,40 @@ foreach (string relevantFileName in relevantFileNames)
     }
     IReadOnlyList<Token> tokens = tokenizer.Results();
     IReadOnlyList<Token> tokensWithoutAttributes = HandleDecimalLiterals(FilterOutAttributes(tokens));
+    var (atLessIdentifiers, warnings) = HandleInappropriateAts(fileData.ContextedFilename, tokensWithoutAttributes);
     LineCounter counter = new(tokens);
     FileTokenData fileTokenData = new(fileData.ContextedFilename, tokensWithoutAttributes);
     Report report = counter.CreateReport();
+    report.Warnings.AddRange(warnings);
     LineLengthChecker.AddWarnings(fileData, report, maxLineLength);
     new IdentifierAnalyzer(fileTokenData, report).AddWarnings();
     new MalapropAnalyzer(fileTokenData, report).AddWarnings();
     new MethodLengthAnalyzer(fileTokenData, report).AddWarnings();
     report.Show();
     totalReport.Add(report);
+}
+
+(IReadOnlyList<Token> tokens, List<string> warnings) HandleInappropriateAts(string contextedFilename, IReadOnlyList<Token> tokens)
+{
+    List<Token> output = new();
+    List<string> warnings = new();
+    for (int i = 0; i < tokens.Count; i++)
+    {
+        Token current = tokens[i];
+        if (current.TokenType == TokenType.Identifier)
+        {
+            string identifierName = ((ComplexToken)current).Info;
+            if (identifierName[0] == '@')
+            {
+                string restOfName = identifierName.Substring(1);
+                if (!AllCSharpKeywords.KeyWords.Contains(restOfName))
+                {
+                    warnings.Add($"Unnecessary '@' in {identifierName} (in {contextedFilename}).");
+                }
+            }
+        }
+    }
+    return (output, warnings);
 }
 
 IReadOnlyList<Token> HandleDecimalLiterals(IReadOnlyList<Token> tokens)

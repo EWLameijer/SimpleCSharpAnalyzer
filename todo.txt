@@ -1,7 +1,9 @@
 phase 0: refactor - possibly with common base class for MethodLength & IdentifierAnalyzer?
 
-?fix enum : byte bug 
+
+2) parse #region Id? ... #endregion (and remove from parsing!)
 // check other examples (5 left!)
+? check comments - commented-out code?
 ? magic constants?
 ? Tarzan [unused tricks?]
 ? repeated code?  
@@ -11,6 +13,8 @@ phase 5: ?
 
 
 DONE
+1) parse undue @, but add warning about misuse! // needs to be sophisticated, not only when it is not an identifier!
+?fix enum : byte bug 
 phase 1: check parameters
 phase 2: Mrs Malaprop
 phase 4: method names 

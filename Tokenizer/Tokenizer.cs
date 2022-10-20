@@ -230,7 +230,7 @@ public class Tokenizer
             Token token = GetInterpolatedVerbatimStringToken();
             return token;
         }
-        if (char.IsLower(ch)) // @lock and such, for people who want a reserved word as identifier.
+        if (char.IsLetter(ch)) // @lock and such, for people who want a reserved word as identifier.
         {
             StringBuilder atIdentifier = new();
             atIdentifier.Append('@');
