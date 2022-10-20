@@ -1,7 +1,12 @@
-phase 0: refactor 
-    
+phase 0: refactor - possibly with common base class for MethodLength & IdentifierAnalyzer?
 
-phase 3: method lengths 
+?fix enum : byte bug 
+// check other examples (5 left!)
+? magic constants?
+? Tarzan [unused tricks?]
+? repeated code?  
+
+
 phase 5: ?
 
 
