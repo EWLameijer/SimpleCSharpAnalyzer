@@ -172,7 +172,11 @@ public class IdentifierAnalyzer
                     index == parameters.Count - 1 || parameters[index + 1].TokenType == Comma))
                 {
                     string paramName = ((ComplexToken)parameter).Info;
-                    if (!char.IsLower(paramName[0])) _report.Warnings.Add($"Invalid parameter name: " +
+                    char startChar = paramName[0];
+                    if (startChar == '@')
+                        startChar = paramName[1];
+                    if (!char.IsLower(startChar))
+                        _report.Warnings.Add($"Invalid parameter name: " +
                             $"{paramName} (in {_contextedFilename}).");
                 }
             }
@@ -251,7 +255,13 @@ public class IdentifierAnalyzer
             return char.IsUpper(identifierName[0]);
         if (scope == ScopeType.ClassRecordStruct)
             return identifierName[0] == '_' && char.IsLower(identifierName[1]);
-        else return char.IsLower(identifierName[0]);
+        else
+        {
+            char startChar = identifierName[0];
+            if (startChar == '@')
+                startChar = identifierName[1];
+            return char.IsLower(startChar);
+        }
     }
 
     private static bool SuggestsUpperCase(TokenType tokenType) =>

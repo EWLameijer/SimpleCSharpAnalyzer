@@ -229,6 +229,18 @@ public class Tokenizer
             Token token = GetInterpolatedVerbatimStringToken();
             return token;
         }
+        if (char.IsLower(ch)) // @lock and such, for people who want a reserved word as identifier.
+        {
+            StringBuilder atIdentifier = new();
+            atIdentifier.Append('@');
+            do
+            {
+                atIdentifier.Append(ch);
+                _nextCharIndex++;
+                ch = CurrentChar();
+            } while (char.IsLower(ch));
+            return new ComplexToken { TokenType = Identifier, Info = atIdentifier.ToString() };
+        }
         throw new ArgumentException("@ parsing error");
     }
 
@@ -467,7 +479,7 @@ public class Tokenizer
         return new ComplexToken { TokenType = TokenType.String, Info = stringContents };
     }
 
-    // TODO: {{ escapes {, so 
+    // TODO: {{ escapes {, so
     private Token GetInterpolatedStringToken()
     {
         bool isEscapeMode = false;
