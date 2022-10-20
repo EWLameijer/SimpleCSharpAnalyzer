@@ -137,6 +137,7 @@ public class Tokenizer
         else if (currentChar == '+') return StoreTokenWithoutConsume(GetPlusToken());
         else if (currentChar == '-') return StoreTokenWithoutConsume(GetMinusToken());
         else if (currentChar == '&') return StoreTokenWithoutConsume(GetLogicAndToken());
+        else if (currentChar == '%') return StoreTokenWithConsume(new Token { TokenType = Modulus });
         else if (currentChar == '|') return StoreTokenWithoutConsume(GetLogicOrToken());
         else if (currentChar == '$') return StoreTokenWithoutConsume(GetDollarToken());
         else if (currentChar == '@') return StoreTokenWithoutConsume(GetAtToken());

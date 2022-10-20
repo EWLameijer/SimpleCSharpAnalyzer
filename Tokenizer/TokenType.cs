@@ -14,7 +14,7 @@ public enum TokenType
     Identifier, If,
     Increment, Init, Interface, Internal, InterpolatedStringEnd, InterpolatedStringMiddle,
     InterPolatedStringStart, InterpolatedStringWhole, Less,
-    LineComment, LogicAnd, LogicOr, Minus,
+    LineComment, LogicAnd, LogicOr, Minus, Modulus,
     Namespace, New, NewLine, Null,
     Number, Out, Override, ParenthesesClose, ParenthesesOpen, Plus,
     Period, Private, Protected, Public, QuestionMark, Readonly, Record, Return, SemiColon, Set,
