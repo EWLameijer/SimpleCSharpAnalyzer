@@ -39,8 +39,9 @@ foreach (string relevantFileName in relevantFileNames)
         tokenizer.Get();
     }
     IReadOnlyList<Token> tokens = tokenizer.Results();
-    IReadOnlyList<Token> tokensWithoutAttributes = HandlePragmas(HandleDecimalLiterals(FilterOutAttributes(tokens)));
-    (IReadOnlyList<Token> atLessIdentifiers, List<string> warnings) = HandleInappropriateAts(fileData.ContextedFilename, tokensWithoutAttributes);
+    IReadOnlyList<Token> tokensWithoutAttributes = new TokenFilterer().Filter(tokens);
+    (IReadOnlyList<Token> atLessIdentifiers, List<string> warnings) =
+        HandleInappropriateAts(fileData.ContextedFilename, tokensWithoutAttributes);
     LineCounter counter = new(tokens);
     FileTokenData fileTokenData = new(fileData.ContextedFilename, tokensWithoutAttributes);
     Report report = counter.CreateReport();
@@ -53,12 +54,11 @@ foreach (string relevantFileName in relevantFileNames)
     totalReport.Add(report);
 }
 
-IReadOnlyList<Token> HandlePragmas(IReadOnlyList<Token> tokens)
-{
-    return tokens.Where(t => t.TokenType != TokenType.Pragma).ToList();
-}
+Console.WriteLine($"\n***TOTAL ({pathname})***");
+totalReport.Show();
 
-(IReadOnlyList<Token> tokens, List<string> warnings) HandleInappropriateAts(string contextedFilename, IReadOnlyList<Token> tokens)
+(IReadOnlyList<Token> tokens, List<string> warnings)
+    HandleInappropriateAts(string contextedFilename, IReadOnlyList<Token> tokens)
 {
     List<Token> output = new();
     List<string> warnings = new();
@@ -67,75 +67,21 @@ IReadOnlyList<Token> HandlePragmas(IReadOnlyList<Token> tokens)
         Token current = tokens[i];
         if (current.TokenType == TokenType.Identifier)
         {
-            string identifierName = ((ComplexToken)current).Info;
-            if (identifierName[0] == '@')
-            {
-                string restOfName = identifierName.Substring(1);
-                if (!AllCSharpKeywords.KeyWords.Contains(restOfName))
-                {
-                    warnings.Add($"Unnecessary '@' in {identifierName} (in {contextedFilename}).");
-                }
-            }
+            WarnIfIdentifierInappropiatelyStartsWithAt(contextedFilename, warnings, current);
         }
     }
     return (output, warnings);
 }
 
-IReadOnlyList<Token> HandleDecimalLiterals(IReadOnlyList<Token> tokens)
+static void WarnIfIdentifierInappropiatelyStartsWithAt(string contextedFilename, List<string> warnings, Token current)
 {
-    List<Token> output = new();
-    for (int i = 0; i < tokens.Count; i++)
+    string identifierName = ((ComplexToken)current).Info;
+    if (identifierName[0] == '@')
     {
-        Token current = tokens[i];
-        int lastOutputIndex = output.Count - 1;
-        if (current.TokenType == TokenType.Identifier &&
-            ((ComplexToken)current).Info.ToLower() == "m"
-            && output[lastOutputIndex].TokenType == TokenType.Number)
+        string restOfName = identifierName.Substring(1);
+        if (!AllCSharpKeywords.KeyWords.Contains(restOfName))
         {
-            output[lastOutputIndex].TokenType = TokenType.DecimalLiteral;
-        }
-        else
-        {
-            output.Add(current);
+            warnings.Add($"Unnecessary '@' in {identifierName} (in {contextedFilename}).");
         }
     }
-    return output;
-}
-
-Console.WriteLine($"\n***TOTAL ({pathname})***");
-totalReport.Show();
-
-IReadOnlyList<Token> FilterOutAttributes(IReadOnlyList<Token> tokens)
-{
-    List<Token> output = new();
-    for (int i = 0; i < tokens.Count; i++)
-    {
-        TokenType currentType = tokens[i].TokenType;
-        if (currentType == TokenType.BracketsOpen && LastRealType(tokens, i) != TokenType.Identifier)
-        {
-            int depth = 0;
-            int newIndex = i + 1;
-            TokenType newToken = tokens[newIndex].TokenType;
-            while (newToken != TokenType.BracketsClose || depth > 0)
-            {
-                if (newToken == TokenType.BracketsOpen) depth++;
-                if (newToken == TokenType.BracketsClose) depth--;
-                newIndex++;
-                newToken = tokens[newIndex].TokenType;
-            }
-            i = newIndex; // index of ']'
-        }
-        else output.Add(tokens[i]);
-    }
-    return output;
-}
-
-TokenType LastRealType(IReadOnlyList<Token> tokens, int i)
-{
-    for (int investigatedIndex = i - 1; investigatedIndex > 0; investigatedIndex--)
-    {
-        TokenType tokenType = tokens[investigatedIndex].TokenType;
-        if (!tokenType.IsSkippable()) return tokenType;
-    }
-    return TokenType.Identifier;
 }

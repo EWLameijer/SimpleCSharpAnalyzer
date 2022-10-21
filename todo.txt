@@ -1,11 +1,15 @@
 phase 0: refactor - possibly with common base class for MethodLength & IdentifierAnalyzer?
 
+2022/10/21 7:42 => 31 warnings
+2022/10/21 8:04 => 27 warnings
 
 // problem seems to be if() {} followed by for, as the postBraces removes the for-reference. Why the postBraces?
 // because of new{ something });
+// probably good to first clean up code
+// also 
 
 // check other examples (5 left!)
-? check comments - commented-out code?
+? check comments - commented-out code? (check for reserved words and = and () and such?
 ? magic constants?
 ? Tarzan [unused tricks?]
 ? repeated code?  
