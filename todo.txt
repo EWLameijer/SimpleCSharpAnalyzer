@@ -16,6 +16,9 @@ Too long method: GetBackupScopeType (in TokenBasedChecking\IdentifierAnalyzer.cs
 2. Too long method: ScanVariables (in TokenBasedChecking\IdentifierAnalyzer.cs) is 65 lines long.
 2022/10/21 21:01 [21] 1. Too long method: CheckForwardBraces (in TokenBasedChecking\BaseAnalyzer.cs) is 22 lines long.
 2022/10/21 21:04 [20] 1. Too long method: CanBeMethod (in TokenBasedChecking\BaseAnalyzer.cs) is 29 lines long.
+2022/10/21 21:29 [17] 2. Too long method: CapitalizationCheck (in TokenBasedChecking\IdentifierAnalyzer.cs) is 25 lines long.
+2022/10/21 21:45 => 17
+2022/10/21 21:45 => 16 :)
 
 SOLVE BUG: Invalid variable name: _malapropisms (in TokenBasedChecking\MalapropAnalyzer.cs - method).
 SOLVE BUG: 1. Invalid variable name: _currentIndex (in TokenBasedChecking\IdentifierAnalyzer.cs - method).

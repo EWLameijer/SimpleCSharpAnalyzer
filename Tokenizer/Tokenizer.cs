@@ -225,8 +225,7 @@ public class Tokenizer
         if (ch == '@' && NextChar() == '"')
         {
             _nextCharIndex++;
-            Token token = GetInterpolatedVerbatimStringToken();
-            return token;
+            return GetInterpolatedVerbatimStringToken();
         }
         throw new ArgumentException("$ parsing error");
     }
@@ -558,22 +557,34 @@ public class Tokenizer
         return new ComplexToken { TokenType = SingleQuotedString, Info = stringContents };
     }
 
+    private class TextPosition
+    {
+        public int LineIndex { get; set; }
+        public int CharIndex { get; set; }
+    }
+
     public bool HasNextToken()
     {
-        int scanLineIndex = _currentLineIndex;
-        int scanNextCharIndex = _nextCharIndex;
-        while (scanLineIndex != _lastLineIndex)
+        TextPosition pos = new() { LineIndex = _currentLineIndex, CharIndex = _nextCharIndex };
+        while (pos.LineIndex != _lastLineIndex)
         {
-            if (scanNextCharIndex == _lines[scanLineIndex].Length)
-            {
-                scanLineIndex++;
-                scanNextCharIndex = 0;
-            }
-            else
-            {
-                if (!char.IsWhiteSpace(_lines[scanLineIndex][scanNextCharIndex])) return true;
-                scanNextCharIndex++;
-            }
+            bool tokenFound = NextTokenFound(pos);
+            if (tokenFound) return true;
+        }
+        return false;
+    }
+
+    private bool NextTokenFound(TextPosition pos)
+    {
+        if (pos.CharIndex == _lines[pos.LineIndex].Length)
+        {
+            pos.LineIndex++;
+            pos.CharIndex = 0;
+        }
+        else
+        {
+            if (!char.IsWhiteSpace(_lines[pos.LineIndex][pos.CharIndex])) return true;
+            pos.CharIndex++;
         }
         return false;
     }

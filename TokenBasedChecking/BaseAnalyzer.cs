@@ -196,4 +196,212 @@ public class BaseAnalyzer
         TokenType nextType = currentStatement[i + 1].TokenType;
         return nextType == ParenthesesOpen;
     }
+
+    protected void ProcessPossibleIdentifier(List<Token> currentStatement)
+    {
+        // can be empty through "return {..;"
+        bool ready = ParseStraightforwardCases(currentStatement);
+        if (ready) return;
+        if (DoShow) Show(currentStatement);
+        int? pos = CanBeMethod(currentStatement);
+        if (pos != null)
+        {
+            ProcessParameter(currentStatement, pos);
+            return;
+        }
+        CheckVariables(currentStatement);
+    }
+
+    private void CheckVariables(List<Token> currentStatement)
+    {
+        List<TokenType> newBracesStack = new();
+        List<TokenType> possibleTypeStack = new();
+        for (int i = 0; i < currentStatement.Count; i++)
+        {
+            bool endLoop = CheckCurrentVariableCandidate(currentStatement, newBracesStack, possibleTypeStack, i);
+            if (endLoop) break;
+        }
+        currentStatement.Clear();
+    }
+
+    private bool CheckCurrentVariableCandidate(List<Token> currentStatement,
+    List<TokenType> newBracesStack, List<TokenType> possibleTypeStack, int index)
+    {
+        TokenType tokenType = currentStatement[index].TokenType;
+        if (tokenType.IsModifier() || tokenType.IsDeclarer()) return false;
+        possibleTypeStack.Add(tokenType);
+        if (tokenType.IsOpeningType()) newBracesStack.Add(tokenType);
+        else if (tokenType.IsClosingType()) CheckForwardBraces(tokenType, newBracesStack);
+        else
+        {
+            CheckPropertiesAndVariables(currentStatement, newBracesStack, possibleTypeStack, index, tokenType);
+            if (tokenType == Assign) return true;
+        }
+        return false;
+    }
+
+    private void CheckPropertiesAndVariables(List<Token> currentStatement,
+    List<TokenType> newBracesStack, List<TokenType> possibleTypeStack, int i, TokenType tokenType)
+    {
+        if (IsValueName(currentStatement, newBracesStack, possibleTypeStack, i, tokenType))
+        {
+            ScopeType currentScope = GetCurrentScope();
+            TokenType nextType = currentStatement[i + 1].TokenType;
+            string varType = (nextType == BracesOpen || nextType == FatArrow) ? "property" : "variable";
+            if (!CapitalizationCheck(i, currentStatement, currentScope))
+            {
+                string warning = $"Invalid {varType} name: " +
+                    $"{((ComplexToken)currentStatement[i]).Info} (in {ContextedFilename} - " +
+                    $"{PrettyPrint(currentScope)}).";
+                Report.Warnings.Add(warning);
+            }
+        }
+    }
+
+    private bool CapitalizationCheck(int i, List<Token> currentStatement, ScopeType scope)
+    {
+        string identifierName = ((ComplexToken)currentStatement[i]).Info;
+        TokenType nextTokenType = currentStatement[i + 1].TokenType;
+        if ((nextTokenType == BracesOpen || nextTokenType == FatArrow) || // is property
+            currentStatement.Any(t => SuggestsUpperCase(t.TokenType)))
+            return char.IsUpper(identifierName[0]);
+        if (scope == ScopeType.ClassRecordStruct)
+            return identifierName[0] == '_' && char.IsLower(identifierName[1]);
+        else
+        {
+            return CheckLocalVariable(identifierName);
+        }
+    }
+
+    private bool CheckLocalVariable(string identifierName)
+    {
+        char startChar = identifierName[0];
+        if (startChar == '@')
+        {
+            string normalName = identifierName.Substring(1);
+            if (!AllCSharpKeywords.KeyWords.Contains(normalName))
+            {
+                Report.Warnings.Add($"Unnecessary '@' in front of {identifierName} " +
+                    $"(in {ContextedFilename}).");
+                return true; // don't give second warning
+            }
+            startChar = identifierName[1];
+        }
+        return char.IsLower(startChar);
+    }
+
+    private static bool SuggestsUpperCase(TokenType tokenType) =>
+    tokenType == Public || tokenType == Protected || tokenType == Const;
+
+    private static string PrettyPrint(ScopeType scopeType) => scopeType switch
+    {
+        ScopeType.File => "top-level-scope",
+        ScopeType.ClassRecordStruct => "class/record/struct",
+        _ => "method"
+    };
+
+    private ScopeType GetCurrentScope()
+    {
+        ScopeType currentScope = Scopes.Count > 0 ? Scopes.Last().Type : ScopeType.File;
+        int scopeIndex = Scopes.Count - 1;
+        while (scopeIndex >= 0 && currentScope == ScopeType.ScopeTypeNotSet)
+        {
+            if (Scopes[scopeIndex].Type != ScopeType.ScopeTypeNotSet)
+                currentScope = Scopes[scopeIndex].Type;
+            scopeIndex--;
+        }
+
+        return currentScope;
+    }
+
+    private bool IsValueName(List<Token> currentStatement,
+    List<TokenType> newBracesStack, List<TokenType> possibleTypeStack, int i, TokenType tokenType)
+    {
+        return newBracesStack.Count == 0 && possibleTypeStack.Count(t => t == Identifier) > 1 &&
+                !IsCall(currentStatement, i)
+                && tokenType == Identifier && currentStatement[i - 1].TokenType != Period
+                && !currentStatement.Take(i).Any(t => t.TokenType == Where);
+    }
+
+    private static void Show(List<Token> currentStatement)
+    {
+        List<string> readable = currentStatement.Select(t => t.PrettyPrint()).ToList();
+        Console.WriteLine("STATEMENT: " + string.Join(" ", readable));
+    }
+
+    private List<Token> GetParameters(List<Token> currentStatement, int openingPos)
+    {
+        int depth = 0;
+        int currentPos = openingPos;
+        List<Token> parameters = new();
+        while (currentStatement[currentPos].TokenType != ParenthesesClose || depth > 0)
+        {
+            TokenType currentType = currentStatement[currentPos].TokenType;
+            if (currentType == ParenthesesOpen) depth++;
+            if (currentType == ParenthesesClose) depth--;
+            if (depth == 0 && !currentType.IsSkippable()) parameters.Add(currentStatement[currentPos]);
+            currentPos++;
+        }
+        return parameters;
+    }
+
+    protected void ProcessParameter(List<Token> currentStatement, int? pos)
+    {
+        int openParenthesisPos = (int)pos + 1;
+        List<Token> parameters = GetParameters(currentStatement, openParenthesisPos + 1);
+        for (int index = parameters.Count - 1; index > 0; index--)
+        {
+            Token parameter = parameters[index];
+            if (parameter.TokenType == Identifier && (
+                index == parameters.Count - 1 || parameters[index + 1].TokenType == Comma))
+            {
+                CheckParameterName(parameter);
+            }
+        }
+    }
+
+    private void CheckParameterName(Token parameter)
+    {
+        string paramName = ((ComplexToken)parameter).Info;
+        (bool isFinished, char startChar) = GetStartCharAndName(paramName);
+
+        if (!isFinished && !char.IsLower(startChar))
+            Report.Warnings.Add($"Invalid parameter name: " +
+                $"{paramName} (in {ContextedFilename}).");
+    }
+
+    private (bool isFinished, char startChar) GetStartCharAndName(string paramName)
+    {
+        char startChar = paramName[0];
+        if (startChar == '@')
+        {
+            string normalName = paramName.Substring(1);
+            if (!AllCSharpKeywords.KeyWords.Contains(normalName))
+            {
+                Report.Warnings.Add($"Unnecessary '@' in front of {paramName} " +
+                    $"(in {ContextedFilename}).");
+                return (true, startChar);
+            }
+            startChar = paramName[1];
+        }
+        return (false, startChar);
+    }
+
+    protected static bool ParseStraightforwardCases(List<Token> currentStatement)
+    {
+        if (currentStatement.Count < 2)
+        {
+            currentStatement.Clear();
+            return true;
+        }
+        TokenType firstType = currentStatement[0].TokenType;
+
+        if (firstType == If || firstType == Else || firstType == ForEach || firstType == Return
+            || currentStatement.Any(t => t.TokenType == TokenType.Enum))
+        {
+            currentStatement.Clear();
+            return true;
+        }
+        return false;
+    }
 }
