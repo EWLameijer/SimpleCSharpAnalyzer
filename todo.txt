@@ -1,7 +1,9 @@
 phase 0: refactor - possibly with common base class for MethodLength & IdentifierAnalyzer?
 
 
-2) parse #region Id? ... #endregion (and remove from parsing!)
+// problem seems to be if() {} followed by for, as the postBraces removes the for-reference. Why the postBraces?
+// because of new{ something });
+
 // check other examples (5 left!)
 ? check comments - commented-out code?
 ? magic constants?
@@ -13,6 +15,7 @@ phase 5: ?
 
 
 DONE
+2) parse #region Id? ... #endregion (and remove from parsing!)
 1) parse undue @, but add warning about misuse! // needs to be sophisticated, not only when it is not an identifier!
 ?fix enum : byte bug 
 phase 1: check parameters
