@@ -8,6 +8,14 @@ phase 0: refactor - possibly with common base class for MethodLength & Identifie
 FIRST solve other too-long methods, as well as duplication of code 
 THEN go work on the invalid variable names
 
+2022/10/21 20:02 [24] 2. Too long method: HandleStatementEndingWithSemicolon (in TokenBasedChecking\IdentifierAnalyzer.cs) is 25 lines long.
+2022/10/21 20:05 [23] 2. Too long method: AddScope (in TokenBasedChecking\IdentifierAnalyzer.cs) is 30 lines long.
+Too long method: GetBackupScopeType (in TokenBasedChecking\IdentifierAnalyzer.cs) is 16 lines long.
+2022/10/21 20:22 [22] 2. Too long method: ProcessPossibleIdentifier (in TokenBasedChecking\IdentifierAnalyzer.cs) is 86 lines long. > 20:22 
+
+2. Too long method: ScanVariables (in TokenBasedChecking\IdentifierAnalyzer.cs) is 65 lines long.
+2022/10/21 21:01 [21] 1. Too long method: CheckForwardBraces (in TokenBasedChecking\BaseAnalyzer.cs) is 22 lines long.
+2022/10/21 21:04 [20] 1. Too long method: CanBeMethod (in TokenBasedChecking\BaseAnalyzer.cs) is 29 lines long.
 
 SOLVE BUG: Invalid variable name: _malapropisms (in TokenBasedChecking\MalapropAnalyzer.cs - method).
 SOLVE BUG: 1. Invalid variable name: _currentIndex (in TokenBasedChecking\IdentifierAnalyzer.cs - method).

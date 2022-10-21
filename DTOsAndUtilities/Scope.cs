@@ -6,4 +6,8 @@ public enum ScopeType
     If, While, Do, For, Foreach, New, Else
 }
 
-public record Scope(ScopeType Type, string Name);
+public class Scope
+{
+    public ScopeType Type { get; set; }
+    public string Name { get; set; } = null!;
+}

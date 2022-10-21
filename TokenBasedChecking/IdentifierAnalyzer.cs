@@ -4,26 +4,21 @@ using static Tokenizing.TokenType;
 
 namespace TokenBasedChecking;
 
-public class IdentifierAnalyzer
+public class IdentifierAnalyzer : BaseAnalyzer
 {
-    private readonly string _contextedFilename;
     private readonly IReadOnlyList<Token> _tokens;
-    private readonly Report _report;
+
     private int _currentIndex = 0;
-    private readonly List<Scope> _scopes = new();
-    private const bool DoShow = true;
 
     private enum FileModus
     { FileModusNotSet, TopLevel, FileScoped, Traditional }
 
-    public IdentifierAnalyzer(FileTokenData fileData, Report report)
+    public IdentifierAnalyzer(FileTokenData fileData, Report report) : base(fileData, report)
     {
-        _contextedFilename = fileData.ContextedFilename;
         _tokens = fileData.Tokens;
 
         // is this a top level file?
-        Console.WriteLine($"{_contextedFilename} is {GetFileModus()}.");
-        _report = report;
+        Console.WriteLine($"{ContextedFilename} is {GetFileModus()}.");
     }
 
     public void AddWarnings()
@@ -45,113 +40,156 @@ public class IdentifierAnalyzer
         return nextTokenType == BracesOpen ? FileModus.Traditional : FileModus.FileScoped;
     }
 
-    private void ScanVariables()
+    private void ScanVariables() //' 28 lines
     {
         List<Token> currentStatement = new();
         bool postBraces = false;
         while (_currentIndex < _tokens.Count && _tokens[_currentIndex].TokenType != BracesOpen)
         {
-            Token currentToken = _tokens[_currentIndex];
+            Token? currentToken = LookForNextEndingToken(currentStatement);
+            if (currentToken == null) return;
             TokenType currentTokenType = currentToken.TokenType;
-            while (currentTokenType != SemiColon && currentTokenType != BracesOpen && currentTokenType != BracesClose)
-            {
-                if (!currentTokenType.IsSkippable()) currentStatement.Add(_tokens[_currentIndex]);
-                _currentIndex++;
-                if (_currentIndex == _tokens.Count) return;
-                currentToken = _tokens[_currentIndex];
-                currentTokenType = currentToken.TokenType;
-            }
             currentStatement.Add(currentToken);
             // type IS semicolon or bracesOpen
-            if (currentTokenType == SemiColon)
-            {
-                if (postBraces)
-                {
-                    currentStatement.Clear();
-                    postBraces = false;
-                }
-                else if (currentStatement.Count > 0 && currentStatement[0].TokenType == For)
-                {
-                    while (currentTokenType != SemiColon)
-                    {
-                        _currentIndex++;
-                        currentTokenType = _tokens[_currentIndex].TokenType;
-                    }
-                    int depth = 0;
-                    while (currentTokenType != ParenthesesClose && depth > 0)
-                    {
-                        if (currentTokenType == ParenthesesOpen) depth++;
-                        if (currentTokenType == ParenthesesClose) depth--;
-                        _currentIndex++;
-                        currentTokenType = _tokens[_currentIndex].TokenType;
-                    }
-                }
-                else ProcessPossibleIdentifier(currentStatement);
-                _currentIndex++;
-            }
-            else if (currentTokenType == BracesClose)
-            {
-                _scopes.RemoveAt(_scopes.Count - 1);
-                _currentIndex++;
-                // handle }). // fluent interface after lambda...
-                while (_currentIndex < _tokens.Count && (_tokens[_currentIndex].TokenType.IsSkippable() ||
-                    _tokens[_currentIndex].TokenType == ParenthesesClose))
-                    _currentIndex++;
-                return;
-            }
-            else // opening braces
-            {
-                AddScope(currentStatement);
-                ProcessPossibleIdentifier(currentStatement);
-                _currentIndex++;
-                currentStatement.Clear();
-                ScanVariables();
-                postBraces = true;
-            }
+            bool? postBracesOrQuit = HandleEndingToken(currentTokenType, currentStatement, postBraces);
+            if (postBracesOrQuit == null) return;
         }
         // type IS BracesOpen
     }
 
-    private void AddScope(List<Token> currentStatement)
+    private bool? HandleEndingToken(TokenType currentTokenType, List<Token> currentStatement, bool postBraces)
     {
-        ScopeType scopeType = ScopeType.ScopeTypeNotSet;
-        string name = "unknown";
-        if (currentStatement.Any(t => t.TokenType.IsTypeType()))
+        switch (currentTokenType)
         {
-            scopeType = ScopeType.ClassRecordStruct;
-            name = ((ComplexToken)currentStatement.First(t => t.TokenType == Identifier)).Info;
-        }
-        if (currentStatement.Any(t => t.TokenType == New))
-        {
-            scopeType = ScopeType.New;
-        }
-        if (CanBeMethod(currentStatement) != null) scopeType = ScopeType.Method;
-        ScopeType possibleScopeType = ScopeType.ScopeTypeNotSet;
-        if (currentStatement.Count > 0)
-        {
-            possibleScopeType = currentStatement[0].TokenType switch
-            {
-                If => ScopeType.If,
-                Else => ScopeType.Else,
-                ForEach => ScopeType.Foreach,
-                For => ScopeType.For,
-                Do => ScopeType.Do,
-                While => ScopeType.While,
-                _ => ScopeType.ScopeTypeNotSet
-            };
-        }
-        if (possibleScopeType != ScopeType.ScopeTypeNotSet) scopeType = possibleScopeType;
+            case SemiColon:
+                HandleStatementEndingWithSemicolon(currentStatement, postBraces);
+                return false;
 
-        _scopes.Add(new Scope(scopeType, name));
+            case BracesClose:
+                HandleStatementEndingWithClosingBraces();
+                return null;
+
+            default:
+                HandleStatementEndingWithOpeningBraces(currentStatement);
+                return true;
+        };
+    }
+
+    private Token? LookForNextEndingToken(List<Token> currentStatement)
+    {
+        Token currentToken = _tokens[_currentIndex];
+        TokenType currentTokenType = currentToken.TokenType;
+        while (currentTokenType != SemiColon && currentTokenType != BracesOpen && currentTokenType != BracesClose)
+        {
+            if (!currentTokenType.IsSkippable()) currentStatement.Add(_tokens[_currentIndex]);
+            _currentIndex++;
+            if (_currentIndex == _tokens.Count) return null;
+            currentToken = _tokens[_currentIndex];
+            currentTokenType = currentToken.TokenType;
+        }
+        return currentToken;
+    }
+
+    private void HandleStatementEndingWithSemicolon(List<Token> currentStatement, bool postBraces)
+    {
+        TokenType currentTokenType = _tokens[_currentIndex].TokenType;
+        if (postBraces)
+        {
+            currentStatement.Clear();
+        }
+        else if (currentStatement.Count > 0 && currentStatement[0].TokenType == For)
+        {
+            ProcessForLoopSetup(currentTokenType);
+        }
+        else ProcessPossibleIdentifier(currentStatement);
+        _currentIndex++;
+    }
+
+    private void ProcessForLoopSetup(TokenType currentTokenType)
+    {
+        while (currentTokenType != SemiColon)
+        {
+            _currentIndex++;
+            currentTokenType = _tokens[_currentIndex].TokenType;
+        }
+        int depth = 0;
+        while (currentTokenType != ParenthesesClose || depth > 0)
+        {
+            if (currentTokenType == ParenthesesOpen) depth++;
+            if (currentTokenType == ParenthesesClose) depth--;
+            _currentIndex++;
+            currentTokenType = _tokens[_currentIndex].TokenType;
+        }
+    }
+
+    private void HandleStatementEndingWithClosingBraces()
+    {
+        Scopes.RemoveAt(Scopes.Count - 1);
+        _currentIndex++;
+        // handle }). // fluent interface after lambda...
+        while (_currentIndex < _tokens.Count && (_tokens[_currentIndex].TokenType.IsSkippable() ||
+            _tokens[_currentIndex].TokenType == ParenthesesClose))
+            _currentIndex++;
+    }
+
+    private void HandleStatementEndingWithOpeningBraces(List<Token> currentStatement)
+    {
+        AddScope(currentStatement);
+        ProcessPossibleIdentifier(currentStatement);
+        _currentIndex++;
+        currentStatement.Clear();
+        ScanVariables();
     }
 
     private void ProcessPossibleIdentifier(List<Token> currentStatement)
     {
         // can be empty through "return {..;"
+        bool ready = ParseStraightforwardCases(currentStatement);
+        if (ready) return;
+        if (DoShow) Show(currentStatement);
+        int? pos = CanBeMethod(currentStatement);
+        if (pos != null)
+        {
+            ProcessParameter(currentStatement, pos);
+            return;
+        }
+        CheckVariables(currentStatement);
+    }
+
+    private void CheckVariables(List<Token> currentStatement)
+    {
+        List<TokenType> newBracesStack = new();
+        List<TokenType> possibleTypeStack = new();
+        for (int i = 0; i < currentStatement.Count; i++)
+        {
+            bool endLoop = CheckCurrentVariableCandidate(currentStatement, newBracesStack, possibleTypeStack, i);
+            if (endLoop) break;
+        }
+        currentStatement.Clear();
+    }
+
+    private bool CheckCurrentVariableCandidate(List<Token> currentStatement,
+        List<TokenType> newBracesStack, List<TokenType> possibleTypeStack, int index)
+    {
+        TokenType tokenType = currentStatement[index].TokenType;
+        if (tokenType.IsModifier() || tokenType.IsDeclarer()) return false;
+        possibleTypeStack.Add(tokenType);
+        if (tokenType.IsOpeningType()) newBracesStack.Add(tokenType);
+        else if (tokenType.IsClosingType()) CheckForwardBraces(tokenType, newBracesStack);
+        else
+        {
+            CheckPropertiesAndVariables(currentStatement, newBracesStack, possibleTypeStack, index, tokenType);
+            if (tokenType == Assign) return true;
+        }
+        return false;
+    }
+
+    private static bool ParseStraightforwardCases(List<Token> currentStatement)
+    {
         if (currentStatement.Count < 2)
         {
             currentStatement.Clear();
-            return;
+            return true;
         }
         TokenType firstType = currentStatement[0].TokenType;
 
@@ -159,79 +197,92 @@ public class IdentifierAnalyzer
             || currentStatement.Any(t => t.TokenType == TokenType.Enum))
         {
             currentStatement.Clear();
-            return;
+            return true;
         }
-        if (DoShow) Show(currentStatement);
-        int? pos = CanBeMethod(currentStatement);
-        if (pos != null)
+        return false;
+    }
+
+    private void CheckPropertiesAndVariables(List<Token> currentStatement,
+        List<TokenType> newBracesStack, List<TokenType> possibleTypeStack, int i, TokenType tokenType)
+    {
+        if (IsValueName(currentStatement, newBracesStack, possibleTypeStack, i, tokenType))
         {
-            int openParenthesisPos = (int)pos + 1;
-            List<Token> parameters = GetParameters(currentStatement, openParenthesisPos + 1);
-            for (int index = parameters.Count - 1; index > 0; index--)
+            ScopeType currentScope = GetCurrentScope();
+            TokenType nextType = currentStatement[i + 1].TokenType;
+            string varType = (nextType == BracesOpen || nextType == FatArrow) ? "property" : "variable";
+            if (!CapitalizationCheck(i, currentStatement, currentScope))
             {
-                Token parameter = parameters[index];
-                if (parameter.TokenType == Identifier && (
-                    index == parameters.Count - 1 || parameters[index + 1].TokenType == Comma))
-                {
-                    string paramName = ((ComplexToken)parameter).Info;
-                    char startChar = paramName[0];
-                    if (startChar == '@')
-                    {
-                        string normalName = paramName.Substring(1);
-                        if (!AllCSharpKeywords.KeyWords.Contains(normalName))
-                        {
-                            _report.Warnings.Add($"Unnecessary '@' in front of {paramName} " +
-                                $"(in {_contextedFilename}).");
-                            return;
-                        }
-                        startChar = paramName[1];
-                    }
-                    if (!char.IsLower(startChar))
-                        _report.Warnings.Add($"Invalid parameter name: " +
-                            $"{paramName} (in {_contextedFilename}).");
-                }
+                string warning = $"Invalid {varType} name: " +
+                    $"{((ComplexToken)currentStatement[i]).Info} (in {ContextedFilename} - " +
+                    $"{PrettyPrint(currentScope)}).";
+                Report.Warnings.Add(warning);
             }
-            return;
         }
-        List<TokenType> newBracesStack = new();
-        List<TokenType> possibleTypeStack = new();
-        for (int i = 0; i < currentStatement.Count; i++)
-        {
-            TokenType tokenType = currentStatement[i].TokenType;
-            if (tokenType.IsModifier() || tokenType.IsDeclarer()) continue;
-            possibleTypeStack.Add(tokenType);
-            if (tokenType.IsOpeningType()) newBracesStack.Add(tokenType);
-            else if (tokenType.IsClosingType()) SharedUtils.CheckForwardBraces(tokenType, newBracesStack);
-            else
-            {
-                if (newBracesStack.Count == 0 && possibleTypeStack.Count(t => t == Identifier) > 1 &&
-                !SharedUtils.IsCall(currentStatement, i)
+    }
+
+    private bool IsValueName(List<Token> currentStatement,
+        List<TokenType> newBracesStack, List<TokenType> possibleTypeStack, int i, TokenType tokenType)
+    {
+        return newBracesStack.Count == 0 && possibleTypeStack.Count(t => t == Identifier) > 1 &&
+                !IsCall(currentStatement, i)
                 && tokenType == Identifier && currentStatement[i - 1].TokenType != Period
-                && !currentStatement.Take(i).Any(t => t.TokenType == Where))
-                {
-                    ScopeType currentScope = _scopes.Count > 0 ? _scopes.Last().Type : ScopeType.File;
-                    int scopeIndex = _scopes.Count - 1;
-                    while (scopeIndex >= 0 && currentScope == ScopeType.ScopeTypeNotSet)
-                    {
-                        if (_scopes[scopeIndex].Type != ScopeType.ScopeTypeNotSet)
-                            currentScope = _scopes[scopeIndex].Type;
-                        scopeIndex--;
-                    }
-                    TokenType nextType = currentStatement[i + 1].TokenType;
-                    string varType = (nextType == BracesOpen || nextType == FatArrow) ? "property" : "variable";
-                    if (!CapitalizationCheck(i, currentStatement, currentScope))
-                    {
-                        string warning = $"Invalid {varType} name: " +
-                            $"{((ComplexToken)currentStatement[i]).Info} (in {_contextedFilename} - " +
-                            $"{PrettyPrint(currentScope)}).";
-                        // Console.WriteLine("***" + warning);
-                        _report.Warnings.Add(warning);
-                    }
-                }
-                if (tokenType == Assign) break;
+                && !currentStatement.Take(i).Any(t => t.TokenType == Where);
+    }
+
+    private ScopeType GetCurrentScope()
+    {
+        ScopeType currentScope = Scopes.Count > 0 ? Scopes.Last().Type : ScopeType.File;
+        int scopeIndex = Scopes.Count - 1;
+        while (scopeIndex >= 0 && currentScope == ScopeType.ScopeTypeNotSet)
+        {
+            if (Scopes[scopeIndex].Type != ScopeType.ScopeTypeNotSet)
+                currentScope = Scopes[scopeIndex].Type;
+            scopeIndex--;
+        }
+
+        return currentScope;
+    }
+
+    private void ProcessParameter(List<Token> currentStatement, int? pos)
+    {
+        int openParenthesisPos = (int)pos + 1;
+        List<Token> parameters = GetParameters(currentStatement, openParenthesisPos + 1);
+        for (int index = parameters.Count - 1; index > 0; index--)
+        {
+            Token parameter = parameters[index];
+            if (parameter.TokenType == Identifier && (
+                index == parameters.Count - 1 || parameters[index + 1].TokenType == Comma))
+            {
+                CheckParameterName(parameter);
             }
         }
-        currentStatement.Clear();
+    }
+
+    private void CheckParameterName(Token parameter)
+    {
+        string paramName = ((ComplexToken)parameter).Info;
+        (bool isFinished, char startChar) = GetStartCharAndName(paramName);
+
+        if (!isFinished && !char.IsLower(startChar))
+            Report.Warnings.Add($"Invalid parameter name: " +
+                $"{paramName} (in {ContextedFilename}).");
+    }
+
+    private (bool isFinished, char startChar) GetStartCharAndName(string paramName)
+    {
+        char startChar = paramName[0];
+        if (startChar == '@')
+        {
+            string normalName = paramName.Substring(1);
+            if (!AllCSharpKeywords.KeyWords.Contains(normalName))
+            {
+                Report.Warnings.Add($"Unnecessary '@' in front of {paramName} " +
+                    $"(in {ContextedFilename}).");
+                return (true, startChar);
+            }
+            startChar = paramName[1];
+        }
+        return (false, startChar);
     }
 
     private List<Token> GetParameters(List<Token> currentStatement, int openingPos)
@@ -274,8 +325,8 @@ public class IdentifierAnalyzer
                 string normalName = identifierName.Substring(1);
                 if (!AllCSharpKeywords.KeyWords.Contains(normalName))
                 {
-                    _report.Warnings.Add($"Unnecessary '@' in front of {identifierName} " +
-                        $"(in {_contextedFilename}).");
+                    Report.Warnings.Add($"Unnecessary '@' in front of {identifierName} " +
+                        $"(in {ContextedFilename}).");
                     return true; // don't give second warning
                 }
                 startChar = identifierName[1];
@@ -287,47 +338,9 @@ public class IdentifierAnalyzer
     private static bool SuggestsUpperCase(TokenType tokenType) =>
         tokenType == Public || tokenType == Protected || tokenType == Const;
 
-    private bool IsDirectCall(List<Token> currentStatement, int i)
-    {
-        if (i == currentStatement.Count - 1) return false;
-        TokenType nextType = currentStatement[i + 1].TokenType;
-        return nextType == ParenthesesOpen;
-    }
-
     private static void Show(List<Token> currentStatement)
     {
         List<string> readable = currentStatement.Select(t => t.PrettyPrint()).ToList();
         Console.WriteLine("STATEMENT: " + string.Join(" ", readable));
-    }
-
-    private int? CanBeMethod(List<Token> currentStatement)
-    {
-        List<TokenType> newBracesStack = new();
-        List<TokenType> possibleTypeStack = new();
-        for (int i = 0; i < currentStatement.Count; i++)
-        {
-            TokenType tokenType = currentStatement[i].TokenType;
-            if (tokenType.IsModifier() || tokenType.IsDeclarer()) continue;
-            possibleTypeStack.Add(tokenType);
-            if (tokenType.IsOpeningType()) newBracesStack.Add(tokenType);
-            else if (tokenType.IsClosingType()) SharedUtils.CheckForwardBraces(tokenType, newBracesStack);
-            else
-            {
-                TokenType? prevTokenType = i > 0 ? currentStatement[i - 1].TokenType : null;
-                if (newBracesStack.Count == 0 && (possibleTypeStack.Count(t => t == Identifier) > 1 ||
-                    possibleTypeStack.Count(t => t == Identifier) == 1 &&
-                    SharedUtils.RepresentsClassName(currentStatement[i], _scopes)) &&
-                    IsDirectCall(currentStatement, i) && tokenType == Identifier && prevTokenType != Period)
-                {
-                    string methodName = ((ComplexToken)currentStatement[i]).Info;
-                    if (DoShow) Console.WriteLine($"Candidate method: {methodName}");
-                    if (!char.IsUpper(methodName[0])) _report.Warnings.Add(
-                        $"Invalid method name: {methodName} (in {_contextedFilename}).");
-                    return i;
-                }
-                if (tokenType == Assign) break;
-            }
-        }
-        return null;
     }
 }
