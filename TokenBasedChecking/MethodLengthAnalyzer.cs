@@ -85,7 +85,8 @@ public class MethodLengthAnalyzer
                     //Console.WriteLine($"&&&counted {}");
                     int lineCount = CountLines(tokenIndex, _currentIndex);
                     if (lineCount > 15)
-                        _report.Warnings.Add($"Too long method: {methodName} (in {_contextedFilename}) is {lineCount} lines long.");
+                        _report.Warnings.Add($"Too long method: {methodName} " +
+                            $"(in {_contextedFilename}) is {lineCount} lines long.");
                 }
                 _methodNames.RemoveAt(_methodNames.Count - 1);
                 _scopes.RemoveAt(_scopes.Count - 1);
@@ -245,8 +246,8 @@ public class MethodLengthAnalyzer
             {
                 TokenType? prevTokenType = i > 0 ? currentStatement[i - 1].TokenType : null;
                 if (newBracesStack.Count == 0 && (possibleTypeStack.Count(t => t == Identifier) > 1 ||
-                    possibleTypeStack.Count(t => t == Identifier) == 1 && SharedUtils.RepresentsClassName(currentStatement[i], _scopes))
-                    &&
+                    possibleTypeStack.Count(t => t == Identifier) == 1 &&
+                    SharedUtils.RepresentsClassName(currentStatement[i], _scopes)) &&
                 IsDirectCall(currentStatement, i) && tokenType == Identifier && prevTokenType != Period)
                 {
                     string methodName = ((ComplexToken)currentStatement[i]).Info;

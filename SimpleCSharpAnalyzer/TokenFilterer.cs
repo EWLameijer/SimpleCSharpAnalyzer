@@ -42,21 +42,26 @@ internal class TokenFilterer
             TokenType currentType = tokens[i].TokenType;
             if (currentType == TokenType.BracketsOpen && LastRealType(tokens, i) != TokenType.Identifier)
             {
-                int depth = 0;
-                int newIndex = i + 1;
-                TokenType newToken = tokens[newIndex].TokenType;
-                while (newToken != TokenType.BracketsClose || depth > 0)
-                {
-                    if (newToken == TokenType.BracketsOpen) depth++;
-                    if (newToken == TokenType.BracketsClose) depth--;
-                    newIndex++;
-                    newToken = tokens[newIndex].TokenType;
-                }
-                i = newIndex; // index of ']'
+                i = SkipAttribute(tokens, i);
             }
             else output.Add(tokens[i]);
         }
         return output;
+    }
+
+    private static int SkipAttribute(IReadOnlyList<Token> tokens, int startIndex)
+    {
+        int depth = 0;
+        int newIndex = startIndex + 1;
+        TokenType newToken = tokens[newIndex].TokenType;
+        while (newToken != TokenType.BracketsClose || depth > 0)
+        {
+            if (newToken == TokenType.BracketsOpen) depth++;
+            if (newToken == TokenType.BracketsClose) depth--;
+            newIndex++;
+            newToken = tokens[newIndex].TokenType;
+        }
+        return newIndex; // index of ']'
     }
 
     private static bool IsMPrecededByNumber(Token current, Token previous) =>

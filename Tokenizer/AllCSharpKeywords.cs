@@ -2,7 +2,7 @@
 
 public static class AllCSharpKeywords
 {
-    private static readonly HashSet<string> keyWords = new()
+    private static readonly HashSet<string> _keyWords = new()
     {
         "abstract", "as", "base", "bool", "break", "byte", "case", "catch", "char", "checked",
         "class", "const", "continue", "decimal", "default", "delegate", "do", "double", "else",
@@ -14,5 +14,5 @@ public static class AllCSharpKeywords
         "try", "typeof", "uint", "ulong", "unchecked", "unsafe", "ushort", "using", "virtual",
         "void", "volatile", "while"  };
 
-    public static HashSet<string> KeyWords => keyWords;
+    public static HashSet<string> KeyWords => _keyWords;
 }

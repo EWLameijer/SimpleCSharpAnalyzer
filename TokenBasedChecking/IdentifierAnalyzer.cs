@@ -315,9 +315,9 @@ public class IdentifierAnalyzer
             {
                 TokenType? prevTokenType = i > 0 ? currentStatement[i - 1].TokenType : null;
                 if (newBracesStack.Count == 0 && (possibleTypeStack.Count(t => t == Identifier) > 1 ||
-                    possibleTypeStack.Count(t => t == Identifier) == 1 && SharedUtils.RepresentsClassName(currentStatement[i], _scopes))
-                    &&
-                IsDirectCall(currentStatement, i) && tokenType == Identifier && prevTokenType != Period)
+                    possibleTypeStack.Count(t => t == Identifier) == 1 &&
+                    SharedUtils.RepresentsClassName(currentStatement[i], _scopes)) &&
+                    IsDirectCall(currentStatement, i) && tokenType == Identifier && prevTokenType != Period)
                 {
                     string methodName = ((ComplexToken)currentStatement[i]).Info;
                     if (DoShow) Console.WriteLine($"Candidate method: {methodName}");
