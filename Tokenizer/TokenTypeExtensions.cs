@@ -40,14 +40,14 @@ public static class TokenTypeExtensions
 
     public static bool IsModifier(this TokenType tokenType)
     {
-        List<TokenType> openTypes = new() { Const, Readonly, Public, Private, Protected, Static, Using };
-        return openTypes.Contains(tokenType);
+        List<TokenType> modifiers = new() { Async, Const, Readonly, Public, Private, Protected, Static, Using };
+        return modifiers.Contains(tokenType);
     }
 
     public static bool IsDeclarer(this TokenType tokenType)
     {
-        List<TokenType> openTypes = new() { Namespace, Using };
-        return openTypes.Contains(tokenType);
+        List<TokenType> declarers = new() { Namespace, Using };
+        return declarers.Contains(tokenType);
     }
 
     public static bool IsTypeType(this TokenType tokenType)

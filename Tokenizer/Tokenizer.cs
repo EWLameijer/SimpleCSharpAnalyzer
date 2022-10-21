@@ -131,6 +131,7 @@ public class Tokenizer
         else if (currentChar == '^') return StoreTokenWithConsume(new Token { TokenType = Caret });
         else if (currentChar == '*') return StoreTokenWithConsume(new Token { TokenType = Times });
         else if (currentChar == '"') return StoreTokenWithoutConsume(GetStringToken());
+        else if (currentChar == '#') return StoreTokenWithoutConsume(GetPragmaToken());
         else if (currentChar == '\'') return StoreTokenWithoutConsume(GetSingleQuotedStringToken());
         else if (currentChar == '<') return StoreTokenWithoutConsume(GetLessTypeToken());
         else if (currentChar == '>') return StoreTokenWithoutConsume(GetGreaterTypeToken());
@@ -146,6 +147,21 @@ public class Tokenizer
         Console.WriteLine($"Parse stopped at line {_lines[_currentLineIndex]}");
         Environment.Exit(-1);
         throw new ArgumentException("Tokenizer error: weird token!");
+    }
+
+    private Token GetPragmaToken()
+    {
+        StringBuilder pragma = new();
+        _nextCharIndex++;
+        char ch = CurrentChar();
+        while (ch != '\n')
+        {
+            pragma.Append(ch);
+            _nextCharIndex++;
+            ch = CurrentChar();
+        }
+        _nextCharIndex--; // reset so newline will be read
+        return new ComplexToken { TokenType = Pragma, Info = pragma.ToString() };
     }
 
     private Token GetBlockComment()

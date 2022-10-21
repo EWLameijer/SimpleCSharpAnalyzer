@@ -11,6 +11,7 @@ public class IdentifierAnalyzer
     private readonly Report _report;
     private int _currentIndex = 0;
     private readonly List<Scope> _scopes = new();
+    private const bool DoShow = true;
 
     private enum FileModus
     { FileModusNotSet, TopLevel, FileScoped, Traditional }
@@ -160,7 +161,7 @@ public class IdentifierAnalyzer
             currentStatement.Clear();
             return;
         }
-        //Show(currentStatement);
+        if (DoShow) Show(currentStatement);
         int? pos = CanBeMethod(currentStatement);
         if (pos != null)
         {
@@ -319,7 +320,7 @@ public class IdentifierAnalyzer
                 IsDirectCall(currentStatement, i) && tokenType == Identifier && prevTokenType != Period)
                 {
                     string methodName = ((ComplexToken)currentStatement[i]).Info;
-                    //Console.WriteLine($"Candidate method: {methodName}");
+                    if (DoShow) Console.WriteLine($"Candidate method: {methodName}");
                     if (!char.IsUpper(methodName[0])) _report.Warnings.Add(
                         $"Invalid method name: {methodName} (in {_contextedFilename}).");
                     return i;

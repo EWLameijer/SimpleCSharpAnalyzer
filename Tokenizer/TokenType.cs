@@ -20,7 +20,7 @@ public enum TokenType
     LineComment, Lock, LogicAnd, LogicOr, Minus, Modulus,
     Namespace, New, NewLine, Null,
     Number, Operator, Out, Override, Params, ParenthesesClose, ParenthesesOpen, Partial, Plus,
-    Period, Private, Protected, Public, QuestionMark, Readonly, Record, Ref, Return, Sealed,
+    Period, Pragma, Private, Protected, Public, QuestionMark, Readonly, Record, Ref, Return, Sealed,
     SemiColon, Set,
     SingleQuotedString, Stackalloc, Static,
     String, Struct, Switch, This,

@@ -39,8 +39,8 @@ foreach (string relevantFileName in relevantFileNames)
         tokenizer.Get();
     }
     IReadOnlyList<Token> tokens = tokenizer.Results();
-    IReadOnlyList<Token> tokensWithoutAttributes = HandleDecimalLiterals(FilterOutAttributes(tokens));
-    var (atLessIdentifiers, warnings) = HandleInappropriateAts(fileData.ContextedFilename, tokensWithoutAttributes);
+    IReadOnlyList<Token> tokensWithoutAttributes = HandlePragmas(HandleDecimalLiterals(FilterOutAttributes(tokens)));
+    (IReadOnlyList<Token> atLessIdentifiers, List<string> warnings) = HandleInappropriateAts(fileData.ContextedFilename, tokensWithoutAttributes);
     LineCounter counter = new(tokens);
     FileTokenData fileTokenData = new(fileData.ContextedFilename, tokensWithoutAttributes);
     Report report = counter.CreateReport();
@@ -51,6 +51,11 @@ foreach (string relevantFileName in relevantFileNames)
     new MethodLengthAnalyzer(fileTokenData, report).AddWarnings();
     report.Show();
     totalReport.Add(report);
+}
+
+IReadOnlyList<Token> HandlePragmas(IReadOnlyList<Token> tokens)
+{
+    return tokens.Where(t => t.TokenType != TokenType.Pragma).ToList();
 }
 
 (IReadOnlyList<Token> tokens, List<string> warnings) HandleInappropriateAts(string contextedFilename, IReadOnlyList<Token> tokens)
