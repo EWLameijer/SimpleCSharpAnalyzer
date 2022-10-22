@@ -194,8 +194,8 @@ public class Tokenizer
         return null;
     }
 
-    private (Token? finalToken, bool startNewLine) ProcessBlockCommentChar(char ch, StringBuilder result, TokenType finishType,
-        TokenType nonFinishType)
+    private (Token? finalToken, bool startNewLine) ProcessBlockCommentChar(char ch,
+        StringBuilder result, TokenType finishType, TokenType nonFinishType)
     {
         if (ch == '*' && NextChar() == '/')
         {
@@ -283,31 +283,54 @@ public class Tokenizer
         } while (true);
     }
 
-    private Token? GetVerbatimStringLine(StringBuilder result, TokenType finalToken, TokenType nonFinalToken)
+    private Token? GetVerbatimStringLine(StringBuilder result, TokenType finalTokenType,
+        TokenType nonFinalTokenType)
     {
         do
         {
             _nextCharIndex++;
-            char ch = CurrentChar();
-            if (ch == '"')
-            {
-                if (NextChar() != '"')
-                {
-                    _nextCharIndex++;
-                    return new ComplexToken { TokenType = finalToken, Info = result.ToString() };
-                }
-                else _nextCharIndex += 2; // skip next double quote
-            }
-            else if (ch == '\n')
-            {
-                _currentLineIndex++;
-                _nextCharIndex = -1; // will soon need to start at 0
-                _parsedTokens.Add(new ComplexToken { TokenType = nonFinalToken, Info = result.ToString() });
-                _parsedTokens.Add(new Token { TokenType = NewLine });
-                break;
-            }
-            result.Append(ch);
+            (Token finalToken, bool isBreak) = HandleVerbatimChar(result, finalTokenType,
+                nonFinalTokenType);
+            if (finalToken != null) return finalToken;
+            if (isBreak) break;
         } while (true);
+        return null;
+    }
+
+    private void HandleVerbatimLineEnd(StringBuilder result, TokenType nonFinalTokenType)
+    {
+        _currentLineIndex++;
+        _nextCharIndex = -1; // will soon need to start at 0
+        _parsedTokens.Add(new ComplexToken { TokenType = nonFinalTokenType, Info = result.ToString() });
+        _parsedTokens.Add(new Token { TokenType = NewLine });
+    }
+
+    private (Token? finalToken, bool isBreak) HandleVerbatimChar(StringBuilder result,
+        TokenType finalTokenType, TokenType nonFinalTokenType)
+    {
+        char ch = CurrentChar();
+        if (ch == '"')
+        {
+            Token? finalToken = HandleDoubleQuotes(result, finalTokenType);
+            if (finalToken != null) return (finalToken, false);
+        }
+        else if (ch == '\n')
+        {
+            HandleVerbatimLineEnd(result, nonFinalTokenType);
+            return (null, true);
+        }
+        result.Append(ch);
+        return (null, false);
+    }
+
+    private Token? HandleDoubleQuotes(StringBuilder result, TokenType finalTokenType)
+    {
+        if (NextChar() != '"')
+        {
+            _nextCharIndex++;
+            return new ComplexToken { TokenType = finalTokenType, Info = result.ToString() };
+        }
+        else _nextCharIndex += 2; // skip next double quote
         return null;
     }
 
