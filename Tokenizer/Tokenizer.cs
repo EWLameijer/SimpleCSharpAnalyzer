@@ -476,46 +476,61 @@ public class Tokenizer
     // TODO: {{ escapes {, so
     private Token GetInterpolatedStringToken()
     {
-        bool isEscapeMode = false;
         StringBuilder result = new();
-        int initCharIndex = _nextCharIndex + 1;
+        bool isEscapeMode = false;
+        bool shouldContinue;
         TokenType tokenType = InterPolatedStringStart;
         do
         {
-            _nextCharIndex++;
-            char ch = _lines[_currentLineIndex][_nextCharIndex];
-            if (ch == '\\') isEscapeMode = !isEscapeMode;
-            else if (ch == '"' && !isEscapeMode) break;
-            else if (ch == '{' && !isEscapeMode)
-            {
-                Token nextToken;
-                if (_lines[_currentLineIndex][_nextCharIndex + 1] == '{')
-                {
-                    _nextCharIndex += 2;
-                    result.Append(ch);
-                    continue;
-                }
-                _parsedTokens.Add(new ComplexToken { TokenType = tokenType, Info = result.ToString() });
-                result.Clear();
-                tokenType = InterpolatedStringMiddle;
-                result.Clear();
-                _nextCharIndex++;
-                do
-                {
-                    nextToken = Get()!;
-                } while (nextToken.TokenType != BracesClose);
-                _parsedTokens.RemoveAt(_parsedTokens.Count - 1);// get rid of }
-                _nextCharIndex--; // so won't skip " or such
-                // get all characters (also on next line) until
-            }
-            else
-            {
-                isEscapeMode = false;
-                result.Append(ch);
-            }
-        } while (true);
+            (shouldContinue, isEscapeMode, tokenType) =
+                ParseInterpolatedStringChar(result, isEscapeMode, tokenType);
+        } while (shouldContinue);
         _nextCharIndex++;
         return new ComplexToken { TokenType = InterpolatedStringEnd, Info = result.ToString() };
+    }
+
+    private (bool shouldContinue, bool escapeMode, TokenType tokenType)
+        ParseInterpolatedStringChar(StringBuilder result, bool isEscapeMode, TokenType tokenType)
+    {
+        _nextCharIndex++;
+        char ch = _lines[_currentLineIndex][_nextCharIndex];
+        if (ch == '\\') isEscapeMode = !isEscapeMode;
+        else if (ch == '"' && !isEscapeMode) return (false, isEscapeMode, tokenType);
+        else if (ch == '{' && !isEscapeMode) tokenType = HandleInterpolatedBraceOpen(result, tokenType);
+        else
+        {
+            isEscapeMode = false;
+            result.Append(ch);
+        }
+        return (true, isEscapeMode, tokenType);
+    }
+
+    private TokenType HandleInterpolatedBraceOpen(StringBuilder result, TokenType tokenType)
+    {
+        char ch = CurrentChar();
+        if (_lines[_currentLineIndex][_nextCharIndex + 1] == '{')
+        {
+            _nextCharIndex += 2;
+            result.Append(ch);
+            return tokenType;
+        }
+        return ParseEmbeddedCode(result, tokenType);
+    }
+
+    private TokenType ParseEmbeddedCode(StringBuilder result, TokenType tokenType)
+    {
+        _parsedTokens.Add(new ComplexToken { TokenType = tokenType, Info = result.ToString() });
+        result.Clear();
+        tokenType = InterpolatedStringMiddle;
+        _nextCharIndex++;
+        Token nextToken;
+        do
+        {
+            nextToken = Get()!;
+        } while (nextToken.TokenType != BracesClose);
+        _parsedTokens.RemoveAt(_parsedTokens.Count - 1);// get rid of }
+        _nextCharIndex--; // so won't skip " or such
+        return tokenType;
     }
 
     private Token GetSingleQuotedStringToken()
