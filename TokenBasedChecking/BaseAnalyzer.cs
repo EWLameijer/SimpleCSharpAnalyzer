@@ -9,12 +9,15 @@ public class BaseAnalyzer
 {
     protected readonly string ContextedFilename;
     protected readonly Report Report;
+    protected readonly IReadOnlyList<Token> Tokens;
     protected const bool DoShow = true;
     protected readonly List<Scope> Scopes = new();
+    protected int CurrentIndex = 0;
 
     public BaseAnalyzer(FileTokenData fileData, Report report)
     {
         ContextedFilename = fileData.ContextedFilename;
+        Tokens = fileData.Tokens;
         Report = report;
     }
 
@@ -38,6 +41,53 @@ public class BaseAnalyzer
         else
         {
             throw new ArgumentException("Parsing error!");
+        }
+    }
+
+    protected Token? LookForNextEndingToken(List<Token> currentStatement)
+    {
+        Token currentToken = Tokens[CurrentIndex];
+        TokenType currentTokenType = currentToken.TokenType;
+        while (currentTokenType != SemiColon && currentTokenType != BracesOpen && currentTokenType != BracesClose)
+        {
+            if (!currentTokenType.IsSkippable()) currentStatement.Add(Tokens[CurrentIndex]);
+            CurrentIndex++;
+            if (CurrentIndex == Tokens.Count) return null;
+            currentToken = Tokens[CurrentIndex];
+            currentTokenType = currentToken.TokenType;
+        }
+        return currentToken;
+    }
+
+    protected void HandleStatementEndingWithSemicolon(List<Token> currentStatement, bool postBraces)
+    {
+        TokenType currentTokenType = Tokens[CurrentIndex].TokenType;
+        if (postBraces)
+        {
+            currentStatement.Clear();
+        }
+        else if (currentStatement.Count > 0 && currentStatement[0].TokenType == For)
+        {
+            ProcessForLoopSetup(currentTokenType);
+        }
+        else ProcessPossibleIdentifier(currentStatement);
+        CurrentIndex++;
+    }
+
+    private void ProcessForLoopSetup(TokenType currentTokenType)
+    {
+        while (currentTokenType != SemiColon)
+        {
+            CurrentIndex++;
+            currentTokenType = Tokens[CurrentIndex].TokenType;
+        }
+        int depth = 0;
+        while (currentTokenType != ParenthesesClose || depth > 0)
+        {
+            if (currentTokenType == ParenthesesOpen) depth++;
+            if (currentTokenType == ParenthesesClose) depth--;
+            CurrentIndex++;
+            currentTokenType = Tokens[CurrentIndex].TokenType;
         }
     }
 
