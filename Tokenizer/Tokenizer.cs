@@ -328,58 +328,7 @@ public class Tokenizer
     // for now, may work well enough, though...
     private Token GetInterpolatedVerbatimStringToken()
     {
-        StringBuilder result = new();
-        do
-        {
-            _nextCharIndex++;
-            char ch = CurrentChar();
-            if (ch == '"' && NextChar() != '"')
-            {
-                _nextCharIndex++;
-                return new ComplexToken { TokenType = VerbatimStringWhole, Info = result.ToString() };
-            }
-            if (ch == '"' && NextChar() == '"')
-            {
-                _nextCharIndex += 2; // skip next double quote
-            }
-            else if (ch == '\n')
-            {
-                _currentLineIndex++;
-                _nextCharIndex = -1; // will soon need to start at 0
-                _parsedTokens.Add(new ComplexToken { TokenType = VerbatimStringStart, Info = result.ToString() });
-                _parsedTokens.Add(new Token { TokenType = NewLine });
-                break;
-            }
-            result.Append(ch);
-        } while (true);
-
-        do
-        {
-            result.Clear();
-            do
-            {
-                _nextCharIndex++;
-                char ch = CurrentChar();
-                if (ch == '"' && NextChar() != '"')
-                {
-                    _nextCharIndex++;
-                    return new ComplexToken { TokenType = VerbatimStringEnd, Info = result.ToString() };
-                }
-                if (ch == '"' && NextChar() == '"')
-                {
-                    _nextCharIndex += 2; // skip next double quote
-                }
-                else if (ch == '\n')
-                {
-                    _currentLineIndex++;
-                    _nextCharIndex = -1; // will soon need to start at 0
-                    _parsedTokens.Add(new ComplexToken { TokenType = VerbatimStringMiddle, Info = result.ToString() });
-                    _parsedTokens.Add(new Token { TokenType = NewLine });
-                    break;
-                }
-                result.Append(ch);
-            } while (true);
-        } while (true);
+        return GetVerbatimStringToken();
     }
 
     private Token GetPlusToken()

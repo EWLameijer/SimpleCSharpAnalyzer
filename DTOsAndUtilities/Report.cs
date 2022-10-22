@@ -10,6 +10,8 @@ public class Report
 
     public int TotalLines => SetupLines + EmptyLines + BraceLines + CodeLines + CommentLines;
 
+    public int ExtraCodeLines { get; set; }
+
     public List<string> Warnings { get; set; } = new();
 
     public void Add(Report other)
@@ -19,6 +21,7 @@ public class Report
         BraceLines += other.BraceLines;
         CodeLines += other.CodeLines;
         CommentLines += other.CommentLines;
+        ExtraCodeLines += other.ExtraCodeLines;
         Warnings.AddRange(other.Warnings);
     }
 
@@ -36,6 +39,7 @@ public class Report
             Console.WriteLine($"{i + 1}. {Warnings[i]}\n");
         }
         Console.WriteLine(Warnings.Count + " warnings in total");
+        Console.WriteLine(ExtraCodeLines + " extra code lines");
     }
 
     private static void ShowPadded(string text, int number)

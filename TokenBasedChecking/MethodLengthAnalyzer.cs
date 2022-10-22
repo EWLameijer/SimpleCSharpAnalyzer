@@ -80,8 +80,11 @@ public class MethodLengthAnalyzer : BaseAnalyzer
                     //Console.WriteLine($"&&&counted {}");
                     int lineCount = CountLines(tokenIndex, _currentIndex);
                     if (lineCount > 15)
+                    {
                         Report.Warnings.Add($"Too long method: {methodName} " +
                             $"(in {ContextedFilename}) is {lineCount} lines long.");
+                        Report.ExtraCodeLines += lineCount - 15;
+                    }
                 }
                 _methodNames.RemoveAt(_methodNames.Count - 1);
                 Scopes.RemoveAt(Scopes.Count - 1);

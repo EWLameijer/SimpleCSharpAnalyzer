@@ -1,5 +1,8 @@
 phase 0: refactor - possibly with common base class for MethodLength & IdentifierAnalyzer?
 
+273 lines => 235 LOC 
+235 2022/10/22 9:43
+
 2022/10/21 7:42 => 31 warnings
 2022/10/21 8:04 => 27 warnings
 2022/10/21 8:32 => 26 warnings
