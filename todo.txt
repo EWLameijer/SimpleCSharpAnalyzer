@@ -1,7 +1,8 @@
 phase 0: refactor - possibly with common base class for MethodLength & IdentifierAnalyzer?
 rrf Better verbatimstringtoken, prepare for bugfix 1.6.2, 208 extra lines, code somewhat broken
 
-273 lines => 197 LOC 
+273 lines => 184 LOC 
+184 2022/10/22 10:04
 197 2022/10/22 9:57
 208 2022/10/22 9:46
 235 2022/10/22 9:43

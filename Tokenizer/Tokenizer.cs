@@ -241,30 +241,41 @@ public class Tokenizer
     {
         _nextCharIndex++;
         char ch = CurrentChar();
+        Token? possibleVerbatimStringToken = GetPossibleVerbatimStringToken(ch);
+        if (possibleVerbatimStringToken != null) return possibleVerbatimStringToken;
+        if (char.IsLetter(ch)) // @lock and such, for people who want a reserved word as identifier.
+        {
+            string atIdentifier = ExtractAtStartingIdentifier(ref ch);
+            return new ComplexToken { TokenType = Identifier, Info = atIdentifier };
+        }
+        throw new ArgumentException("@ parsing error");
+    }
+
+    private Token? GetPossibleVerbatimStringToken(char ch)
+    {
         if (ch == '"')
         {
-            Token token = GetVerbatimStringToken();
-            return token;
+            return GetVerbatimStringToken();
         }
         if (ch == '$' && NextChar() == '"')
         {
             _nextCharIndex++;
-            Token token = GetInterpolatedVerbatimStringToken();
-            return token;
+            return GetInterpolatedVerbatimStringToken();
         }
-        if (char.IsLetter(ch)) // @lock and such, for people who want a reserved word as identifier.
+        return null;
+    }
+
+    private string ExtractAtStartingIdentifier(ref char ch)
+    {
+        StringBuilder atIdentifier = new();
+        atIdentifier.Append('@');
+        do
         {
-            StringBuilder atIdentifier = new();
-            atIdentifier.Append('@');
-            do
-            {
-                atIdentifier.Append(ch);
-                _nextCharIndex++;
-                ch = CurrentChar();
-            } while (char.IsLower(ch));
-            return new ComplexToken { TokenType = Identifier, Info = atIdentifier.ToString() };
-        }
-        throw new ArgumentException("@ parsing error");
+            atIdentifier.Append(ch);
+            _nextCharIndex++;
+            ch = CurrentChar();
+        } while (char.IsLower(ch));
+        return atIdentifier.ToString();
     }
 
     private Token GetVerbatimStringToken()
