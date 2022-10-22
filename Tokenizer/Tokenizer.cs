@@ -270,57 +270,45 @@ public class Tokenizer
     private Token GetVerbatimStringToken()
     {
         StringBuilder result = new();
+        Token? finishedToken = GetVerbatimStringLine(result, VerbatimStringWhole,
+            VerbatimStringStart);
+        if (finishedToken != null) return finishedToken;
+
+        do
+        {
+            result.Clear();
+            finishedToken = GetVerbatimStringLine(result, VerbatimStringEnd,
+            VerbatimStringMiddle);
+            if (finishedToken != null) return finishedToken;
+        } while (true);
+    }
+
+    private Token? GetVerbatimStringLine(StringBuilder result, TokenType finalToken, TokenType nonFinalToken)
+    {
         do
         {
             _nextCharIndex++;
             char ch = CurrentChar();
-            if (ch == '"' && NextChar() != '"')
+            if (ch == '"')
             {
-                _nextCharIndex++;
-                return new ComplexToken { TokenType = VerbatimStringWhole, Info = result.ToString() };
-            }
-            if (ch == '"' && NextChar() == '"')
-            {
-                _nextCharIndex += 2; // skip next double quote
+                if (NextChar() != '"')
+                {
+                    _nextCharIndex++;
+                    return new ComplexToken { TokenType = finalToken, Info = result.ToString() };
+                }
+                else _nextCharIndex += 2; // skip next double quote
             }
             else if (ch == '\n')
             {
                 _currentLineIndex++;
                 _nextCharIndex = -1; // will soon need to start at 0
-                _parsedTokens.Add(new ComplexToken { TokenType = VerbatimStringStart, Info = result.ToString() });
+                _parsedTokens.Add(new ComplexToken { TokenType = nonFinalToken, Info = result.ToString() });
                 _parsedTokens.Add(new Token { TokenType = NewLine });
                 break;
             }
             result.Append(ch);
         } while (true);
-
-        do
-        {
-            result.Clear();
-            do
-            {
-                _nextCharIndex++;
-                char ch = CurrentChar();
-                if (ch == '"' && NextChar() != '"')
-                {
-                    _nextCharIndex++;
-                    return new ComplexToken { TokenType = VerbatimStringEnd, Info = result.ToString() };
-                }
-                if (ch == '"' && NextChar() == '"')
-                {
-                    _nextCharIndex += 2; // skip next double quote
-                }
-                else if (ch == '\n')
-                {
-                    _currentLineIndex++;
-                    _nextCharIndex = -1; // will soon need to start at 0
-                    _parsedTokens.Add(new ComplexToken { TokenType = VerbatimStringMiddle, Info = result.ToString() });
-                    _parsedTokens.Add(new Token { TokenType = NewLine });
-                    break;
-                }
-                result.Append(ch);
-            } while (true);
-        } while (true);
+        return null;
     }
 
     // note: is a copy of verbatim processing.
