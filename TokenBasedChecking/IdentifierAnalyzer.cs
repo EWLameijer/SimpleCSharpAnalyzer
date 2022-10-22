@@ -6,7 +6,6 @@ namespace TokenBasedChecking;
 
 public class IdentifierAnalyzer : BaseAnalyzer
 {
-    private readonly IReadOnlyList<Token> _tokens;
 
     private int _currentIndex = 0;
 

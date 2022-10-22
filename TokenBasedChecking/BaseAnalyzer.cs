@@ -11,11 +11,13 @@ public class BaseAnalyzer
     protected readonly Report Report;
     protected const bool DoShow = true;
     protected readonly List<Scope> Scopes = new();
+    protected readonly IReadOnlyList<Token> Tokens;
 
     public BaseAnalyzer(FileTokenData fileData, Report report)
     {
         ContextedFilename = fileData.ContextedFilename;
         Report = report;
+        Tokens = fileData.Tokens;
     }
 
     internal bool IsCall(List<Token> currentStatement, int i)
