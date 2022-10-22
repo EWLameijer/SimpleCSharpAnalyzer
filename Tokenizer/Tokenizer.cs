@@ -168,49 +168,56 @@ public class Tokenizer
     {
         // starts at *
         StringBuilder result = new();
+        Token? oneLineBlockComment = GetBlockCommentLine(result, BlockCommentWhole,
+            BlockCommentStart);
+        if (oneLineBlockComment != null) return oneLineBlockComment;
+        do
+        {
+            result.Clear();
+            Token? furtherLineBlockComment = GetBlockCommentLine(result, BlockCommentEnd,
+                BlockCommentMiddle);
+            if (furtherLineBlockComment != null) return furtherLineBlockComment;
+        } while (true);
+    }
+
+    private Token? GetBlockCommentLine(StringBuilder result, TokenType finishType,
+        TokenType nonFinishType)
+    {
         do
         {
             _nextCharIndex++;
             char ch = CurrentChar();
-            if (ch == '*' && NextChar() == '/')
-            {
-                _nextCharIndex += 2;
-                return new ComplexToken { TokenType = BlockCommentWhole, Info = result.ToString() };
-            }
-            if (ch == '\n')
-            {
-                _currentLineIndex++;
-                _nextCharIndex = -1; // will soon need to start at 0
-                _parsedTokens.Add(new ComplexToken { TokenType = BlockCommentStart, Info = result.ToString() });
-                _parsedTokens.Add(new Token { TokenType = NewLine });
-                break;
-            }
-            result.Append(ch);
+            (Token? finalToken, bool startNewLine) = ProcessBlockCommentChar(ch, result, finishType, nonFinishType);
+            if (finalToken != null) return finalToken;
+            if (startNewLine) break;
         } while (true);
+        return null;
+    }
 
-        do
+    private (Token? finalToken, bool startNewLine) ProcessBlockCommentChar(char ch, StringBuilder result, TokenType finishType,
+        TokenType nonFinishType)
+    {
+        if (ch == '*' && NextChar() == '/')
         {
-            result.Clear();
-            do
-            {
-                _nextCharIndex++;
-                char ch = CurrentChar();
-                if (ch == '*' && NextChar() == '/')
-                {
-                    _nextCharIndex += 2;
-                    return new ComplexToken { TokenType = BlockCommentEnd, Info = result.ToString() };
-                }
-                if (ch == '\n')
-                {
-                    _currentLineIndex++;
-                    _nextCharIndex = -1;
-                    _parsedTokens.Add(new ComplexToken { TokenType = BlockCommentMiddle, Info = result.ToString() });
-                    _parsedTokens.Add(new Token { TokenType = NewLine });
-                    break;
-                }
-                result.Append(ch);
-            } while (true);
-        } while (true);
+            _nextCharIndex += 2;
+            Token finalToken = new ComplexToken { TokenType = finishType, Info = result.ToString() };
+            return (finalToken, false);
+        }
+        if (ch == '\n')
+        {
+            StoreNextBlockCommentLine(result, nonFinishType);
+            return (null, true);
+        }
+        result.Append(ch);
+        return (null, false);
+    }
+
+    private void StoreNextBlockCommentLine(StringBuilder result, TokenType nonFinishType)
+    {
+        _currentLineIndex++;
+        _nextCharIndex = -1; // will soon need to start at 0
+        _parsedTokens.Add(new ComplexToken { TokenType = nonFinishType, Info = result.ToString() });
+        _parsedTokens.Add(new Token { TokenType = NewLine });
     }
 
     private Token GetDollarToken()
