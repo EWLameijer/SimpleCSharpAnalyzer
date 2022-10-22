@@ -230,17 +230,18 @@ public class BaseAnalyzer
         TokenType tokenType = currentStatement[index].TokenType;
         if (tokenType.IsModifier() || tokenType.IsDeclarer()) return false;
         possibleTypeStack.Add(tokenType);
+        if (tokenType == Assign) return true;
         if (tokenType.IsOpeningType()) newBracesStack.Add(tokenType);
         else if (tokenType.IsClosingType()) CheckForwardBraces(tokenType, newBracesStack);
         else
         {
-            CheckPropertiesAndVariables(currentStatement, newBracesStack, possibleTypeStack, index, tokenType);
-            if (tokenType == Assign) return true;
+            if (VariableNameAtThisLocation(currentStatement, newBracesStack,
+                possibleTypeStack, index, tokenType)) return true;
         }
         return false;
     }
 
-    private void CheckPropertiesAndVariables(List<Token> currentStatement,
+    private bool VariableNameAtThisLocation(List<Token> currentStatement,
     List<TokenType> newBracesStack, List<TokenType> possibleTypeStack, int i, TokenType tokenType)
     {
         if (IsValueName(currentStatement, newBracesStack, possibleTypeStack, i, tokenType))
@@ -255,7 +256,9 @@ public class BaseAnalyzer
                     $"{PrettyPrint(currentScope)}).";
                 Report.Warnings.Add(warning);
             }
+            return true;
         }
+        return false;
     }
 
     private bool CapitalizationCheck(int i, List<Token> currentStatement, ScopeType scope)

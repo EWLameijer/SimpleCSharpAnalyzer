@@ -102,9 +102,9 @@ public class Tokenizer
     private Token GetIdentifierOrKeyword(char currentChar)
     {
         string identifier = GetIdentifier(currentChar);
-        if (Keywords.dict.ContainsKey(identifier))
+        if (Keywords._dict.ContainsKey(identifier))
         {
-            Token target = new() { TokenType = Keywords.dict[identifier] };
+            Token target = new() { TokenType = Keywords._dict[identifier] };
             _parsedTokens.Add(target);
             return target;
         }
