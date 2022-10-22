@@ -1,5 +1,6 @@
 phase 0: refactor - possibly with common base class for MethodLength & IdentifierAnalyzer?
 rrf Better verbatimstringtoken, prepare for bugfix 1.6.2, 208 extra lines, code somewhat broken
+OK. Zonder braces kan je OOK een while krijgen while (a) b; . Dus vang while ook dan af!
 
 273 lines => 133 LOC 
 

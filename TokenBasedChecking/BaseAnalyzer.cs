@@ -397,7 +397,7 @@ public class BaseAnalyzer
         TokenType firstType = currentStatement[0].TokenType;
 
         if (firstType == If || firstType == Else || firstType == ForEach || firstType == Return
-            || currentStatement.Any(t => t.TokenType == TokenType.Enum))
+            || firstType == While || currentStatement.Any(t => t.TokenType == TokenType.Enum))
         {
             currentStatement.Clear();
             return true;
