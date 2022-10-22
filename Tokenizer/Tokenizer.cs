@@ -24,11 +24,20 @@ public class Tokenizer
     {
         _lines = lines.Select(line => line + "\n").ToList();
         _lastLineIndex = _lines.Count;
+        BuildComplexTokensDictionary();
     }
 
     private Token StoreTokenWithConsume(Token token)
     {
         _nextCharIndex++;
+        _parsedTokens.Add(token);
+        return token;
+    }
+
+    private Token StoreTokenWithConsume(TokenType tokenType)
+    {
+        _nextCharIndex++;
+        Token token = new() { TokenType = tokenType };
         _parsedTokens.Add(token);
         return token;
     }
@@ -116,38 +125,51 @@ public class Tokenizer
             }
         }
         else if (char.IsDigit(currentChar)) return StoreTokenWithoutConsume(GetNumberToken());
-        else if (currentChar == '.') return StoreTokenWithConsume(new Token { TokenType = Period });
-        else if (currentChar == ';') return StoreTokenWithConsume(new Token { TokenType = SemiColon });
-        else if (currentChar == ':') return StoreTokenWithConsume(new Token { TokenType = Colon });
-        else if (currentChar == '(') return StoreTokenWithConsume(new Token { TokenType = ParenthesesOpen });
-        else if (currentChar == ')') return StoreTokenWithConsume(new Token { TokenType = ParenthesesClose });
-        else if (currentChar == '[') return StoreTokenWithConsume(new Token { TokenType = BracketsOpen });
-        else if (currentChar == ']') return StoreTokenWithConsume(new Token { TokenType = BracketsClose });
-        else if (currentChar == '!') return StoreTokenWithConsume(new Token { TokenType = ExclamationMark });
-        else if (currentChar == '{') return StoreTokenWithConsume(new Token { TokenType = BracesOpen });
-        else if (currentChar == '}') return StoreTokenWithConsume(new Token { TokenType = BracesClose });
-        else if (currentChar == '?') return StoreTokenWithConsume(new Token { TokenType = QuestionMark });
-        else if (currentChar == ',') return StoreTokenWithConsume(new Token { TokenType = Comma });
-        else if (currentChar == '^') return StoreTokenWithConsume(new Token { TokenType = Caret });
-        else if (currentChar == '*') return StoreTokenWithConsume(new Token { TokenType = Times });
-        else if (currentChar == '"') return StoreTokenWithoutConsume(GetStringToken());
-        else if (currentChar == '#') return StoreTokenWithoutConsume(GetPragmaToken());
-        else if (currentChar == '\'') return StoreTokenWithoutConsume(GetSingleQuotedStringToken());
-        else if (currentChar == '<') return StoreTokenWithoutConsume(GetLessTypeToken());
-        else if (currentChar == '>') return StoreTokenWithoutConsume(GetGreaterTypeToken());
-        else if (currentChar == '+') return StoreTokenWithoutConsume(GetPlusToken());
-        else if (currentChar == '-') return StoreTokenWithoutConsume(GetMinusToken());
-        else if (currentChar == '&') return StoreTokenWithoutConsume(GetLogicAndToken());
-        else if (currentChar == '%') return StoreTokenWithConsume(new Token { TokenType = Modulus });
-        else if (currentChar == '|') return StoreTokenWithoutConsume(GetLogicOrToken());
-        else if (currentChar == '$') return StoreTokenWithoutConsume(GetDollarToken());
-        else if (currentChar == '@') return StoreTokenWithoutConsume(GetAtToken());
-        else if (currentChar == '=') return StoreTokenWithoutConsume(GetAssignToken());
+        else if (_simpleTokens.ContainsKey(currentChar)) return StoreTokenWithConsume(_simpleTokens[currentChar]);
+        else if (_complexTokens.ContainsKey(currentChar))
+            return StoreTokenWithoutConsume(_complexTokens[currentChar]());
 
         Console.WriteLine($"Parse stopped at line {_lines[_currentLineIndex]}");
         Environment.Exit(-1);
         throw new ArgumentException("Tokenizer error: weird token!");
     }
+
+    private void BuildComplexTokensDictionary()
+    {
+        _complexTokens['"'] = GetStringToken;
+        _complexTokens['#'] = GetPragmaToken;
+        _complexTokens['\''] = GetSingleQuotedStringToken;
+        _complexTokens['<'] = GetLessTypeToken;
+        _complexTokens['>'] = GetGreaterTypeToken;
+        _complexTokens['+'] = GetPlusToken;
+        _complexTokens['-'] = GetMinusToken;
+        _complexTokens['&'] = GetLogicAndToken;
+        _complexTokens['|'] = GetLogicOrToken;
+        _complexTokens['$'] = GetDollarToken;
+        _complexTokens['@'] = GetAtToken;
+        _complexTokens['='] = GetAssignToken;
+    }
+
+    private readonly Dictionary<char, Func<Token>> _complexTokens = new();
+
+    private readonly Dictionary<char, TokenType> _simpleTokens = new()
+    {
+        [','] = Comma,
+        ['.'] = Period,
+        ['?'] = QuestionMark,
+        ['!'] = ExclamationMark,
+        [';'] = SemiColon,
+        [':'] = Colon,
+        ['^'] = Caret,
+        ['*'] = Times,
+        ['%'] = Modulus,
+        ['('] = ParenthesesOpen,
+        [')'] = ParenthesesClose,
+        ['['] = BracketsOpen,
+        [']'] = BracketsClose,
+        ['{'] = BracesOpen,
+        ['}'] = BracesClose,
+    };
 
     private Token GetPragmaToken()
     {
