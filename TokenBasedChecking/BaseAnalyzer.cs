@@ -304,7 +304,7 @@ public class BaseAnalyzer
     {
         ScopeType currentScope = Scopes.Count > 0 ? Scopes.Last().Type : ScopeType.File;
         int scopeIndex = Scopes.Count - 1;
-        while (scopeIndex >= 0 && currentScope == ScopeType.ScopeTypeNotSet)
+        while (scopeIndex >= 0 && !currentScope.IsFoundational())
         {
             if (Scopes[scopeIndex].Type != ScopeType.ScopeTypeNotSet)
                 currentScope = Scopes[scopeIndex].Type;

@@ -6,6 +6,12 @@ public enum ScopeType
     If, While, Do, For, Foreach, New, Else
 }
 
+public static class ScopeTypeExtensions
+{
+    public static bool IsFoundational(this ScopeType scopeType) =>
+        scopeType == ScopeType.ClassRecordStruct || scopeType == ScopeType.Method;
+}
+
 public class Scope
 {
     public ScopeType Type { get; set; }
