@@ -37,10 +37,11 @@ public class MethodLengthAnalyzer : BaseAnalyzer
             if (currentTokenType == SemiColon)
             {
                 HandleStatementEndingWithSemicolon(currentStatement, postBraces);
+                postBraces = false;
             }
             else if (currentTokenType == BracesClose)
             {
-                (string methodName, int tokenIndex) = _methodNames[_methodNames.Count - 1];
+                (string methodName, int tokenIndex) = _methodNames[^1];
                 if (methodName != "none")
                 {
                     // is method scope!
@@ -81,6 +82,7 @@ public class MethodLengthAnalyzer : BaseAnalyzer
                 ScanMethods();
                 postBraces = true;
             }
+            currentStatement.Clear();
         }
     }
 

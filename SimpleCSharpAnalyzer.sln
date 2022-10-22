@@ -16,7 +16,13 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "TokenBasedChecking", "Token
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "DTOsAndUtilities", "DTOsAndUtilities\DTOsAndUtilities.csproj", "{39CA3C66-D593-4156-A761-C403A2F60ACF}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "SimpleCSharpAnalyzer.Tests", "SimpleCSharpAnalyzer.Tests\SimpleCSharpAnalyzer.Tests.csproj", "{B1049A70-0CE4-4E67-B436-50FE26663AC2}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "SimpleCSharpAnalyzer.Tests", "SimpleCSharpAnalyzer.Tests\SimpleCSharpAnalyzer.Tests.csproj", "{B1049A70-0CE4-4E67-B436-50FE26663AC2}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Parser", "Parser\Parser.csproj", "{5E6A8264-9C88-4394-9503-D50E6BADA893}"
+	ProjectSection(ProjectDependencies) = postProject
+		{39CA3C66-D593-4156-A761-C403A2F60ACF} = {39CA3C66-D593-4156-A761-C403A2F60ACF}
+		{B63EF08C-F9D1-4F21-9715-69C03DA577EA} = {B63EF08C-F9D1-4F21-9715-69C03DA577EA}
+	EndProjectSection
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -44,6 +50,10 @@ Global
 		{B1049A70-0CE4-4E67-B436-50FE26663AC2}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{B1049A70-0CE4-4E67-B436-50FE26663AC2}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{B1049A70-0CE4-4E67-B436-50FE26663AC2}.Release|Any CPU.Build.0 = Release|Any CPU
+		{5E6A8264-9C88-4394-9503-D50E6BADA893}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{5E6A8264-9C88-4394-9503-D50E6BADA893}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{5E6A8264-9C88-4394-9503-D50E6BADA893}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{5E6A8264-9C88-4394-9503-D50E6BADA893}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
