@@ -63,75 +63,93 @@ public class Tokenizer
      * If that is '/' too,
     */
 
+    /*SHORTEN*/
+
     public Token? Get()
     {
         if (!HasNextToken()) throw new EndOfStreamException();
-        while (_currentLineIndex != _lastLineIndex)
-        {
-            if (_nextCharIndex == _lines[_currentLineIndex].Length)
-            {
-                _currentLineIndex++;
-                _nextCharIndex = 0;
-            }
-            else
-            {
-                char ch = _lines[_currentLineIndex][_nextCharIndex];
-                if (!char.IsWhiteSpace(ch)) break;
-                if (ch == '\n')
-                    _parsedTokens.Add(new Token { TokenType = NewLine });
-                _nextCharIndex++;
-            }
-        }
+        GoToFirstNonWhiteSpace();
         char currentChar = _lines[_currentLineIndex][_nextCharIndex];
 
-        if (currentChar == '/')
-        {
-            _nextCharIndex++;
-            char nextChar = _lines[_currentLineIndex][_nextCharIndex];
-            if (nextChar == '/')
-            {
-                _nextCharIndex++;
-                string contents = _lines[_currentLineIndex][_nextCharIndex..].Trim();
-                _nextCharIndex = _lines[_currentLineIndex].Length - 1; // don't skip newline!
-                return StoreTokenWithoutConsume(LineComment, contents);
-            }
-            else if (nextChar == '*')
-                return StoreTokenWithoutConsume(GetBlockComment());
-            else return StoreTokenWithoutConsume(Division);
-        }
+        if (currentChar == '/') return HandlePossibleComment();
         else if (currentChar == '_' || char.IsLetter(currentChar))
-        {
-            StringBuilder result = new();
-            result.Append(currentChar);
-            do
-            {
-                _nextCharIndex++;
-                char ch = _lines[_currentLineIndex][_nextCharIndex];
-                if (char.IsLetterOrDigit(ch) || ch == '_') result.Append(ch); else break;
-            } while (true);
-
-            string identifier = result.ToString();
-            if (Keywords.dict.ContainsKey(identifier))
-            {
-                Token target = new() { TokenType = Keywords.dict[identifier] };
-                _parsedTokens.Add(target);
-                return target;
-            }
-            else
-            {
-                Token token = new ComplexToken { TokenType = Identifier, Info = result.ToString() };
-                _parsedTokens.Add(token);
-                return token;
-            }
-        }
+            return GetIdentifierOrKeyword(currentChar);
         else if (char.IsDigit(currentChar)) return StoreTokenWithoutConsume(GetNumberToken());
         else if (_simpleTokens.ContainsKey(currentChar)) return StoreTokenWithConsume(_simpleTokens[currentChar]);
         else if (_complexTokens.ContainsKey(currentChar))
             return StoreTokenWithoutConsume(_complexTokens[currentChar]());
 
         Console.WriteLine($"Parse stopped at line {_lines[_currentLineIndex]}");
-        Environment.Exit(-1);
         throw new ArgumentException("Tokenizer error: weird token!");
+    }
+
+    private Token HandlePossibleComment()
+    {
+        _nextCharIndex++;
+        char nextChar = _lines[_currentLineIndex][_nextCharIndex];
+        if (nextChar == '/')
+        {
+            _nextCharIndex++;
+            string contents = _lines[_currentLineIndex][_nextCharIndex..].Trim();
+            _nextCharIndex = _lines[_currentLineIndex].Length - 1; // don't skip newline!
+            return StoreTokenWithoutConsume(LineComment, contents);
+        }
+        else if (nextChar == '*')
+            return StoreTokenWithoutConsume(GetBlockComment());
+        else return StoreTokenWithoutConsume(Division);
+    }
+
+    private Token GetIdentifierOrKeyword(char currentChar)
+    {
+        string identifier = GetIdentifier(currentChar);
+        if (Keywords.dict.ContainsKey(identifier))
+        {
+            Token target = new() { TokenType = Keywords.dict[identifier] };
+            _parsedTokens.Add(target);
+            return target;
+        }
+        else
+        {
+            Token token = new ComplexToken { TokenType = Identifier, Info = identifier };
+            _parsedTokens.Add(token);
+            return token;
+        }
+    }
+
+    private string GetIdentifier(char currentChar)
+    {
+        StringBuilder result = new();
+        result.Append(currentChar);
+        do
+        {
+            _nextCharIndex++;
+            char ch = _lines[_currentLineIndex][_nextCharIndex];
+            if (char.IsLetterOrDigit(ch) || ch == '_') result.Append(ch); else break;
+        } while (true);
+
+        return result.ToString();
+    }
+
+    private void GoToFirstNonWhiteSpace()
+    {
+        while (_currentLineIndex != _lastLineIndex)
+        {
+            if (_nextCharIndex == _lines[_currentLineIndex].Length) GoToNextLine();
+            else
+            {
+                char ch = _lines[_currentLineIndex][_nextCharIndex];
+                if (!char.IsWhiteSpace(ch)) return;
+                if (ch == '\n')
+                    _parsedTokens.Add(new Token { TokenType = NewLine });
+                _nextCharIndex++;
+            }
+        }
+    }
+
+    private void GoToNextLine()
+    {
+        _currentLineIndex++;
+        _nextCharIndex = 0;
     }
 
     private void BuildComplexTokensDictionary()
