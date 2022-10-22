@@ -249,16 +249,22 @@ public class BaseAnalyzer
             ScopeType currentScope = GetCurrentScope();
             TokenType nextType = currentStatement[i + 1].TokenType;
             string varType = (nextType == BracesOpen || nextType == FatArrow) ? "property" : "variable";
-            if (!CapitalizationCheck(i, currentStatement, currentScope))
-            {
-                string warning = $"Invalid {varType} name: " +
-                    $"{((ComplexToken)currentStatement[i]).Info} (in {ContextedFilename} - " +
-                    $"{PrettyPrint(currentScope)}).";
-                Report.Warnings.Add(warning);
-            }
+            CheckCorrectCapitalization(currentStatement, i, currentScope, varType);
             return true;
         }
         return false;
+    }
+
+    private void CheckCorrectCapitalization(List<Token> currentStatement, int i,
+        ScopeType currentScope, string varType)
+    {
+        if (!CapitalizationCheck(i, currentStatement, currentScope))
+        {
+            string warning = $"Invalid {varType} name: " +
+                $"{((ComplexToken)currentStatement[i]).Info} (in {ContextedFilename} - " +
+                $"{PrettyPrint(currentScope)}).";
+            Report.Warnings.Add(warning);
+        }
     }
 
     private bool CapitalizationCheck(int i, List<Token> currentStatement, ScopeType scope)

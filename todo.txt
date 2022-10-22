@@ -4,6 +4,7 @@ OK. Zonder braces kan je OOK een while krijgen while (a) b; . Dus vang while ook
 
 273 lines => 133 LOC 
 
+73 2022/10/22 12:24
 133 2022/10/22 10:46 
 157 2022/10/22 10:27 
 184 2022/10/22 10:04

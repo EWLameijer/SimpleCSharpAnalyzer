@@ -123,22 +123,12 @@ public class MethodLengthAnalyzer : BaseAnalyzer
         bool newlineMode = false;
         for (int i = startIndex; i < endIndex; i++)
         {
-            if (_tokens[i].TokenType == TokenType.NewLine)
+            if (_tokens[i].TokenType == NewLine)
             {
-                if (newlineMode)
-                {
-                    //  do nothing
-                }
-                else
-                {
-                    newlineCount++;
-                    newlineMode = true;
-                }
+                if (!newlineMode) newlineCount++;
+                newlineMode = true;
             }
-            else
-            {
-                newlineMode = false;
-            }
+            else newlineMode = false;
         }
         return newlineCount + 1;// closing brace is also a line
     }
