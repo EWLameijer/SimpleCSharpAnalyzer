@@ -9,10 +9,13 @@ public class IdentifierAnalyzer : BaseAnalyzer
     private enum FileModus
     { FileModusNotSet, TopLevel, FileScoped, Traditional }
 
+
+
     public IdentifierAnalyzer(FileTokenData fileData, Report report) : base(fileData, report)
     {
         // is this a top level file?
         Console.WriteLine($"{ContextedFilename} is {GetFileModus()}.");
+        ReportWrongIdentifierNames = true;
     }
 
     public void AddWarnings()

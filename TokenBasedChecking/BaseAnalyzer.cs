@@ -13,6 +13,7 @@ public class BaseAnalyzer
     protected readonly List<Scope> Scopes = new();
     protected readonly IReadOnlyList<Token> Tokens;
     protected int CurrentIndex = 0;
+    protected bool ReportWrongIdentifierNames = false;
 
     protected Token? LookForNextEndingToken(List<Token> currentStatement)
     {
@@ -315,7 +316,7 @@ public class BaseAnalyzer
     private void CheckCorrectCapitalization(List<Token> currentStatement, int i,
         ScopeType currentScope, string varType)
     {
-        if (!CapitalizationCheck(i, currentStatement, currentScope))
+        if (ReportWrongIdentifierNames && !CapitalizationCheck(i, currentStatement, currentScope))
         {
             string warning = $"Invalid {varType} name: " +
                 $"{((ComplexToken)currentStatement[i]).Info} (in {ContextedFilename} - " +
