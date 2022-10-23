@@ -35,6 +35,10 @@ public class UsingDirectiveNode : Node
         _contents = contents;
     }
 
-    public static UsingDirectiveNode Get(ParsePosition position) =>
-         new(GetNextUntil(position, SemiColon));
+    public static UsingDirectiveNode Get(ParsePosition position)
+    {
+        UsingDirectiveNode result = new(GetNextUntil(position, SemiColon));
+        position.Proceed(); // skip semicolon
+        return result;
+    }
 }
