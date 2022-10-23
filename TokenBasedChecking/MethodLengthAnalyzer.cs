@@ -6,7 +6,6 @@ namespace TokenBasedChecking;
 
 public class MethodLengthAnalyzer : BaseAnalyzer
 {
-    private int _currentIndex = 0;
     private readonly List<(string, int)> _methodNames = new();
 
     public MethodLengthAnalyzer(FileTokenData fileData, Report report) : base(fileData, report)
@@ -29,16 +28,16 @@ public class MethodLengthAnalyzer : BaseAnalyzer
     {
         List<Token> currentStatement = new();
         bool postBraces = false;
-        while (_currentIndex < Tokens.Count && Tokens[_currentIndex].TokenType != BracesOpen)
+        while (CurrentIndex < Tokens.Count && Tokens[CurrentIndex].TokenType != BracesOpen)
         {
-            Token currentToken = Tokens[_currentIndex];
+            Token currentToken = Tokens[CurrentIndex];
             TokenType currentTokenType = currentToken.TokenType;
             while (currentTokenType != SemiColon && currentTokenType != BracesOpen && currentTokenType != BracesClose)
             {
-                if (!currentTokenType.IsSkippable()) currentStatement.Add(Tokens[_currentIndex]);
-                _currentIndex++;
-                if (_currentIndex == Tokens.Count) return;
-                currentToken = Tokens[_currentIndex];
+                if (!currentTokenType.IsSkippable()) currentStatement.Add(Tokens[CurrentIndex]);
+                CurrentIndex++;
+                if (CurrentIndex == Tokens.Count) return;
+                currentToken = Tokens[CurrentIndex];
                 currentTokenType = currentToken.TokenType;
             }
             currentStatement.Add(currentToken);
@@ -53,20 +52,20 @@ public class MethodLengthAnalyzer : BaseAnalyzer
                 {
                     while (currentTokenType != SemiColon)
                     {
-                        _currentIndex++;
-                        currentTokenType = Tokens[_currentIndex].TokenType;
+                        CurrentIndex++;
+                        currentTokenType = Tokens[CurrentIndex].TokenType;
                     }
                     int depth = 0;
                     while (currentTokenType != ParenthesesClose && depth > 0)
                     {
                         if (currentTokenType == ParenthesesOpen) depth++;
                         if (currentTokenType == ParenthesesClose) depth--;
-                        _currentIndex++;
-                        currentTokenType = Tokens[_currentIndex].TokenType;
+                        CurrentIndex++;
+                        currentTokenType = Tokens[CurrentIndex].TokenType;
                     }
                 }
                 else ProcessPossibleIdentifier(currentStatement);
-                _currentIndex++;
+                CurrentIndex++;
             }
             else if (currentTokenType == BracesClose)
             {
@@ -74,9 +73,9 @@ public class MethodLengthAnalyzer : BaseAnalyzer
                 if (methodName != "none")
                 {
                     // is method scope!
-                    //Console.WriteLine($"###detected method exit {methodName} at {_currentIndex}");
+                    //Console.WriteLine($"###detected method exit {methodName} at {CurrentIndex}");
                     //Console.WriteLine($"&&&counted {}");
-                    int lineCount = CountLines(tokenIndex, _currentIndex);
+                    int lineCount = CountLines(tokenIndex, CurrentIndex);
                     if (lineCount > 15)
                     {
                         Report.Warnings.Add($"Too long method: {methodName} " +
@@ -86,11 +85,11 @@ public class MethodLengthAnalyzer : BaseAnalyzer
                 }
                 _methodNames.RemoveAt(_methodNames.Count - 1);
                 Scopes.RemoveAt(Scopes.Count - 1);
-                _currentIndex++;
+                CurrentIndex++;
                 // duplicate code!
-                while (_currentIndex < Tokens.Count && (Tokens[_currentIndex].TokenType.IsSkippable() ||
-                    Tokens[_currentIndex].TokenType == ParenthesesClose))
-                    _currentIndex++;
+                while (CurrentIndex < Tokens.Count && (Tokens[CurrentIndex].TokenType.IsSkippable() ||
+                    Tokens[CurrentIndex].TokenType == ParenthesesClose))
+                    CurrentIndex++;
                 return;
             }
             else // opening braces
@@ -100,14 +99,14 @@ public class MethodLengthAnalyzer : BaseAnalyzer
                 if (methodIndex != null)
                 {
                     string methodName = ((ComplexToken)currentStatement[(int)methodIndex]).Info;
-                    // Console.WriteLine($"***detected method entry {methodName} at {_currentIndex}");
-                    _methodNames.Add((methodName, _currentIndex));
+                    // Console.WriteLine($"***detected method entry {methodName} at {CurrentIndex}");
+                    _methodNames.Add((methodName, CurrentIndex));
                 }
                 else
                 {
-                    _methodNames.Add(("none", _currentIndex));
+                    _methodNames.Add(("none", CurrentIndex));
                 }
-                _currentIndex++;
+                CurrentIndex++;
                 currentStatement.Clear();
                 ScanMethods();
                 postBraces = true;
