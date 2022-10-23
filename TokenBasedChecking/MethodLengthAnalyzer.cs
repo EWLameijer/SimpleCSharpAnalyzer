@@ -69,7 +69,7 @@ public class MethodLengthAnalyzer : BaseAnalyzer
 
     private void UpdateMethodNames(List<Token> currentStatement)
     {
-        int? methodIndex = CanBeMethod(currentStatement);
+        int? methodIndex = CanBeMethod(currentStatement, true);
         if (methodIndex != null)
         {
             string methodName = ((ComplexToken)currentStatement[(int)methodIndex]).Info;

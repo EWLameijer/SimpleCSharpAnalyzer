@@ -149,7 +149,7 @@ public class BaseAnalyzer
         {
             scopeType = ScopeType.New;
         }
-        if (CanBeMethod(currentStatement) != null) scopeType = ScopeType.Method;
+        if (CanBeMethod(currentStatement, true) != null) scopeType = ScopeType.Method;
         ScopeType possibleScopeType = ScopeType.ScopeTypeNotSet;
         possibleScopeType = GetBackupScopeType(currentStatement, possibleScopeType);
         if (possibleScopeType != ScopeType.ScopeTypeNotSet) scopeType = possibleScopeType;
@@ -194,7 +194,7 @@ public class BaseAnalyzer
         return new Scope { Type = ScopeType.ScopeTypeNotSet, Name = "unknown" };
     }
 
-    public int? CanBeMethod(List<Token> currentStatement)
+    public int? CanBeMethod(List<Token> currentStatement, bool onlyParsing)
     {
         List<TokenType> newBracesStack = new();
         List<TokenType> possibleTypeStack = new();
@@ -204,26 +204,28 @@ public class BaseAnalyzer
             if (tokenType.IsModifier() || tokenType.IsDeclarer()) continue;
             possibleTypeStack.Add(tokenType);
             (int? foundIndex, bool done) =
-                CheckMethodCloser(tokenType, newBracesStack, currentStatement, possibleTypeStack, i);
+                CheckMethodCloser(tokenType, newBracesStack, currentStatement, possibleTypeStack,
+                i, onlyParsing);
             if (foundIndex != null || done) return foundIndex;
         }
         return null;
     }
 
     private (int? foundIndex, bool done) CheckMethodCloser(TokenType tokenType, List<TokenType> newBracesStack,
-        List<Token> currentStatement, List<TokenType> possibleTypeStack, int i)
+        List<Token> currentStatement, List<TokenType> possibleTypeStack, int i, bool onlyParsing)
     {
         if (tokenType.IsOpeningType()) newBracesStack.Add(tokenType);
         else if (tokenType.IsClosingType()) CheckForwardBraces(tokenType, newBracesStack);
         else
         {
-            return CheckWhetherLineIsMethod(currentStatement, i, newBracesStack, possibleTypeStack);
+            return CheckWhetherLineIsMethod(currentStatement, i, newBracesStack, possibleTypeStack,
+                onlyParsing);
         }
         return (null, false);
     }
 
     private (int? foundIndex, bool done) CheckWhetherLineIsMethod(List<Token> currentStatement, int i,
-        List<TokenType> newBracesStack, List<TokenType> possibleTypeStack)
+        List<TokenType> newBracesStack, List<TokenType> possibleTypeStack, bool onlyParsing)
     {
         TokenType tokenType = currentStatement[i].TokenType;
         TokenType? prevTokenType = i > 0 ? currentStatement[i - 1].TokenType : null;
@@ -232,7 +234,8 @@ public class BaseAnalyzer
         {
             string methodName = ((ComplexToken)currentStatement[i]).Info;
             if (DoShow) Console.WriteLine($"Candidate method: {methodName}");
-            if (!char.IsUpper(methodName[0])) Report.Warnings.Add(
+            if (ReportWrongIdentifierNames && !onlyParsing &&
+                !char.IsUpper(methodName[0])) Report.Warnings.Add(
                 $"Invalid method name: {methodName} (in {ContextedFilename}).");
             return (i, true);
         }
@@ -262,7 +265,7 @@ public class BaseAnalyzer
         bool ready = ParseStraightforwardCases(currentStatement);
         if (ready) return;
         if (DoShow) Show(currentStatement);
-        int? pos = CanBeMethod(currentStatement);
+        int? pos = CanBeMethod(currentStatement, false);
         if (pos != null)
         {
             ProcessParameter(currentStatement, pos);

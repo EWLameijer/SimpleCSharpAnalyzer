@@ -8,6 +8,7 @@ Waarom niet bij MethodLengthAnalyzer
 
 IDEAS:
 (gebrek aan) lege regels tussen methodes rapporteren
+Als aantal parameters groter is dan ???
 Persoonlijke settings van MaxLineLength enzo...
 Tarzan: gebrek aan ?? ?. etc.
 
