@@ -9,7 +9,7 @@ public class BaseAnalyzer
 {
     protected readonly string ContextedFilename;
     protected readonly Report Report;
-    protected const bool DoShow = true;
+    protected const bool DoShow = false;
     protected readonly List<Scope> Scopes = new();
     protected readonly IReadOnlyList<Token> Tokens;
     protected int CurrentIndex = 0;

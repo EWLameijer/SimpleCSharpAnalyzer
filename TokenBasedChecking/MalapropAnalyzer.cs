@@ -24,15 +24,15 @@ public class MalapropAnalyzer
             Token currentToken = _tokens[i];
             if (currentToken.TokenType == TokenType.Identifier && currentToken is ComplexToken ct)
             {
-                WarnIfIdentifierHasWrongTypeName(i, ct);
+                WarnIfIdentifierHasWrongTypeName(ct);
             }
         }
     }
 
-    private void WarnIfIdentifierHasWrongTypeName(int i, ComplexToken ct)
+    private void WarnIfIdentifierHasWrongTypeName(ComplexToken ct)
     {
         string identifierContents = ct.Info;
-        if (_malapropisms.Contains(identifierContents) && _tokens[i + 1].TokenType == TokenType.Period)
+        if (_malapropisms.Contains(identifierContents))
         {
             _report.Warnings.Add(
                 $"In {_contextedFilename} use regular type instead of '{identifierContents}'");
