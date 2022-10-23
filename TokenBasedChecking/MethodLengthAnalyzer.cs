@@ -34,21 +34,28 @@ public class MethodLengthAnalyzer : BaseAnalyzer
             if (currentToken == null) return;
             TokenType currentTokenType = currentToken.TokenType;
             currentStatement.Add(currentToken);
-            if (currentTokenType == SemiColon)
-            {
-                HandleStatementEndingInSemicolon(currentStatement, postBraces, currentTokenType);
-                postBraces = false;
-            }
-            else if (currentTokenType == BracesClose)
-            {
-                HandleStatementEndingInClosingBraces();
-                return;
-            }
-            else // opening braces
-            {
-                HandleStatementEndingInOpeningBraces(currentStatement);
-                postBraces = true;
-            }
+            bool? processResult = HandleStatement(currentStatement, postBraces, currentTokenType);
+            if (processResult == null) return; else postBraces = (bool)processResult;
+        }
+    }
+
+    private bool? HandleStatement(List<Token> currentStatement, bool postBraces,
+        TokenType currentTokenType)
+    {
+        if (currentTokenType == SemiColon)
+        {
+            HandleStatementEndingInSemicolon(currentStatement, postBraces, currentTokenType);
+            return false;
+        }
+        else if (currentTokenType == BracesClose)
+        {
+            HandleStatementEndingInClosingBraces();
+            return null;
+        }
+        else // opening braces
+        {
+            HandleStatementEndingInOpeningBraces(currentStatement);
+            return true;
         }
     }
 
@@ -77,6 +84,15 @@ public class MethodLengthAnalyzer : BaseAnalyzer
 
     private void HandleStatementEndingInClosingBraces()
     {
+        IfMethodScopeEndsCheckMethodLength();
+        Scopes.RemoveAt(Scopes.Count - 1);
+        CurrentIndex++;
+        // duplicate code!
+        HandleClosingBraceWithPossibleClosingParenthesis();
+    }
+
+    private void IfMethodScopeEndsCheckMethodLength()
+    {
         (string methodName, int tokenIndex) = _methodNames[_methodNames.Count - 1];
         if (methodName != "none")
         {
@@ -89,10 +105,6 @@ public class MethodLengthAnalyzer : BaseAnalyzer
             }
         }
         _methodNames.RemoveAt(_methodNames.Count - 1);
-        Scopes.RemoveAt(Scopes.Count - 1);
-        CurrentIndex++;
-        // duplicate code!
-        HandleClosingBraceWithPossibleClosingParenthesis();
     }
 
     private void HandleStatementEndingInSemicolon(List<Token> currentStatement,
@@ -104,22 +116,27 @@ public class MethodLengthAnalyzer : BaseAnalyzer
         }
         else if (currentStatement.Count > 0 && currentStatement[0].TokenType == For)
         {
-            while (currentTokenType != SemiColon)
-            {
-                CurrentIndex++;
-                currentTokenType = Tokens[CurrentIndex].TokenType;
-            }
-            int depth = 0;
-            while (currentTokenType != ParenthesesClose || depth > 0)
-            {
-                if (currentTokenType == ParenthesesOpen) depth++;
-                if (currentTokenType == ParenthesesClose) depth--;
-                CurrentIndex++;
-                currentTokenType = Tokens[CurrentIndex].TokenType;
-            }
+            HandleForStatement(currentTokenType);
         }
         else ProcessPossibleIdentifier(currentStatement);
         CurrentIndex++;
+    }
+
+    private void HandleForStatement(TokenType currentTokenType)
+    {
+        while (currentTokenType != SemiColon)
+        {
+            CurrentIndex++;
+            currentTokenType = Tokens[CurrentIndex].TokenType;
+        }
+        int depth = 0;
+        while (currentTokenType != ParenthesesClose || depth > 0)
+        {
+            if (currentTokenType == ParenthesesOpen) depth++;
+            if (currentTokenType == ParenthesesClose) depth--;
+            CurrentIndex++;
+            currentTokenType = Tokens[CurrentIndex].TokenType;
+        }
     }
 
     private int CountLines(int startIndex, int endIndex)
