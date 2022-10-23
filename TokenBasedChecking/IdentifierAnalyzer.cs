@@ -74,9 +74,7 @@ public class IdentifierAnalyzer : BaseAnalyzer
         Scopes.RemoveAt(Scopes.Count - 1);
         CurrentIndex++;
         // handle }). // fluent interface after lambda...
-        while (CurrentIndex < Tokens.Count && (Tokens[CurrentIndex].TokenType.IsSkippable() ||
-            Tokens[CurrentIndex].TokenType == ParenthesesClose))
-            CurrentIndex++;
+        HandleClosingBraceWithPossibleClosingParenthesis();
     }
 
     private void HandleStatementEndingWithOpeningBraces(List<Token> currentStatement)

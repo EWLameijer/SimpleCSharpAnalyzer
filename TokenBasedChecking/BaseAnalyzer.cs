@@ -44,6 +44,13 @@ public class BaseAnalyzer
         CurrentIndex++;
     }
 
+    protected void HandleClosingBraceWithPossibleClosingParenthesis()
+    {
+        while (CurrentIndex < Tokens.Count && (Tokens[CurrentIndex].TokenType.IsSkippable() ||
+            Tokens[CurrentIndex].TokenType == ParenthesesClose))
+            CurrentIndex++;
+    }
+
     private void ProcessForLoopSetup(TokenType currentTokenType)
     {
         while (currentTokenType != SemiColon)
