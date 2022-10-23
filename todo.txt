@@ -2,6 +2,8 @@ phase 0: refactor - possibly with common base class for MethodLength & Identifie
 rrf Better verbatimstringtoken, prepare for bugfix 1.6.2, 208 extra lines, code somewhat broken
 OK. Zonder braces kan je OOK een while krijgen while (a) b; . Dus vang while ook dan af!
 
+=> gewoon de semicolonhandling sharen werkt niet. Factor dat individueel uit?
+
 273 lines => 133 LOC 
 
 73 2022/10/22 12:24
