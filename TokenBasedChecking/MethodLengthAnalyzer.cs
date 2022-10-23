@@ -45,7 +45,7 @@ public class MethodLengthAnalyzer : BaseAnalyzer
         switch (currentTokenType)
         {
             case SemiColon:
-                HandleStatementEndingInSemicolon(currentStatement, postBraces, currentTokenType);
+                HandleStatementEndingWithSemicolon(currentStatement, postBraces);
                 return false;
 
             case BracesClose:
@@ -104,21 +104,6 @@ public class MethodLengthAnalyzer : BaseAnalyzer
             }
         }
         _methodNames.RemoveAt(_methodNames.Count - 1);
-    }
-
-    private void HandleStatementEndingInSemicolon(List<Token> currentStatement,
-        bool postBraces, TokenType currentTokenType)
-    {
-        if (postBraces)
-        {
-            currentStatement.Clear();
-        }
-        else if (currentStatement.Count > 0 && currentStatement[0].TokenType == For)
-        {
-            ProcessForLoopSetup(currentTokenType);
-        }
-        else ProcessPossibleIdentifier(currentStatement);
-        CurrentIndex++;
     }
 
     private int CountLines(int startIndex, int endIndex)
