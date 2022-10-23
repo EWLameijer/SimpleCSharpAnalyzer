@@ -12,12 +12,19 @@ public class NamespaceNode : Node
         _nameSpaceName = namespaceName;
     }
 
+    private static readonly HashSet<TokenType> _namespaceEnders = new() { SemiColon, BracesOpen };
+
     public static NamespaceNode Get(ParsePosition position)
     {
         position.SkipWhitespace();
         if (position.CurrentTokenType() == Namespace)
         {
-
+            List<Token> contents = GetNextUntil(position, _namespaceEnders);
+            return new NamespaceNode(contents);
+        }
+        else
+        {
+            throw new ArgumentException("Top-level statements not supported yet!");
         }
     }
 }

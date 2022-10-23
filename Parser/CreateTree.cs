@@ -13,6 +13,7 @@ public class CreateTree
 
     public FileNode Parse()
     {
+        return FileNode.Get(_position);
     }
 
     private NamespaceNode GetNameSpace()

@@ -1,52 +1,27 @@
 ﻿using Tokenizing;
-using static Tokenizing.TokenType;
 
 namespace Parser;
 
 public class Node
-{ }
-
-public class UsingsNode : Node
 {
-    private readonly List<UsingDirectiveNode> _usings;
-
-    private UsingsNode(List<UsingDirectiveNode> usings)
+    protected Node()
     {
-        _usings = usings;
     }
 
-    public static UsingsNode Get(ParsePosition position)
-    {
-        List<UsingDirectiveNode> usingDirectives = new();
-        do
-        {
-            position.SkipWhitespace();
-            if (position.CurrentTokenType() == Using)
-                usingDirectives.Add(UsingDirectiveNode.Get(position));
-            else break;
-        } while (true);
-        return new UsingsNode(usingDirectives);
-    }
-}
-
-public class UsingDirectiveNode : Node
-{
-    private readonly IReadOnlyList<Token> _contents;
-
-    public UsingDirectiveNode(List<Token> contents)
-    {
-        _contents = contents;
-    }
-
-    public static UsingDirectiveNode Get(ParsePosition position)
+    protected static List<Token> GetNextUntil(ParsePosition position, HashSet<TokenType> endingTokens)
     {
         position.Proceed();
         List<Token> contents = new();
-        while (position.CurrentTokenType() != SemiColon)
+        while (!endingTokens.Contains(position.CurrentTokenType()))
         {
             contents.Add(position.CurrentToken());
             position.Proceed();
         }
-        return new UsingDirectiveNode(contents);
+        return contents;
+    }
+
+    protected static List<Token> GetNextUntil(ParsePosition position, TokenType endingToken)
+    {
+        return GetNextUntil(position, new HashSet<TokenType> { endingToken });
     }
 }
