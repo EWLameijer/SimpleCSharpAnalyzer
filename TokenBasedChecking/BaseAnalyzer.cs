@@ -43,6 +43,7 @@ public class BaseAnalyzer
         }
         else ProcessPossibleIdentifier(currentStatement);
         CurrentIndex++;
+        currentStatement.Clear();
     }
 
     protected void HandleClosingBraceWithPossibleClosingParenthesis()
@@ -52,7 +53,7 @@ public class BaseAnalyzer
             CurrentIndex++;
     }
 
-    private void ProcessForLoopSetup(TokenType currentTokenType)
+    protected void ProcessForLoopSetup(TokenType currentTokenType)
     {
         while (currentTokenType != SemiColon)
         {

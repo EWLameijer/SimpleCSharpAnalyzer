@@ -115,27 +115,10 @@ public class MethodLengthAnalyzer : BaseAnalyzer
         }
         else if (currentStatement.Count > 0 && currentStatement[0].TokenType == For)
         {
-            HandleForStatement(currentTokenType);
+            ProcessForLoopSetup(currentTokenType);
         }
         else ProcessPossibleIdentifier(currentStatement);
         CurrentIndex++;
-    }
-
-    private void HandleForStatement(TokenType currentTokenType)
-    {
-        while (currentTokenType != SemiColon)
-        {
-            CurrentIndex++;
-            currentTokenType = Tokens[CurrentIndex].TokenType;
-        }
-        int depth = 0;
-        while (currentTokenType != ParenthesesClose || depth > 0)
-        {
-            if (currentTokenType == ParenthesesOpen) depth++;
-            if (currentTokenType == ParenthesesClose) depth--;
-            CurrentIndex++;
-            currentTokenType = Tokens[CurrentIndex].TokenType;
-        }
     }
 
     private int CountLines(int startIndex, int endIndex)
