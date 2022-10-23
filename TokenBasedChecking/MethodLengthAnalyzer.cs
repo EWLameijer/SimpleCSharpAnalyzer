@@ -30,16 +30,9 @@ public class MethodLengthAnalyzer : BaseAnalyzer
         bool postBraces = false;
         while (CurrentIndex < Tokens.Count && Tokens[CurrentIndex].TokenType != BracesOpen)
         {
-            Token currentToken = Tokens[CurrentIndex];
+            Token? currentToken = LookForNextEndingToken(currentStatement);
+            if (currentToken == null) return;
             TokenType currentTokenType = currentToken.TokenType;
-            while (currentTokenType != SemiColon && currentTokenType != BracesOpen && currentTokenType != BracesClose)
-            {
-                if (!currentTokenType.IsSkippable()) currentStatement.Add(Tokens[CurrentIndex]);
-                CurrentIndex++;
-                if (CurrentIndex == Tokens.Count) return;
-                currentToken = Tokens[CurrentIndex];
-                currentTokenType = currentToken.TokenType;
-            }
             currentStatement.Add(currentToken);
             if (currentTokenType == SemiColon)
             {
