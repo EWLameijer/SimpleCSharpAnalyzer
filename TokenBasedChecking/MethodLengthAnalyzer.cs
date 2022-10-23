@@ -6,13 +6,11 @@ namespace TokenBasedChecking;
 
 public class MethodLengthAnalyzer : BaseAnalyzer
 {
-    private readonly IReadOnlyList<Token> _tokens;
     private int _currentIndex = 0;
     private readonly List<(string, int)> _methodNames = new();
 
     public MethodLengthAnalyzer(FileTokenData fileData, Report report) : base(fileData, report)
     {
-        _tokens = fileData.Tokens;
     }
 
     public void AddWarnings()
@@ -31,16 +29,16 @@ public class MethodLengthAnalyzer : BaseAnalyzer
     {
         List<Token> currentStatement = new();
         bool postBraces = false;
-        while (_currentIndex < _tokens.Count && _tokens[_currentIndex].TokenType != BracesOpen)
+        while (_currentIndex < Tokens.Count && Tokens[_currentIndex].TokenType != BracesOpen)
         {
-            Token currentToken = _tokens[_currentIndex];
+            Token currentToken = Tokens[_currentIndex];
             TokenType currentTokenType = currentToken.TokenType;
             while (currentTokenType != SemiColon && currentTokenType != BracesOpen && currentTokenType != BracesClose)
             {
-                if (!currentTokenType.IsSkippable()) currentStatement.Add(_tokens[_currentIndex]);
+                if (!currentTokenType.IsSkippable()) currentStatement.Add(Tokens[_currentIndex]);
                 _currentIndex++;
-                if (_currentIndex == _tokens.Count) return;
-                currentToken = _tokens[_currentIndex];
+                if (_currentIndex == Tokens.Count) return;
+                currentToken = Tokens[_currentIndex];
                 currentTokenType = currentToken.TokenType;
             }
             currentStatement.Add(currentToken);
@@ -56,7 +54,7 @@ public class MethodLengthAnalyzer : BaseAnalyzer
                     while (currentTokenType != SemiColon)
                     {
                         _currentIndex++;
-                        currentTokenType = _tokens[_currentIndex].TokenType;
+                        currentTokenType = Tokens[_currentIndex].TokenType;
                     }
                     int depth = 0;
                     while (currentTokenType != ParenthesesClose && depth > 0)
@@ -64,7 +62,7 @@ public class MethodLengthAnalyzer : BaseAnalyzer
                         if (currentTokenType == ParenthesesOpen) depth++;
                         if (currentTokenType == ParenthesesClose) depth--;
                         _currentIndex++;
-                        currentTokenType = _tokens[_currentIndex].TokenType;
+                        currentTokenType = Tokens[_currentIndex].TokenType;
                     }
                 }
                 else ProcessPossibleIdentifier(currentStatement);
@@ -90,8 +88,8 @@ public class MethodLengthAnalyzer : BaseAnalyzer
                 Scopes.RemoveAt(Scopes.Count - 1);
                 _currentIndex++;
                 // duplicate code!
-                while (_currentIndex < _tokens.Count && (_tokens[_currentIndex].TokenType.IsSkippable() ||
-                    _tokens[_currentIndex].TokenType == ParenthesesClose))
+                while (_currentIndex < Tokens.Count && (Tokens[_currentIndex].TokenType.IsSkippable() ||
+                    Tokens[_currentIndex].TokenType == ParenthesesClose))
                     _currentIndex++;
                 return;
             }
@@ -123,7 +121,7 @@ public class MethodLengthAnalyzer : BaseAnalyzer
         bool newlineMode = false;
         for (int i = startIndex; i < endIndex; i++)
         {
-            if (_tokens[i].TokenType == NewLine)
+            if (Tokens[i].TokenType == NewLine)
             {
                 if (!newlineMode) newlineCount++;
                 newlineMode = true;

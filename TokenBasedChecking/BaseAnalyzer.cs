@@ -12,6 +12,22 @@ public class BaseAnalyzer
     protected const bool DoShow = true;
     protected readonly List<Scope> Scopes = new();
     protected readonly IReadOnlyList<Token> Tokens;
+    protected int CurrentIndex = 0;
+
+    protected Token? LookForNextEndingToken(List<Token> currentStatement)
+    {
+        Token currentToken = Tokens[CurrentIndex];
+        TokenType currentTokenType = currentToken.TokenType;
+        while (currentTokenType != SemiColon && currentTokenType != BracesOpen && currentTokenType != BracesClose)
+        {
+            if (!currentTokenType.IsSkippable()) currentStatement.Add(Tokens[CurrentIndex]);
+            CurrentIndex++;
+            if (CurrentIndex == Tokens.Count) return null;
+            currentToken = Tokens[CurrentIndex];
+            currentTokenType = currentToken.TokenType;
+        }
+        return currentToken;
+    }
 
     public BaseAnalyzer(FileTokenData fileData, Report report)
     {
