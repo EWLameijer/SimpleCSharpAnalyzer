@@ -1,18 +1,5 @@
 phase 0: refactor - possibly with common base class for MethodLength & IdentifierAnalyzer?
 
-Problems:
--code is broken.
-Possible solutions:
-    1. 15 regular debugging
-    2. 15 go back and re-refactor from last point, after 5 mins test and commit, repeat
-    3. 15 start design of real parser
-
-
-1. 
-'Sequence contains no elements'
-Problem: after ; no clear of line 
-Problem with i++) { => so For does not work properly!
-
 2022/10/21 7:42 => 31 warnings
 2022/10/21 8:04 => 27 warnings
 2022/10/21 8:32 => 26 warnings
@@ -20,8 +7,6 @@ Problem with i++) { => so For does not work properly!
 2022/10/21 8:54 => 24 warnings
 FIRST solve other too-long methods, as well as duplication of code 
 THEN go work on the invalid variable names
-
-
 
 2022/10/21 20:02 [24] 2. Too long method: HandleStatementEndingWithSemicolon (in TokenBasedChecking\IdentifierAnalyzer.cs) is 25 lines long.
 2022/10/21 20:05 [23] 2. Too long method: AddScope (in TokenBasedChecking\IdentifierAnalyzer.cs) is 30 lines long.
