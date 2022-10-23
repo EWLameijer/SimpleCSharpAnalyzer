@@ -6,13 +6,10 @@ namespace TokenBasedChecking;
 
 public class MethodLengthAnalyzer : BaseAnalyzer
 {
-    private readonly IReadOnlyList<Token> _tokens;
-    private int _currentIndex = 0;
     private readonly List<(string, int)> _methodNames = new();
 
     public MethodLengthAnalyzer(FileTokenData fileData, Report report) : base(fileData, report)
     {
-        _tokens = fileData.Tokens;
     }
 
     public void AddWarnings()
@@ -31,86 +28,113 @@ public class MethodLengthAnalyzer : BaseAnalyzer
     {
         List<Token> currentStatement = new();
         bool postBraces = false;
-        while (_currentIndex < _tokens.Count && _tokens[_currentIndex].TokenType != BracesOpen)
+        while (CurrentIndex < Tokens.Count && Tokens[CurrentIndex].TokenType != BracesOpen)
         {
-            Token currentToken = _tokens[_currentIndex];
+            Token? currentToken = LookForNextEndingToken(currentStatement);
+            if (currentToken == null) return;
             TokenType currentTokenType = currentToken.TokenType;
-            while (currentTokenType != SemiColon && currentTokenType != BracesOpen && currentTokenType != BracesClose)
-            {
-                if (!currentTokenType.IsSkippable()) currentStatement.Add(_tokens[_currentIndex]);
-                _currentIndex++;
-                if (_currentIndex == _tokens.Count) return;
-                currentToken = _tokens[_currentIndex];
-                currentTokenType = currentToken.TokenType;
-            }
             currentStatement.Add(currentToken);
-            if (currentTokenType == SemiColon)
+            bool? processResult = HandleStatement(currentStatement, postBraces, currentTokenType);
+            if (processResult == null) return; else postBraces = (bool)processResult;
+        }
+    }
+
+    private bool? HandleStatement(List<Token> currentStatement, bool postBraces,
+        TokenType currentTokenType)
+    {
+        switch (currentTokenType)
+        {
+            case SemiColon:
+                HandleStatementEndingInSemicolon(currentStatement, postBraces, currentTokenType);
+                return false;
+
+            case BracesClose:
+                HandleStatementEndingInClosingBraces();
+                return null;
+
+            default: //opening braces
+                HandleStatementEndingInOpeningBraces(currentStatement);
+                return true;
+        }
+    }
+
+    private void HandleStatementEndingInOpeningBraces(List<Token> currentStatement)
+    {
+        AddScope(currentStatement);
+        UpdateMethodNames(currentStatement);
+        CurrentIndex++;
+        currentStatement.Clear();
+        ScanMethods();
+    }
+
+    private void UpdateMethodNames(List<Token> currentStatement)
+    {
+        int? methodIndex = CanBeMethod(currentStatement);
+        if (methodIndex != null)
+        {
+            string methodName = ((ComplexToken)currentStatement[(int)methodIndex]).Info;
+            _methodNames.Add((methodName, CurrentIndex));
+        }
+        else
+        {
+            _methodNames.Add(("none", CurrentIndex));
+        }
+    }
+
+    private void HandleStatementEndingInClosingBraces()
+    {
+        IfMethodScopeEndsCheckMethodLength();
+        Scopes.RemoveAt(Scopes.Count - 1);
+        CurrentIndex++;
+        // duplicate code!
+        HandleClosingBraceWithPossibleClosingParenthesis();
+    }
+
+    private void IfMethodScopeEndsCheckMethodLength()
+    {
+        (string methodName, int tokenIndex) = _methodNames[_methodNames.Count - 1];
+        if (methodName != "none")
+        {
+            int lineCount = CountLines(tokenIndex, CurrentIndex);
+            if (lineCount > 15)
             {
-                if (postBraces)
-                {
-                    currentStatement.Clear();
-                    postBraces = false;
-                }
-                else if (currentStatement.Count > 0 && currentStatement[0].TokenType == For)
-                {
-                    while (currentTokenType != SemiColon)
-                    {
-                        _currentIndex++;
-                        currentTokenType = _tokens[_currentIndex].TokenType;
-                    }
-                    int depth = 0;
-                    while (currentTokenType != ParenthesesClose && depth > 0)
-                    {
-                        if (currentTokenType == ParenthesesOpen) depth++;
-                        if (currentTokenType == ParenthesesClose) depth--;
-                        _currentIndex++;
-                        currentTokenType = _tokens[_currentIndex].TokenType;
-                    }
-                }
-                else ProcessPossibleIdentifier(currentStatement);
-                _currentIndex++;
+                Report.Warnings.Add($"Too long method: {methodName} " +
+                    $"(in {ContextedFilename}) is {lineCount} lines long.");
+                Report.ExtraCodeLines += lineCount - 15;
             }
-            else if (currentTokenType == BracesClose)
-            {
-                (string methodName, int tokenIndex) = _methodNames[_methodNames.Count - 1];
-                if (methodName != "none")
-                {
-                    // is method scope!
-                    //Console.WriteLine($"###detected method exit {methodName} at {_currentIndex}");
-                    //Console.WriteLine($"&&&counted {}");
-                    int lineCount = CountLines(tokenIndex, _currentIndex);
-                    if (lineCount > 15)
-                        Report.Warnings.Add($"Too long method: {methodName} " +
-                            $"(in {ContextedFilename}) is {lineCount} lines long.");
-                }
-                _methodNames.RemoveAt(_methodNames.Count - 1);
-                Scopes.RemoveAt(Scopes.Count - 1);
-                _currentIndex++;
-                // duplicate code!
-                while (_currentIndex < _tokens.Count && (_tokens[_currentIndex].TokenType.IsSkippable() ||
-                    _tokens[_currentIndex].TokenType == ParenthesesClose))
-                    _currentIndex++;
-                return;
-            }
-            else // opening braces
-            {
-                AddScope(currentStatement);
-                int? methodIndex = CanBeMethod(currentStatement);
-                if (methodIndex != null)
-                {
-                    string methodName = ((ComplexToken)currentStatement[(int)methodIndex]).Info;
-                    // Console.WriteLine($"***detected method entry {methodName} at {_currentIndex}");
-                    _methodNames.Add((methodName, _currentIndex));
-                }
-                else
-                {
-                    _methodNames.Add(("none", _currentIndex));
-                }
-                _currentIndex++;
-                currentStatement.Clear();
-                ScanMethods();
-                postBraces = true;
-            }
+        }
+        _methodNames.RemoveAt(_methodNames.Count - 1);
+    }
+
+    private void HandleStatementEndingInSemicolon(List<Token> currentStatement,
+        bool postBraces, TokenType currentTokenType)
+    {
+        if (postBraces)
+        {
+            currentStatement.Clear();
+        }
+        else if (currentStatement.Count > 0 && currentStatement[0].TokenType == For)
+        {
+            HandleForStatement(currentTokenType);
+        }
+        else ProcessPossibleIdentifier(currentStatement);
+        CurrentIndex++;
+    }
+
+    private void HandleForStatement(TokenType currentTokenType)
+    {
+        while (currentTokenType != SemiColon)
+        {
+            CurrentIndex++;
+            currentTokenType = Tokens[CurrentIndex].TokenType;
+        }
+        int depth = 0;
+        while (currentTokenType != ParenthesesClose || depth > 0)
+        {
+            if (currentTokenType == ParenthesesOpen) depth++;
+            if (currentTokenType == ParenthesesClose) depth--;
+            CurrentIndex++;
+            currentTokenType = Tokens[CurrentIndex].TokenType;
         }
     }
 
@@ -120,22 +144,12 @@ public class MethodLengthAnalyzer : BaseAnalyzer
         bool newlineMode = false;
         for (int i = startIndex; i < endIndex; i++)
         {
-            if (_tokens[i].TokenType == TokenType.NewLine)
+            if (Tokens[i].TokenType == NewLine)
             {
-                if (newlineMode)
-                {
-                    //  do nothing
-                }
-                else
-                {
-                    newlineCount++;
-                    newlineMode = true;
-                }
+                if (!newlineMode) newlineCount++;
+                newlineMode = true;
             }
-            else
-            {
-                newlineMode = false;
-            }
+            else newlineMode = false;
         }
         return newlineCount + 1;// closing brace is also a line
     }

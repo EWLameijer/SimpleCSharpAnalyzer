@@ -24,11 +24,20 @@ public class Tokenizer
     {
         _lines = lines.Select(line => line + "\n").ToList();
         _lastLineIndex = _lines.Count;
+        BuildComplexTokensDictionary();
     }
 
     private Token StoreTokenWithConsume(Token token)
     {
         _nextCharIndex++;
+        _parsedTokens.Add(token);
+        return token;
+    }
+
+    private Token StoreTokenWithConsume(TokenType tokenType)
+    {
+        _nextCharIndex++;
+        Token token = new() { TokenType = tokenType };
         _parsedTokens.Add(token);
         return token;
     }
@@ -54,100 +63,131 @@ public class Tokenizer
      * If that is '/' too,
     */
 
+    /*SHORTEN*/
+
     public Token? Get()
     {
         if (!HasNextToken()) throw new EndOfStreamException();
+        GoToFirstNonWhiteSpace();
+        char currentChar = _lines[_currentLineIndex][_nextCharIndex];
+
+        if (currentChar == '/') return HandlePossibleComment();
+        else if (currentChar == '_' || char.IsLetter(currentChar))
+            return GetIdentifierOrKeyword(currentChar);
+        else if (char.IsDigit(currentChar)) return StoreTokenWithoutConsume(GetNumberToken());
+        else if (_simpleTokens.ContainsKey(currentChar)) return StoreTokenWithConsume(_simpleTokens[currentChar]);
+        else if (_complexTokens.ContainsKey(currentChar))
+            return StoreTokenWithoutConsume(_complexTokens[currentChar]());
+
+        Console.WriteLine($"Parse stopped at line {_lines[_currentLineIndex]}");
+        throw new ArgumentException("Tokenizer error: weird token!");
+    }
+
+    private Token HandlePossibleComment()
+    {
+        _nextCharIndex++;
+        char nextChar = _lines[_currentLineIndex][_nextCharIndex];
+        if (nextChar == '/')
+        {
+            _nextCharIndex++;
+            string contents = _lines[_currentLineIndex][_nextCharIndex..].Trim();
+            _nextCharIndex = _lines[_currentLineIndex].Length - 1; // don't skip newline!
+            return StoreTokenWithoutConsume(LineComment, contents);
+        }
+        else if (nextChar == '*')
+            return StoreTokenWithoutConsume(GetBlockComment());
+        else return StoreTokenWithoutConsume(Division);
+    }
+
+    private Token GetIdentifierOrKeyword(char currentChar)
+    {
+        string identifier = GetIdentifier(currentChar);
+        if (Keywords._dict.ContainsKey(identifier))
+        {
+            Token target = new() { TokenType = Keywords._dict[identifier] };
+            _parsedTokens.Add(target);
+            return target;
+        }
+        else
+        {
+            Token token = new ComplexToken { TokenType = Identifier, Info = identifier };
+            _parsedTokens.Add(token);
+            return token;
+        }
+    }
+
+    private string GetIdentifier(char currentChar)
+    {
+        StringBuilder result = new();
+        result.Append(currentChar);
+        do
+        {
+            _nextCharIndex++;
+            char ch = _lines[_currentLineIndex][_nextCharIndex];
+            if (char.IsLetterOrDigit(ch) || ch == '_') result.Append(ch); else break;
+        } while (true);
+
+        return result.ToString();
+    }
+
+    private void GoToFirstNonWhiteSpace()
+    {
         while (_currentLineIndex != _lastLineIndex)
         {
-            if (_nextCharIndex == _lines[_currentLineIndex].Length)
-            {
-                _currentLineIndex++;
-                _nextCharIndex = 0;
-            }
+            if (_nextCharIndex == _lines[_currentLineIndex].Length) GoToNextLine();
             else
             {
                 char ch = _lines[_currentLineIndex][_nextCharIndex];
-                if (!char.IsWhiteSpace(ch)) break;
+                if (!char.IsWhiteSpace(ch)) return;
                 if (ch == '\n')
                     _parsedTokens.Add(new Token { TokenType = NewLine });
                 _nextCharIndex++;
             }
         }
-        char currentChar = _lines[_currentLineIndex][_nextCharIndex];
-
-        if (currentChar == '/')
-        {
-            _nextCharIndex++;
-            char nextChar = _lines[_currentLineIndex][_nextCharIndex];
-            if (nextChar == '/')
-            {
-                _nextCharIndex++;
-                string contents = _lines[_currentLineIndex][_nextCharIndex..].Trim();
-                _nextCharIndex = _lines[_currentLineIndex].Length - 1; // don't skip newline!
-                return StoreTokenWithoutConsume(LineComment, contents);
-            }
-            else if (nextChar == '*')
-                return StoreTokenWithoutConsume(GetBlockComment());
-            else return StoreTokenWithoutConsume(Division);
-        }
-        else if (currentChar == '_' || char.IsLetter(currentChar))
-        {
-            StringBuilder result = new();
-            result.Append(currentChar);
-            do
-            {
-                _nextCharIndex++;
-                char ch = _lines[_currentLineIndex][_nextCharIndex];
-                if (char.IsLetterOrDigit(ch) || ch == '_') result.Append(ch); else break;
-            } while (true);
-
-            string identifier = result.ToString();
-            if (Keywords.dict.ContainsKey(identifier))
-            {
-                Token target = new() { TokenType = Keywords.dict[identifier] };
-                _parsedTokens.Add(target);
-                return target;
-            }
-            else
-            {
-                Token token = new ComplexToken { TokenType = Identifier, Info = result.ToString() };
-                _parsedTokens.Add(token);
-                return token;
-            }
-        }
-        else if (char.IsDigit(currentChar)) return StoreTokenWithoutConsume(GetNumberToken());
-        else if (currentChar == '.') return StoreTokenWithConsume(new Token { TokenType = Period });
-        else if (currentChar == ';') return StoreTokenWithConsume(new Token { TokenType = SemiColon });
-        else if (currentChar == ':') return StoreTokenWithConsume(new Token { TokenType = Colon });
-        else if (currentChar == '(') return StoreTokenWithConsume(new Token { TokenType = ParenthesesOpen });
-        else if (currentChar == ')') return StoreTokenWithConsume(new Token { TokenType = ParenthesesClose });
-        else if (currentChar == '[') return StoreTokenWithConsume(new Token { TokenType = BracketsOpen });
-        else if (currentChar == ']') return StoreTokenWithConsume(new Token { TokenType = BracketsClose });
-        else if (currentChar == '!') return StoreTokenWithConsume(new Token { TokenType = ExclamationMark });
-        else if (currentChar == '{') return StoreTokenWithConsume(new Token { TokenType = BracesOpen });
-        else if (currentChar == '}') return StoreTokenWithConsume(new Token { TokenType = BracesClose });
-        else if (currentChar == '?') return StoreTokenWithConsume(new Token { TokenType = QuestionMark });
-        else if (currentChar == ',') return StoreTokenWithConsume(new Token { TokenType = Comma });
-        else if (currentChar == '^') return StoreTokenWithConsume(new Token { TokenType = Caret });
-        else if (currentChar == '*') return StoreTokenWithConsume(new Token { TokenType = Times });
-        else if (currentChar == '"') return StoreTokenWithoutConsume(GetStringToken());
-        else if (currentChar == '#') return StoreTokenWithoutConsume(GetPragmaToken());
-        else if (currentChar == '\'') return StoreTokenWithoutConsume(GetSingleQuotedStringToken());
-        else if (currentChar == '<') return StoreTokenWithoutConsume(GetLessTypeToken());
-        else if (currentChar == '>') return StoreTokenWithoutConsume(GetGreaterTypeToken());
-        else if (currentChar == '+') return StoreTokenWithoutConsume(GetPlusToken());
-        else if (currentChar == '-') return StoreTokenWithoutConsume(GetMinusToken());
-        else if (currentChar == '&') return StoreTokenWithoutConsume(GetLogicAndToken());
-        else if (currentChar == '%') return StoreTokenWithConsume(new Token { TokenType = Modulus });
-        else if (currentChar == '|') return StoreTokenWithoutConsume(GetLogicOrToken());
-        else if (currentChar == '$') return StoreTokenWithoutConsume(GetDollarToken());
-        else if (currentChar == '@') return StoreTokenWithoutConsume(GetAtToken());
-        else if (currentChar == '=') return StoreTokenWithoutConsume(GetAssignToken());
-
-        Console.WriteLine($"Parse stopped at line {_lines[_currentLineIndex]}");
-        Environment.Exit(-1);
-        throw new ArgumentException("Tokenizer error: weird token!");
     }
+
+    private void GoToNextLine()
+    {
+        _currentLineIndex++;
+        _nextCharIndex = 0;
+    }
+
+    private void BuildComplexTokensDictionary()
+    {
+        _complexTokens['"'] = GetStringToken;
+        _complexTokens['#'] = GetPragmaToken;
+        _complexTokens['\''] = GetSingleQuotedStringToken;
+        _complexTokens['<'] = GetLessTypeToken;
+        _complexTokens['>'] = GetGreaterTypeToken;
+        _complexTokens['+'] = GetPlusToken;
+        _complexTokens['-'] = GetMinusToken;
+        _complexTokens['&'] = GetLogicAndToken;
+        _complexTokens['|'] = GetLogicOrToken;
+        _complexTokens['$'] = GetDollarToken;
+        _complexTokens['@'] = GetAtToken;
+        _complexTokens['='] = GetAssignToken;
+    }
+
+    private readonly Dictionary<char, Func<Token>> _complexTokens = new();
+
+    private readonly Dictionary<char, TokenType> _simpleTokens = new()
+    {
+        [','] = Comma,
+        ['.'] = Period,
+        ['?'] = QuestionMark,
+        ['!'] = ExclamationMark,
+        [';'] = SemiColon,
+        [':'] = Colon,
+        ['^'] = Caret,
+        ['*'] = Times,
+        ['%'] = Modulus,
+        ['('] = ParenthesesOpen,
+        [')'] = ParenthesesClose,
+        ['['] = BracketsOpen,
+        [']'] = BracketsClose,
+        ['{'] = BracesOpen,
+        ['}'] = BracesClose,
+    };
 
     private Token GetPragmaToken()
     {
@@ -168,49 +208,56 @@ public class Tokenizer
     {
         // starts at *
         StringBuilder result = new();
+        Token? oneLineBlockComment = GetBlockCommentLine(result, BlockCommentWhole,
+            BlockCommentStart);
+        if (oneLineBlockComment != null) return oneLineBlockComment;
+        do
+        {
+            result.Clear();
+            Token? furtherLineBlockComment = GetBlockCommentLine(result, BlockCommentEnd,
+                BlockCommentMiddle);
+            if (furtherLineBlockComment != null) return furtherLineBlockComment;
+        } while (true);
+    }
+
+    private Token? GetBlockCommentLine(StringBuilder result, TokenType finishType,
+        TokenType nonFinishType)
+    {
         do
         {
             _nextCharIndex++;
             char ch = CurrentChar();
-            if (ch == '*' && NextChar() == '/')
-            {
-                _nextCharIndex += 2;
-                return new ComplexToken { TokenType = BlockCommentWhole, Info = result.ToString() };
-            }
-            if (ch == '\n')
-            {
-                _currentLineIndex++;
-                _nextCharIndex = -1; // will soon need to start at 0
-                _parsedTokens.Add(new ComplexToken { TokenType = BlockCommentStart, Info = result.ToString() });
-                _parsedTokens.Add(new Token { TokenType = NewLine });
-                break;
-            }
-            result.Append(ch);
+            (Token? finalToken, bool startNewLine) = ProcessBlockCommentChar(ch, result, finishType, nonFinishType);
+            if (finalToken != null) return finalToken;
+            if (startNewLine) break;
         } while (true);
+        return null;
+    }
 
-        do
+    private (Token? finalToken, bool startNewLine) ProcessBlockCommentChar(char ch,
+        StringBuilder result, TokenType finishType, TokenType nonFinishType)
+    {
+        if (ch == '*' && NextChar() == '/')
         {
-            result.Clear();
-            do
-            {
-                _nextCharIndex++;
-                char ch = CurrentChar();
-                if (ch == '*' && NextChar() == '/')
-                {
-                    _nextCharIndex += 2;
-                    return new ComplexToken { TokenType = BlockCommentEnd, Info = result.ToString() };
-                }
-                if (ch == '\n')
-                {
-                    _currentLineIndex++;
-                    _nextCharIndex = -1;
-                    _parsedTokens.Add(new ComplexToken { TokenType = BlockCommentMiddle, Info = result.ToString() });
-                    _parsedTokens.Add(new Token { TokenType = NewLine });
-                    break;
-                }
-                result.Append(ch);
-            } while (true);
-        } while (true);
+            _nextCharIndex += 2;
+            Token finalToken = new ComplexToken { TokenType = finishType, Info = result.ToString() };
+            return (finalToken, false);
+        }
+        if (ch == '\n')
+        {
+            StoreNextBlockCommentLine(result, nonFinishType);
+            return (null, true);
+        }
+        result.Append(ch);
+        return (null, false);
+    }
+
+    private void StoreNextBlockCommentLine(StringBuilder result, TokenType nonFinishType)
+    {
+        _currentLineIndex++;
+        _nextCharIndex = -1; // will soon need to start at 0
+        _parsedTokens.Add(new ComplexToken { TokenType = nonFinishType, Info = result.ToString() });
+        _parsedTokens.Add(new Token { TokenType = NewLine });
     }
 
     private Token GetDollarToken()
@@ -234,86 +281,108 @@ public class Tokenizer
     {
         _nextCharIndex++;
         char ch = CurrentChar();
+        Token? possibleVerbatimStringToken = GetPossibleVerbatimStringToken(ch);
+        if (possibleVerbatimStringToken != null) return possibleVerbatimStringToken;
+        if (char.IsLetter(ch)) // @lock and such, for people who want a reserved word as identifier.
+        {
+            string atIdentifier = ExtractAtStartingIdentifier(ref ch);
+            return new ComplexToken { TokenType = Identifier, Info = atIdentifier };
+        }
+        throw new ArgumentException("@ parsing error");
+    }
+
+    private Token? GetPossibleVerbatimStringToken(char ch)
+    {
         if (ch == '"')
         {
-            Token token = GetVerbatimStringToken();
-            return token;
+            return GetVerbatimStringToken();
         }
         if (ch == '$' && NextChar() == '"')
         {
             _nextCharIndex++;
-            Token token = GetInterpolatedVerbatimStringToken();
-            return token;
+            return GetInterpolatedVerbatimStringToken();
         }
-        if (char.IsLetter(ch)) // @lock and such, for people who want a reserved word as identifier.
+        return null;
+    }
+
+    private string ExtractAtStartingIdentifier(ref char ch)
+    {
+        StringBuilder atIdentifier = new();
+        atIdentifier.Append('@');
+        do
         {
-            StringBuilder atIdentifier = new();
-            atIdentifier.Append('@');
-            do
-            {
-                atIdentifier.Append(ch);
-                _nextCharIndex++;
-                ch = CurrentChar();
-            } while (char.IsLower(ch));
-            return new ComplexToken { TokenType = Identifier, Info = atIdentifier.ToString() };
-        }
-        throw new ArgumentException("@ parsing error");
+            atIdentifier.Append(ch);
+            _nextCharIndex++;
+            ch = CurrentChar();
+        } while (char.IsLower(ch));
+        return atIdentifier.ToString();
     }
 
     private Token GetVerbatimStringToken()
     {
         StringBuilder result = new();
-        do
-        {
-            _nextCharIndex++;
-            char ch = CurrentChar();
-            if (ch == '"' && NextChar() != '"')
-            {
-                _nextCharIndex++;
-                return new ComplexToken { TokenType = VerbatimStringWhole, Info = result.ToString() };
-            }
-            if (ch == '"' && NextChar() == '"')
-            {
-                _nextCharIndex += 2; // skip next double quote
-            }
-            else if (ch == '\n')
-            {
-                _currentLineIndex++;
-                _nextCharIndex = -1; // will soon need to start at 0
-                _parsedTokens.Add(new ComplexToken { TokenType = VerbatimStringStart, Info = result.ToString() });
-                _parsedTokens.Add(new Token { TokenType = NewLine });
-                break;
-            }
-            result.Append(ch);
-        } while (true);
+        Token? finishedToken = GetVerbatimStringLine(result, VerbatimStringWhole,
+            VerbatimStringStart);
+        if (finishedToken != null) return finishedToken;
 
         do
         {
             result.Clear();
-            do
-            {
-                _nextCharIndex++;
-                char ch = CurrentChar();
-                if (ch == '"' && NextChar() != '"')
-                {
-                    _nextCharIndex++;
-                    return new ComplexToken { TokenType = VerbatimStringEnd, Info = result.ToString() };
-                }
-                if (ch == '"' && NextChar() == '"')
-                {
-                    _nextCharIndex += 2; // skip next double quote
-                }
-                else if (ch == '\n')
-                {
-                    _currentLineIndex++;
-                    _nextCharIndex = -1; // will soon need to start at 0
-                    _parsedTokens.Add(new ComplexToken { TokenType = VerbatimStringMiddle, Info = result.ToString() });
-                    _parsedTokens.Add(new Token { TokenType = NewLine });
-                    break;
-                }
-                result.Append(ch);
-            } while (true);
+            finishedToken = GetVerbatimStringLine(result, VerbatimStringEnd,
+            VerbatimStringMiddle);
+            if (finishedToken != null) return finishedToken;
         } while (true);
+    }
+
+    private Token? GetVerbatimStringLine(StringBuilder result, TokenType finalTokenType,
+        TokenType nonFinalTokenType)
+    {
+        do
+        {
+            _nextCharIndex++;
+            (Token finalToken, bool isBreak) = HandleVerbatimChar(result, finalTokenType,
+                nonFinalTokenType);
+            if (finalToken != null) return finalToken;
+            if (isBreak) break;
+        } while (true);
+        return null;
+    }
+
+    private void HandleVerbatimLineEnd(StringBuilder result, TokenType nonFinalTokenType)
+    {
+        _currentLineIndex++;
+        _nextCharIndex = -1; // will soon need to start at 0
+        _parsedTokens.Add(new ComplexToken { TokenType = nonFinalTokenType, Info = result.ToString() });
+        _parsedTokens.Add(new Token { TokenType = NewLine });
+    }
+
+    private (Token? finalToken, bool isBreak) HandleVerbatimChar(StringBuilder result,
+        TokenType finalTokenType, TokenType nonFinalTokenType)
+    {
+        char ch = CurrentChar();
+        if (ch == '"')
+        {
+            Token? finalToken = HandleDoubleQuotes(result, finalTokenType);
+            if (finalToken != null) return (finalToken, false);
+        }
+        else if (ch == '\n')
+        {
+            HandleVerbatimLineEnd(result, nonFinalTokenType);
+            return (null, true);
+        }
+        result.Append(ch);
+        return (null, false);
+    }
+
+    private Token? HandleDoubleQuotes(StringBuilder result, TokenType finalTokenType)
+    {
+        if (NextChar() != '"')
+        {
+            _nextCharIndex++;
+            return new ComplexToken { TokenType = finalTokenType, Info = result.ToString() };
+        }
+        else _nextCharIndex += 2; // skip next double quote
+        return null;
     }
 
     // note: is a copy of verbatim processing.
@@ -321,58 +390,7 @@ public class Tokenizer
     // for now, may work well enough, though...
     private Token GetInterpolatedVerbatimStringToken()
     {
-        StringBuilder result = new();
-        do
-        {
-            _nextCharIndex++;
-            char ch = CurrentChar();
-            if (ch == '"' && NextChar() != '"')
-            {
-                _nextCharIndex++;
-                return new ComplexToken { TokenType = VerbatimStringWhole, Info = result.ToString() };
-            }
-            if (ch == '"' && NextChar() == '"')
-            {
-                _nextCharIndex += 2; // skip next double quote
-            }
-            else if (ch == '\n')
-            {
-                _currentLineIndex++;
-                _nextCharIndex = -1; // will soon need to start at 0
-                _parsedTokens.Add(new ComplexToken { TokenType = VerbatimStringStart, Info = result.ToString() });
-                _parsedTokens.Add(new Token { TokenType = NewLine });
-                break;
-            }
-            result.Append(ch);
-        } while (true);
-
-        do
-        {
-            result.Clear();
-            do
-            {
-                _nextCharIndex++;
-                char ch = CurrentChar();
-                if (ch == '"' && NextChar() != '"')
-                {
-                    _nextCharIndex++;
-                    return new ComplexToken { TokenType = VerbatimStringEnd, Info = result.ToString() };
-                }
-                if (ch == '"' && NextChar() == '"')
-                {
-                    _nextCharIndex += 2; // skip next double quote
-                }
-                else if (ch == '\n')
-                {
-                    _currentLineIndex++;
-                    _nextCharIndex = -1; // will soon need to start at 0
-                    _parsedTokens.Add(new ComplexToken { TokenType = VerbatimStringMiddle, Info = result.ToString() });
-                    _parsedTokens.Add(new Token { TokenType = NewLine });
-                    break;
-                }
-                result.Append(ch);
-            } while (true);
-        } while (true);
+        return GetVerbatimStringToken();
     }
 
     private Token GetPlusToken()
@@ -498,46 +516,61 @@ public class Tokenizer
     // TODO: {{ escapes {, so
     private Token GetInterpolatedStringToken()
     {
-        bool isEscapeMode = false;
         StringBuilder result = new();
-        int initCharIndex = _nextCharIndex + 1;
+        bool isEscapeMode = false;
+        bool shouldContinue;
         TokenType tokenType = InterPolatedStringStart;
         do
         {
-            _nextCharIndex++;
-            char ch = _lines[_currentLineIndex][_nextCharIndex];
-            if (ch == '\\') isEscapeMode = !isEscapeMode;
-            else if (ch == '"' && !isEscapeMode) break;
-            else if (ch == '{' && !isEscapeMode)
-            {
-                Token nextToken;
-                if (_lines[_currentLineIndex][_nextCharIndex + 1] == '{')
-                {
-                    _nextCharIndex += 2;
-                    result.Append(ch);
-                    continue;
-                }
-                _parsedTokens.Add(new ComplexToken { TokenType = tokenType, Info = result.ToString() });
-                result.Clear();
-                tokenType = InterpolatedStringMiddle;
-                result.Clear();
-                _nextCharIndex++;
-                do
-                {
-                    nextToken = Get()!;
-                } while (nextToken.TokenType != BracesClose);
-                _parsedTokens.RemoveAt(_parsedTokens.Count - 1);// get rid of }
-                _nextCharIndex--; // so won't skip " or such
-                // get all characters (also on next line) until
-            }
-            else
-            {
-                isEscapeMode = false;
-                result.Append(ch);
-            }
-        } while (true);
+            (shouldContinue, isEscapeMode, tokenType) =
+                ParseInterpolatedStringChar(result, isEscapeMode, tokenType);
+        } while (shouldContinue);
         _nextCharIndex++;
         return new ComplexToken { TokenType = InterpolatedStringEnd, Info = result.ToString() };
+    }
+
+    private (bool shouldContinue, bool escapeMode, TokenType tokenType)
+        ParseInterpolatedStringChar(StringBuilder result, bool isEscapeMode, TokenType tokenType)
+    {
+        _nextCharIndex++;
+        char ch = _lines[_currentLineIndex][_nextCharIndex];
+        if (ch == '\\') isEscapeMode = !isEscapeMode;
+        else if (ch == '"' && !isEscapeMode) return (false, isEscapeMode, tokenType);
+        else if (ch == '{' && !isEscapeMode) tokenType = HandleInterpolatedBraceOpen(result, tokenType);
+        else
+        {
+            isEscapeMode = false;
+            result.Append(ch);
+        }
+        return (true, isEscapeMode, tokenType);
+    }
+
+    private TokenType HandleInterpolatedBraceOpen(StringBuilder result, TokenType tokenType)
+    {
+        char ch = CurrentChar();
+        if (_lines[_currentLineIndex][_nextCharIndex + 1] == '{')
+        {
+            _nextCharIndex += 2;
+            result.Append(ch);
+            return tokenType;
+        }
+        return ParseEmbeddedCode(result, tokenType);
+    }
+
+    private TokenType ParseEmbeddedCode(StringBuilder result, TokenType tokenType)
+    {
+        _parsedTokens.Add(new ComplexToken { TokenType = tokenType, Info = result.ToString() });
+        result.Clear();
+        tokenType = InterpolatedStringMiddle;
+        _nextCharIndex++;
+        Token nextToken;
+        do
+        {
+            nextToken = Get()!;
+        } while (nextToken.TokenType != BracesClose);
+        _parsedTokens.RemoveAt(_parsedTokens.Count - 1);// get rid of }
+        _nextCharIndex--; // so won't skip " or such
+        return tokenType;
     }
 
     private Token GetSingleQuotedStringToken()

@@ -11,11 +11,69 @@ public class BaseAnalyzer
     protected readonly Report Report;
     protected const bool DoShow = true;
     protected readonly List<Scope> Scopes = new();
+    protected readonly IReadOnlyList<Token> Tokens;
+    protected int CurrentIndex = 0;
+    protected bool ReportWrongIdentifierNames = false;
+
+    protected Token? LookForNextEndingToken(List<Token> currentStatement)
+    {
+        Token currentToken = Tokens[CurrentIndex];
+        TokenType currentTokenType = currentToken.TokenType;
+        while (currentTokenType != SemiColon && currentTokenType != BracesOpen && currentTokenType != BracesClose)
+        {
+            if (!currentTokenType.IsSkippable()) currentStatement.Add(Tokens[CurrentIndex]);
+            CurrentIndex++;
+            if (CurrentIndex == Tokens.Count) return null;
+            currentToken = Tokens[CurrentIndex];
+            currentTokenType = currentToken.TokenType;
+        }
+        return currentToken;
+    }
+
+    protected void HandleStatementEndingWithSemicolon(List<Token> currentStatement, bool postBraces)
+    {
+        TokenType currentTokenType = Tokens[CurrentIndex].TokenType;
+        if (postBraces)
+        {
+            currentStatement.Clear();
+        }
+        else if (currentStatement.Count > 0 && currentStatement[0].TokenType == For)
+        {
+            ProcessForLoopSetup(currentTokenType);
+        }
+        else ProcessPossibleIdentifier(currentStatement);
+        CurrentIndex++;
+    }
+
+    protected void HandleClosingBraceWithPossibleClosingParenthesis()
+    {
+        while (CurrentIndex < Tokens.Count && (Tokens[CurrentIndex].TokenType.IsSkippable() ||
+            Tokens[CurrentIndex].TokenType == ParenthesesClose))
+            CurrentIndex++;
+    }
+
+    private void ProcessForLoopSetup(TokenType currentTokenType)
+    {
+        while (currentTokenType != SemiColon)
+        {
+            CurrentIndex++;
+            currentTokenType = Tokens[CurrentIndex].TokenType;
+        }
+        int depth = 0;
+        while (currentTokenType != ParenthesesClose || depth > 0)
+        {
+            if (currentTokenType == ParenthesesOpen) depth++;
+            if (currentTokenType == ParenthesesClose) depth--;
+            CurrentIndex++;
+            currentTokenType = Tokens[CurrentIndex].TokenType;
+        }
+    }
 
     public BaseAnalyzer(FileTokenData fileData, Report report)
     {
         ContextedFilename = fileData.ContextedFilename;
         Report = report;
+        Tokens = fileData.Tokens;
     }
 
     internal bool IsCall(List<Token> currentStatement, int i)
@@ -230,17 +288,18 @@ public class BaseAnalyzer
         TokenType tokenType = currentStatement[index].TokenType;
         if (tokenType.IsModifier() || tokenType.IsDeclarer()) return false;
         possibleTypeStack.Add(tokenType);
+        if (tokenType == Assign) return true;
         if (tokenType.IsOpeningType()) newBracesStack.Add(tokenType);
         else if (tokenType.IsClosingType()) CheckForwardBraces(tokenType, newBracesStack);
         else
         {
-            CheckPropertiesAndVariables(currentStatement, newBracesStack, possibleTypeStack, index, tokenType);
-            if (tokenType == Assign) return true;
+            if (VariableNameAtThisLocation(currentStatement, newBracesStack,
+                possibleTypeStack, index, tokenType)) return true;
         }
         return false;
     }
 
-    private void CheckPropertiesAndVariables(List<Token> currentStatement,
+    private bool VariableNameAtThisLocation(List<Token> currentStatement,
     List<TokenType> newBracesStack, List<TokenType> possibleTypeStack, int i, TokenType tokenType)
     {
         if (IsValueName(currentStatement, newBracesStack, possibleTypeStack, i, tokenType))
@@ -248,13 +307,21 @@ public class BaseAnalyzer
             ScopeType currentScope = GetCurrentScope();
             TokenType nextType = currentStatement[i + 1].TokenType;
             string varType = (nextType == BracesOpen || nextType == FatArrow) ? "property" : "variable";
-            if (!CapitalizationCheck(i, currentStatement, currentScope))
-            {
-                string warning = $"Invalid {varType} name: " +
-                    $"{((ComplexToken)currentStatement[i]).Info} (in {ContextedFilename} - " +
-                    $"{PrettyPrint(currentScope)}).";
-                Report.Warnings.Add(warning);
-            }
+            CheckCorrectCapitalization(currentStatement, i, currentScope, varType);
+            return true;
+        }
+        return false;
+    }
+
+    private void CheckCorrectCapitalization(List<Token> currentStatement, int i,
+        ScopeType currentScope, string varType)
+    {
+        if (ReportWrongIdentifierNames && !CapitalizationCheck(i, currentStatement, currentScope))
+        {
+            string warning = $"Invalid {varType} name: " +
+                $"{((ComplexToken)currentStatement[i]).Info} (in {ContextedFilename} - " +
+                $"{PrettyPrint(currentScope)}).";
+            Report.Warnings.Add(warning);
         }
     }
 
@@ -304,7 +371,7 @@ public class BaseAnalyzer
     {
         ScopeType currentScope = Scopes.Count > 0 ? Scopes.Last().Type : ScopeType.File;
         int scopeIndex = Scopes.Count - 1;
-        while (scopeIndex >= 0 && currentScope == ScopeType.ScopeTypeNotSet)
+        while (scopeIndex >= 0 && !currentScope.IsFoundational())
         {
             if (Scopes[scopeIndex].Type != ScopeType.ScopeTypeNotSet)
                 currentScope = Scopes[scopeIndex].Type;
@@ -397,7 +464,7 @@ public class BaseAnalyzer
         TokenType firstType = currentStatement[0].TokenType;
 
         if (firstType == If || firstType == Else || firstType == ForEach || firstType == Return
-            || currentStatement.Any(t => t.TokenType == TokenType.Enum))
+            || firstType == While || currentStatement.Any(t => t.TokenType == TokenType.Enum))
         {
             currentStatement.Clear();
             return true;

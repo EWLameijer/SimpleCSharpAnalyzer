@@ -2,7 +2,7 @@
 
 internal static class Keywords
 {
-    internal static Dictionary<string, TokenType> dict = new()
+    internal static readonly Dictionary<string, TokenType> _dict = new()
     {
         ["abstract"] = TokenType.Abstract,
         ["as"] = TokenType.As,
