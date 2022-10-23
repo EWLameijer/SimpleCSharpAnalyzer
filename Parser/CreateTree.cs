@@ -1,31 +1,15 @@
 ﻿using Tokenizing;
-using static Tokenizing.TokenType;
 
 namespace Parser;
 
-public class ParsePosition
-{
-    public int CurrentIndex { get; set; }
-    public IReadOnlyList<Token> Tokens { get; set; }
-
-    public Token CurrentToken() => Tokens[CurrentIndex];
-
-    public TokenType CurrentTokenType() => Tokens[CurrentIndex].TokenType;
-
-    public void Proceed() => CurrentIndex++;
-}
-
 public class CreateTree
 {
-    private readonly ParsePosition _position;
-
-    private TokenType CurrentTokenType() => _position.Tokens[_position.CurrentIndex].TokenType;
-
-    private void Proceed() => _position.CurrentIndex++;
+    private readonly IReadOnlyList<Token> _tokens;
+    private readonly int _currentIndex = 0;
 
     public CreateTree(IReadOnlyList<Token> tokens)
     {
-        _position = new ParsePosition { CurrentIndex = 0, Tokens = tokens };
+        _tokens = tokens;
     }
 
     public FileNode Parse()
@@ -42,61 +26,27 @@ public class CreateTree
 
     private UsingsNode GetUsingDirectives()
     {
-        // expect an using, or a namespace, or something else
-        List<UsingDirectiveNode> usingDirectives = new();
-        do
-        {
-            SkipWhitespace();
-            if (CurrentTokenType() == Using) usingDirectives.Add(UsingDirectiveNode.Get(_position));
-            else if (CurrentTokenType() == Namespace) { }
-            else { }
-        } while (true);
+        throw new NotImplementedException();
     }
+}
 
-    private void SkipWhitespace()
+public class Node
+{ }
+
+public class UsingsNode : Node
+{ }
+
+public class NamespaceNode : Node
+{ }
+
+public class FileNode : Node
+{
+    private readonly UsingsNode? _usingsNode;
+    private readonly NamespaceNode? _namespaceNode;
+
+    public FileNode(UsingsNode usingsNode, NamespaceNode namespaceNode)
     {
-        while (CurrentTokenType().IsSkippable()) Proceed();
-    }
-
-    public class Node
-    { }
-
-    public class UsingsNode : Node
-    { }
-
-    public class UsingDirectiveNode : Node
-    {
-        private readonly IReadOnlyList<Token> _contents;
-
-        public UsingDirectiveNode(List<Token> contents)
-        {
-            _contents = contents;
-        }
-
-        public static UsingDirectiveNode Get(ParsePosition position)
-        {
-            List<Token> contents = new();
-            while (position.CurrentTokenType() != SemiColon)
-            {
-                contents.Add(position.CurrentToken());
-                position.Proceed();
-            }
-            return new UsingDirectiveNode(contents);
-        }
-    }
-
-    public class NamespaceNode : Node
-    { }
-
-    public class FileNode : Node
-    {
-        private readonly UsingsNode? _usingsNode;
-        private readonly NamespaceNode? _namespaceNode;
-
-        public FileNode(UsingsNode usingsNode, NamespaceNode namespaceNode)
-        {
-            _usingsNode = usingsNode;
-            _namespaceNode = namespaceNode;
-        }
+        _usingsNode = usingsNode;
+        _namespaceNode = namespaceNode;
     }
 }
