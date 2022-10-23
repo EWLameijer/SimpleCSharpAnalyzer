@@ -1,5 +1,4 @@
 phase 0: refactor - possibly with common base class for MethodLength & IdentifierAnalyzer?
-// TEST / run simple test on namespace parsing!
 
 Problems:
 -code is broken.

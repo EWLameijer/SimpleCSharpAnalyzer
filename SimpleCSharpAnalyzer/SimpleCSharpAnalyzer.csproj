@@ -9,7 +9,6 @@
 
   <ItemGroup>
     <ProjectReference Include="..\DTOsAndUtilities\DTOsAndUtilities.csproj" />
-    <ProjectReference Include="..\Parser\Parser.csproj" />
     <ProjectReference Include="..\TokenBasedChecking\TokenBasedChecking.csproj" />
     <ProjectReference Include="..\Tokenizer\Tokenizing.csproj" />
   </ItemGroup>

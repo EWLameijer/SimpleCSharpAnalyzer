@@ -1,7 +1,7 @@
 ﻿using CSharpParser;
 using DTOsAndUtilities;
-using Parser;
 using SimpleCSharpAnalyzer;
+using TokenBasedChecking;
 using Tokenizing;
 
 string pathname;
@@ -44,9 +44,14 @@ foreach (string relevantFileName in relevantFileNames)
         HandleInappropriateAts(fileData.ContextedFilename, tokensWithoutAttributes);
     LineCounter counter = new(tokens);
     FileTokenData fileTokenData = new(fileData.ContextedFilename, tokensWithoutAttributes);
-    CreateTree tree = new(tokensWithoutAttributes);
-    var x = tree.Parse();
-    Console.WriteLine(x);
+    Report report = counter.CreateReport();
+    report.Warnings.AddRange(warnings);
+    LineLengthChecker.AddWarnings(fileData, report, maxLineLength);
+    new IdentifierAnalyzer(fileTokenData, report).AddWarnings();
+    new MalapropAnalyzer(fileTokenData, report).AddWarnings();
+    //new MethodLengthAnalyzer(fileTokenData, report).AddWarnings();
+    report.Show();
+    totalReport.Add(report);
 }
 
 Console.WriteLine($"\n***TOTAL ({pathname})***");
