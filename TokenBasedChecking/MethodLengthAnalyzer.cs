@@ -42,20 +42,19 @@ public class MethodLengthAnalyzer : BaseAnalyzer
     private bool? HandleStatement(List<Token> currentStatement, bool postBraces,
         TokenType currentTokenType)
     {
-        if (currentTokenType == SemiColon)
+        switch (currentTokenType)
         {
-            HandleStatementEndingInSemicolon(currentStatement, postBraces, currentTokenType);
-            return false;
-        }
-        else if (currentTokenType == BracesClose)
-        {
-            HandleStatementEndingInClosingBraces();
-            return null;
-        }
-        else // opening braces
-        {
-            HandleStatementEndingInOpeningBraces(currentStatement);
-            return true;
+            case SemiColon:
+                HandleStatementEndingInSemicolon(currentStatement, postBraces, currentTokenType);
+                return false;
+
+            case BracesClose:
+                HandleStatementEndingInClosingBraces();
+                return null;
+
+            default: //opening braces
+                HandleStatementEndingInOpeningBraces(currentStatement);
+                return true;
         }
     }
 
