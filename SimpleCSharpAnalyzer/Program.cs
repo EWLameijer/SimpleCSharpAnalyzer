@@ -45,7 +45,7 @@ foreach (string relevantFileName in relevantFileNames)
     LineCounter counter = new(tokens);
     FileTokenData fileTokenData = new(fileData.ContextedFilename, tokensWithoutAttributes);
     CreateTree tree = new(tokensWithoutAttributes);
-    var x = tree.Parse();
+    FileNode x = tree.Parse();
     Console.WriteLine(x);
 }
 
