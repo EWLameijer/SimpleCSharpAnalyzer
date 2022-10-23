@@ -29,6 +29,38 @@ public class BaseAnalyzer
         return currentToken;
     }
 
+    protected void HandleStatementEndingWithSemicolon(List<Token> currentStatement, bool postBraces)
+    {
+        TokenType currentTokenType = Tokens[CurrentIndex].TokenType;
+        if (postBraces)
+        {
+            currentStatement.Clear();
+        }
+        else if (currentStatement.Count > 0 && currentStatement[0].TokenType == For)
+        {
+            ProcessForLoopSetup(currentTokenType);
+        }
+        else ProcessPossibleIdentifier(currentStatement);
+        CurrentIndex++;
+    }
+
+    private void ProcessForLoopSetup(TokenType currentTokenType)
+    {
+        while (currentTokenType != SemiColon)
+        {
+            CurrentIndex++;
+            currentTokenType = Tokens[CurrentIndex].TokenType;
+        }
+        int depth = 0;
+        while (currentTokenType != ParenthesesClose || depth > 0)
+        {
+            if (currentTokenType == ParenthesesOpen) depth++;
+            if (currentTokenType == ParenthesesClose) depth--;
+            CurrentIndex++;
+            currentTokenType = Tokens[CurrentIndex].TokenType;
+        }
+    }
+
     public BaseAnalyzer(FileTokenData fileData, Report report)
     {
         ContextedFilename = fileData.ContextedFilename;

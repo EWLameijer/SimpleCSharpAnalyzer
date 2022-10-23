@@ -66,38 +66,6 @@ public class IdentifierAnalyzer : BaseAnalyzer
             default:
                 HandleStatementEndingWithOpeningBraces(currentStatement);
                 return true;
-        };
-    }
-
-    private void HandleStatementEndingWithSemicolon(List<Token> currentStatement, bool postBraces)
-    {
-        TokenType currentTokenType = Tokens[CurrentIndex].TokenType;
-        if (postBraces)
-        {
-            currentStatement.Clear();
-        }
-        else if (currentStatement.Count > 0 && currentStatement[0].TokenType == For)
-        {
-            ProcessForLoopSetup(currentTokenType);
-        }
-        else ProcessPossibleIdentifier(currentStatement);
-        CurrentIndex++;
-    }
-
-    private void ProcessForLoopSetup(TokenType currentTokenType)
-    {
-        while (currentTokenType != SemiColon)
-        {
-            CurrentIndex++;
-            currentTokenType = Tokens[CurrentIndex].TokenType;
-        }
-        int depth = 0;
-        while (currentTokenType != ParenthesesClose || depth > 0)
-        {
-            if (currentTokenType == ParenthesesOpen) depth++;
-            if (currentTokenType == ParenthesesClose) depth--;
-            CurrentIndex++;
-            currentTokenType = Tokens[CurrentIndex].TokenType;
         }
     }
 
