@@ -168,56 +168,49 @@ public class Tokenizer
     {
         // starts at *
         StringBuilder result = new();
-        Token? oneLineBlockComment = GetBlockCommentLine(result, BlockCommentWhole,
-            BlockCommentStart);
-        if (oneLineBlockComment != null) return oneLineBlockComment;
-        do
-        {
-            result.Clear();
-            Token? furtherLineBlockComment = GetBlockCommentLine(result, BlockCommentEnd,
-                BlockCommentMiddle);
-            if (furtherLineBlockComment != null) return furtherLineBlockComment;
-        } while (true);
-    }
-
-    private Token? GetBlockCommentLine(StringBuilder result, TokenType finishType,
-        TokenType nonFinishType)
-    {
         do
         {
             _nextCharIndex++;
             char ch = CurrentChar();
-            (Token finalToken, bool startNewLine) = ProcessBlockCommentChar(ch, result, finishType, nonFinishType);
-            if (finalToken != null) return finalToken;
-            if (startNewLine) break;
+            if (ch == '*' && NextChar() == '/')
+            {
+                _nextCharIndex += 2;
+                return new ComplexToken { TokenType = BlockCommentWhole, Info = result.ToString() };
+            }
+            if (ch == '\n')
+            {
+                _currentLineIndex++;
+                _nextCharIndex = -1; // will soon need to start at 0
+                _parsedTokens.Add(new ComplexToken { TokenType = BlockCommentStart, Info = result.ToString() });
+                _parsedTokens.Add(new Token { TokenType = NewLine });
+                break;
+            }
+            result.Append(ch);
         } while (true);
-        return null;
-    }
 
-    private (Token? finalToken, bool startNewLine) ProcessBlockCommentChar(char ch, StringBuilder result, TokenType finishType,
-        TokenType nonFinishType)
-    {
-        if (ch == '*' && NextChar() == '/')
+        do
         {
-            _nextCharIndex += 2;
-            Token finalToken = new ComplexToken { TokenType = finishType, Info = result.ToString() };
-            return (finalToken, false);
-        }
-        if (ch == '\n')
-        {
-            StoreNextBlockCommentLine(result, nonFinishType);
-            return (null, true);
-        }
-        result.Append(ch);
-        return (null, false);
-    }
-
-    private void StoreNextBlockCommentLine(StringBuilder result, TokenType nonFinishType)
-    {
-        _currentLineIndex++;
-        _nextCharIndex = -1; // will soon need to start at 0
-        _parsedTokens.Add(new ComplexToken { TokenType = nonFinishType, Info = result.ToString() });
-        _parsedTokens.Add(new Token { TokenType = NewLine });
+            result.Clear();
+            do
+            {
+                _nextCharIndex++;
+                char ch = CurrentChar();
+                if (ch == '*' && NextChar() == '/')
+                {
+                    _nextCharIndex += 2;
+                    return new ComplexToken { TokenType = BlockCommentEnd, Info = result.ToString() };
+                }
+                if (ch == '\n')
+                {
+                    _currentLineIndex++;
+                    _nextCharIndex = -1;
+                    _parsedTokens.Add(new ComplexToken { TokenType = BlockCommentMiddle, Info = result.ToString() });
+                    _parsedTokens.Add(new Token { TokenType = NewLine });
+                    break;
+                }
+                result.Append(ch);
+            } while (true);
+        } while (true);
     }
 
     private Token GetDollarToken()
@@ -270,45 +263,57 @@ public class Tokenizer
     private Token GetVerbatimStringToken()
     {
         StringBuilder result = new();
-        Token? finishedToken = GetVerbatimStringLine(result, VerbatimStringWhole,
-            VerbatimStringStart);
-        if (finishedToken != null) return finishedToken;
-
-        do
-        {
-            result.Clear();
-            finishedToken = GetVerbatimStringLine(result, VerbatimStringEnd,
-            VerbatimStringMiddle);
-            if (finishedToken != null) return finishedToken;
-        } while (true);
-    }
-
-    private Token? GetVerbatimStringLine(StringBuilder result, TokenType finalToken, TokenType nonFinalToken)
-    {
         do
         {
             _nextCharIndex++;
             char ch = CurrentChar();
-            if (ch == '"')
+            if (ch == '"' && NextChar() != '"')
             {
-                if (NextChar() != '"')
-                {
-                    _nextCharIndex++;
-                    return new ComplexToken { TokenType = finalToken, Info = result.ToString() };
-                }
-                else _nextCharIndex += 2; // skip next double quote
+                _nextCharIndex++;
+                return new ComplexToken { TokenType = VerbatimStringWhole, Info = result.ToString() };
+            }
+            if (ch == '"' && NextChar() == '"')
+            {
+                _nextCharIndex += 2; // skip next double quote
             }
             else if (ch == '\n')
             {
                 _currentLineIndex++;
                 _nextCharIndex = -1; // will soon need to start at 0
-                _parsedTokens.Add(new ComplexToken { TokenType = nonFinalToken, Info = result.ToString() });
+                _parsedTokens.Add(new ComplexToken { TokenType = VerbatimStringStart, Info = result.ToString() });
                 _parsedTokens.Add(new Token { TokenType = NewLine });
                 break;
             }
             result.Append(ch);
         } while (true);
-        return null;
+
+        do
+        {
+            result.Clear();
+            do
+            {
+                _nextCharIndex++;
+                char ch = CurrentChar();
+                if (ch == '"' && NextChar() != '"')
+                {
+                    _nextCharIndex++;
+                    return new ComplexToken { TokenType = VerbatimStringEnd, Info = result.ToString() };
+                }
+                if (ch == '"' && NextChar() == '"')
+                {
+                    _nextCharIndex += 2; // skip next double quote
+                }
+                else if (ch == '\n')
+                {
+                    _currentLineIndex++;
+                    _nextCharIndex = -1; // will soon need to start at 0
+                    _parsedTokens.Add(new ComplexToken { TokenType = VerbatimStringMiddle, Info = result.ToString() });
+                    _parsedTokens.Add(new Token { TokenType = NewLine });
+                    break;
+                }
+                result.Append(ch);
+            } while (true);
+        } while (true);
     }
 
     // note: is a copy of verbatim processing.
@@ -316,7 +321,58 @@ public class Tokenizer
     // for now, may work well enough, though...
     private Token GetInterpolatedVerbatimStringToken()
     {
-        return GetVerbatimStringToken();
+        StringBuilder result = new();
+        do
+        {
+            _nextCharIndex++;
+            char ch = CurrentChar();
+            if (ch == '"' && NextChar() != '"')
+            {
+                _nextCharIndex++;
+                return new ComplexToken { TokenType = VerbatimStringWhole, Info = result.ToString() };
+            }
+            if (ch == '"' && NextChar() == '"')
+            {
+                _nextCharIndex += 2; // skip next double quote
+            }
+            else if (ch == '\n')
+            {
+                _currentLineIndex++;
+                _nextCharIndex = -1; // will soon need to start at 0
+                _parsedTokens.Add(new ComplexToken { TokenType = VerbatimStringStart, Info = result.ToString() });
+                _parsedTokens.Add(new Token { TokenType = NewLine });
+                break;
+            }
+            result.Append(ch);
+        } while (true);
+
+        do
+        {
+            result.Clear();
+            do
+            {
+                _nextCharIndex++;
+                char ch = CurrentChar();
+                if (ch == '"' && NextChar() != '"')
+                {
+                    _nextCharIndex++;
+                    return new ComplexToken { TokenType = VerbatimStringEnd, Info = result.ToString() };
+                }
+                if (ch == '"' && NextChar() == '"')
+                {
+                    _nextCharIndex += 2; // skip next double quote
+                }
+                else if (ch == '\n')
+                {
+                    _currentLineIndex++;
+                    _nextCharIndex = -1; // will soon need to start at 0
+                    _parsedTokens.Add(new ComplexToken { TokenType = VerbatimStringMiddle, Info = result.ToString() });
+                    _parsedTokens.Add(new Token { TokenType = NewLine });
+                    break;
+                }
+                result.Append(ch);
+            } while (true);
+        } while (true);
     }
 
     private Token GetPlusToken()

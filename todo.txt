@@ -19,14 +19,7 @@ Too long method: GetBackupScopeType (in TokenBasedChecking\IdentifierAnalyzer.cs
 2022/10/21 21:29 [17] 2. Too long method: CapitalizationCheck (in TokenBasedChecking\IdentifierAnalyzer.cs) is 25 lines long.
 2022/10/21 21:45 => 17
 2022/10/21 21:45 => 16 :)
-2022/10/22 06:33 => +304 lines 
-6:42 280 lines 
-6:56 273 lines 
-6:59 235 lines GetVerbatimStringToken
-7:05 208 lines
 
-
-SOLVE BUG: return (new {ComplexToken }
 SOLVE BUG: Invalid variable name: _malapropisms (in TokenBasedChecking\MalapropAnalyzer.cs - method).
 SOLVE BUG: 1. Invalid variable name: _currentIndex (in TokenBasedChecking\IdentifierAnalyzer.cs - method).
 // problem seems to be if() {} followed by for, as the postBraces removes the for-reference. Why the postBraces?
