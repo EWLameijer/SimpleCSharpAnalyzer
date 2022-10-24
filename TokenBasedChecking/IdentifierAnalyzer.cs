@@ -9,8 +9,6 @@ public class IdentifierAnalyzer : BaseAnalyzer
     private enum FileModus
     { FileModusNotSet, TopLevel, FileScoped, Traditional }
 
-
-
     public IdentifierAnalyzer(FileTokenData fileData, Report report) : base(fileData, report)
     {
         // is this a top level file?
@@ -37,7 +35,41 @@ public class IdentifierAnalyzer : BaseAnalyzer
         return nextTokenType == BracesOpen ? FileModus.Traditional : FileModus.FileScoped;
     }
 
-    private void ScanVariables() //' 28 lines
+    // scan tokens until they end!
+    // scan tokens until one of 3 possibilities:
+    // 1: ; - there is a statement, check everything before it to see whether it is a variable or method declaration
+    // 2: { it is a block. Assert the type, then scan everything INSIDE the block [recursively]. When you return, add the closing } and check
+    //    2a: is it a class/record/struct/ -method - /if/else/while/for/foreach/switch-block? Then end it here, check current statement, clear current statement, and go process next statement
+    //    2b: is it a do or new block or a switch expression? Then continue to gobble up everything until the ;
+    // 3: } return
+    private void ScanVariables()
+    {
+        List<Token> currentStatement = new();
+        while (CurrentIndex < Tokens.Count)
+        {
+            TokenType currentTokenType = CurrentTokenType();
+            if (!currentTokenType.IsSkippable())
+            {
+                if (currentTokenType == SemiColon)
+                {
+                    HandleStatementEndingWithSemicolon(currentStatement, false);
+                }
+                else if (currentTokenType == BracesOpen)
+                {
+                    bool isBlockStatement = IsBlockStatement(currentStatement);
+                    CurrentIndex++;
+                    ScanVariables();
+                    currentStatement.Add(CurrentToken()); // should be }
+                    if (!isBlockStatement) HandleStatementEndingWithSemicolon(currentStatement, false);
+                }
+            }
+        }
+    }
+
+    private bool IsBlockStatement(List<Token> currentStatement) =>
+        currentStatement.Select(t => t.TokenType).Any(tt => tt == Do || tt == New);
+
+    private void ScanVariablesOld()
     {
         List<Token> currentStatement = new();
         bool postBraces = false;
@@ -74,10 +106,8 @@ public class IdentifierAnalyzer : BaseAnalyzer
 
     private void HandleStatementEndingWithClosingBraces()
     {
-        Scopes.RemoveAt(Scopes.Count - 1);
-        CurrentIndex++;
         // handle }). // fluent interface after lambda...
-        HandleClosingBraceWithPossibleClosingParenthesis();
+        //HandleClosingBraceWithPossibleClosingParenthesis();
     }
 
     private void HandleStatementEndingWithOpeningBraces(List<Token> currentStatement)
@@ -85,7 +115,7 @@ public class IdentifierAnalyzer : BaseAnalyzer
         AddScope(currentStatement);
         ProcessPossibleIdentifier(currentStatement);
         CurrentIndex++;
-        currentStatement.Clear();
         ScanVariables();
+        Scopes.RemoveAt(Scopes.Count - 1);
     }
 }

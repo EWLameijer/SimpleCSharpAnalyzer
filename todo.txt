@@ -1,8 +1,28 @@
 phase 0: refactor - possibly with common base class for MethodLength & IdentifierAnalyzer?
 rrf Better verbatimstringtoken, prepare for bugfix 1.6.2, 208 extra lines, code somewhat broken
 OK. Zonder braces kan je OOK een while krijgen while (a) b; . Dus vang while ook dan af!
+1/ fundament 2/ read[=1] 3/ debug
+
+Het probleem is dat alles te 'hairy' is geworden. Ik heb een goed algoritme nodig om te parsen,
+DAT goed checken, DAT implementeren, en DAN pas proberen te refactoren
+
+Dus bij { moet je NIET de eerste tekst weghalen
+   mockedIRepository.Setup(x => x.GetAll()).Returns(new List<Brand> { new Brand("test") }.AsQueryable());
+
+STATEMENT: mockedIRepository(Id) . Setup(Id) ( x(Id) FatArrow x(Id) . GetAll(Id) ( ) ) . Returns(Id) ( New List(Id) Less Brand(Id) Greater BracesOpen . AsQueryable(Id) ( ) ) SemiColon
+// need to conserve BracesClose?
+
 
 Waarom niet bij MethodLengthAnalyzer 
+
+if (tokenType.IsOpeningType())
+        {
+            newBracesStack.Add(tokenType);
+            if (tokenType == ParenthesesOpen && i > 0 && currentStatement[i - 1].TokenType == TokenType.Identifier)
+            {
+                return (null, true);
+            }
+        }
 
 => gewoon de semicolonhandling sharen werkt niet. Factor dat individueel uit?
 

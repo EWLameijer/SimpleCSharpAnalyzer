@@ -63,7 +63,6 @@ public class MethodLengthAnalyzer : BaseAnalyzer
         AddScope(currentStatement);
         UpdateMethodNames(currentStatement);
         CurrentIndex++;
-        currentStatement.Clear();
         ScanMethods();
     }
 

@@ -9,11 +9,15 @@ public class BaseAnalyzer
 {
     protected readonly string ContextedFilename;
     protected readonly Report Report;
-    protected const bool DoShow = false;
+    protected const bool DoShow = true;
     protected readonly List<Scope> Scopes = new();
     protected readonly IReadOnlyList<Token> Tokens;
     protected int CurrentIndex = 0;
     protected bool ReportWrongIdentifierNames = false;
+
+    protected TokenType CurrentTokenType() => Tokens[CurrentIndex].TokenType;
+
+    protected Token CurrentToken() => Tokens[CurrentIndex];
 
     protected Token? LookForNextEndingToken(List<Token> currentStatement)
     {
@@ -33,11 +37,7 @@ public class BaseAnalyzer
     protected void HandleStatementEndingWithSemicolon(List<Token> currentStatement, bool postBraces)
     {
         TokenType currentTokenType = Tokens[CurrentIndex].TokenType;
-        if (postBraces)
-        {
-            currentStatement.Clear();
-        }
-        else if (currentStatement.Count > 0 && currentStatement[0].TokenType == For)
+        if (currentStatement.Count > 0 && currentStatement[0].TokenType == For)
         {
             ProcessForLoopSetup(currentTokenType);
         }
@@ -283,7 +283,6 @@ public class BaseAnalyzer
             bool endLoop = CheckCurrentVariableCandidate(currentStatement, newBracesStack, possibleTypeStack, i);
             if (endLoop) break;
         }
-        currentStatement.Clear();
     }
 
     private bool CheckCurrentVariableCandidate(List<Token> currentStatement,
@@ -462,7 +461,6 @@ public class BaseAnalyzer
     {
         if (currentStatement.Count < 2)
         {
-            currentStatement.Clear();
             return true;
         }
         TokenType firstType = currentStatement[0].TokenType;
@@ -470,7 +468,6 @@ public class BaseAnalyzer
         if (firstType == If || firstType == Else || firstType == ForEach || firstType == Return
             || firstType == While || currentStatement.Any(t => t.TokenType == TokenType.Enum))
         {
-            currentStatement.Clear();
             return true;
         }
         return false;
