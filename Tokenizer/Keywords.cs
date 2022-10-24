@@ -7,7 +7,7 @@ internal static class Keywords
         ["abstract"] = TokenType.Abstract,
         ["as"] = TokenType.As,
         ["async"] = TokenType.Async,
-        ["async"] = TokenType.Await,
+        ["await"] = TokenType.Await,
         ["base"] = TokenType.Base,
         ["break"] = TokenType.Break,
         ["case"] = TokenType.Case,
