@@ -245,9 +245,8 @@ public class BaseAnalyzer
         List<TokenType> newBracesStack, List<TokenType> possibleTypeStack, bool onlyParsing)
     {
         TokenType tokenType = currentStatement[i].TokenType;
-        TokenType? prevTokenType = i > 0 ? currentStatement[i - 1].TokenType : null;
         if (TokenIsMethodName(currentStatement, i, newBracesStack,
-            possibleTypeStack, tokenType, prevTokenType))
+            possibleTypeStack, tokenType))
         {
             string methodName = ((ComplexToken)currentStatement[i]).Info;
             if (DoShow) Console.WriteLine($"Candidate method: {methodName}");
@@ -261,8 +260,9 @@ public class BaseAnalyzer
     }
 
     private bool TokenIsMethodName(List<Token> currentStatement, int i, List<TokenType> newBracesStack,
-        List<TokenType> possibleTypeStack, TokenType tokenType, TokenType? prevTokenType)
+        List<TokenType> possibleTypeStack, TokenType tokenType)
     {
+        TokenType? prevTokenType = i > 0 ? currentStatement[i - 1].TokenType : null;
         return newBracesStack.Count == 0 && (possibleTypeStack.Count(t => t == Identifier) > 1 ||
                     possibleTypeStack.Count(t => t == Identifier) == 1 &&
                     RepresentsClassName(currentStatement[i], Scopes)) &&

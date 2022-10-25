@@ -4,26 +4,25 @@ public class Token
 {
     public TokenType TokenType { get; set; }
 
-    public virtual string PrettyPrint()
+    private readonly Dictionary<TokenType, string> _tokenTypeRepresentations = new()
     {
-        return TokenType switch
-        {
-            TokenType.Assign => "=",
-            TokenType.BracesClose => "}",
-            TokenType.BracesOpen => "{",
-            TokenType.BracketsOpen => "[",
-            TokenType.BracketsClose => "]",
-            TokenType.Comma => ",",
-            TokenType.ExclamationMark => "!",
-            TokenType.FatArrow => "=>",
-            TokenType.Greater => ">",
-            TokenType.Less => "<",
-            TokenType.ParenthesesOpen => "(",
-            TokenType.ParenthesesClose => ")",
-            TokenType.Period => ".",
-            _ => TokenType.ToString()
-        };
-    }
+        [TokenType.Assign] = "=",
+        [TokenType.BracesClose] = "}",
+        [TokenType.BracesOpen] = "{",
+        [TokenType.BracketsOpen] = "[",
+        [TokenType.BracketsClose] = "]",
+        [TokenType.Comma] = ",",
+        [TokenType.ExclamationMark] = "!",
+        [TokenType.FatArrow] = "=>",
+        [TokenType.Greater] = ">",
+        [TokenType.Less] = "<",
+        [TokenType.ParenthesesOpen] = "(",
+        [TokenType.ParenthesesClose] = ")",
+        [TokenType.Period] = "."
+    };
+
+    public virtual string PrettyPrint() =>
+        _tokenTypeRepresentations.GetValueOrDefault(TokenType, TokenType.ToString());
 
     public override string ToString()
     {
