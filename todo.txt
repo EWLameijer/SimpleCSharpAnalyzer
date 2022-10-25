@@ -1,108 +1,26 @@
+1/ fundament 2/ read[=1] 3/ debug
 !! doe crashtest na elke verbetering
 
-5. ruim eigen code op
+1. ruim eigen code op
+---
 47 regels 
+21:47: 42 regels
 21:39: 46 regels 
 1. Too long method: ScanVariables (in TokenBasedChecking\IdentifierAnalyzer.cs) is 35 lines long.
 
 2. Too long method: ScanMethods (in TokenBasedChecking\MethodLengthAnalyzer.cs) is 37 lines long.
 
-3. Too long method: PrettyPrint (in Tokenizer\Token.cs) is 19 lines long.
+2 warnings in total
+42 extra code lines
+---
+2. check alle aanwezige repos op fouten in de scanner
 
-3 warnings in total
-46 extra code lines 
-
-
-1/ fundament 2/ read[=1] 3/ debug
 
 IDEAS:
 (gebrek aan) lege regels tussen methodes rapporteren
 Als aantal parameters groter is dan ???
 Persoonlijke settings van MaxLineLength enzo...
 Tarzan: gebrek aan ?? ?. etc.
-
-273 lines => 133 LOC 
-
-73 2022/10/22 12:24
-133 2022/10/22 10:46 
-157 2022/10/22 10:27 
-184 2022/10/22 10:04
-197 2022/10/22 9:57
-208 2022/10/22 9:46
-235 2022/10/22 9:43
-
-2022/10/21 7:42 => 31 warnings
-2022/10/21 8:04 => 27 warnings
-2022/10/21 8:32 => 26 warnings
-2022/10/21 8:46 => 25 warnings
-2022/10/21 8:54 => 24 warnings
-FIRST solve other too-long methods, as well as duplication of code 
-THEN go work on the invalid variable names
-
-2022/10/21 20:02 [24] 2. Too long method: HandleStatementEndingWithSemicolon (in TokenBasedChecking\IdentifierAnalyzer.cs) is 25 lines long.
-2022/10/21 20:05 [23] 2. Too long method: AddScope (in TokenBasedChecking\IdentifierAnalyzer.cs) is 30 lines long.
-Too long method: GetBackupScopeType (in TokenBasedChecking\IdentifierAnalyzer.cs) is 16 lines long.
-2022/10/21 20:22 [22] 2. Too long method: ProcessPossibleIdentifier (in TokenBasedChecking\IdentifierAnalyzer.cs) is 86 lines long. > 20:22 
-
-2. Too long method: ScanVariables (in TokenBasedChecking\IdentifierAnalyzer.cs) is 65 lines long.
-2022/10/21 21:01 [21] 1. Too long method: CheckForwardBraces (in TokenBasedChecking\BaseAnalyzer.cs) is 22 lines long.
-2022/10/21 21:04 [20] 1. Too long method: CanBeMethod (in TokenBasedChecking\BaseAnalyzer.cs) is 29 lines long.
-2022/10/21 21:29 [17] 2. Too long method: CapitalizationCheck (in TokenBasedChecking\IdentifierAnalyzer.cs) is 25 lines long.
-2022/10/21 21:45 => 17
-2022/10/21 21:45 => 16 :)
-
-SOLVE BUG: Invalid variable name: _malapropisms (in TokenBasedChecking\MalapropAnalyzer.cs - method).
-SOLVE BUG: 1. Invalid variable name: _currentIndex (in TokenBasedChecking\IdentifierAnalyzer.cs - method).
-// problem seems to be if() {} followed by for, as the postBraces removes the for-reference. Why the postBraces?
-// because of new{ something });
-// probably good to first clean up code
-// also 
-
-// check other examples (5 left!)
 ? check comments - commented-out code? (check for reserved words and = and () and such?
 ? magic constants?
-? Tarzan [unused tricks?]
 ? repeated code?  
-
-
-phase 5: ?
-
-
-DONE
-2) parse #region Id? ... #endregion (and remove from parsing!)
-1) parse undue @, but add warning about misuse! // needs to be sophisticated, not only when it is not an identifier!
-?fix enum : byte bug 
-phase 1: check parameters
-phase 2: Mrs Malaprop
-phase 4: method names 
-phase 6: eliminate attributes (in early stage? So ; or {/ } before [])
-phase 4: deliberately test wrong properties and names 
-phase 3: classify variables, warn when incorrect 
-phase 2: recognize protected & public & const  // -> Pascal 
-phase 1: recognize properties // -> Pascal
-1. add line length checker
-
---
-using CSharpParser;         => using CSharpParser; OK
-using DTOsAndUtilities;     => using DTOsAndUtilities; 
-using SimpleCSharpAnalyzer;
-using TokenBasedChecking;
-using Tokenizing;
-
-string pathname;
-if (args.Length == 0)
-{
-    Console.Write("Geef de naam van de directory waarvan je de code-regels wilt tellen: ");
-    pathname = Console.ReadLine()!;
-}
-else
-{
-    pathname = args[0];
-}
-
-Test();
-
-void Test()
-{
-    const string test = "D:\\Development\\ITvitae\\C#\\SimpleCSharpAnalyzer\\SimpleCSharpAnalyzer\\SimpleCSharpAnalyzer\\Program.cs";
-    FileData fileData = new(test);
