@@ -77,14 +77,6 @@ public class MethodLengthAnalyzer : BaseAnalyzer
         }
     }
 
-    private void HandleStatementEndingInClosingBraces()
-    {
-        Scopes.RemoveAt(Scopes.Count - 1);
-        CurrentIndex++;
-        // duplicate code!
-        HandleClosingBraceWithPossibleClosingParenthesis();
-    }
-
     private void IfMethodScopeEndsCheckMethodLength()
     {
         (string methodName, int tokenIndex) = _methodNames[_methodNames.Count - 1];
