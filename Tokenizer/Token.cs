@@ -41,6 +41,9 @@ public class ComplexToken : Token
         {
             TokenType.Identifier => $"{Info}(Id)",
             TokenType.String => $"{Info}(STR)",
+            TokenType.InterpolatedStringStart => $"{Info}(ISS)",
+            TokenType.InterpolatedStringMiddle => $"{Info}(ISM)",
+            TokenType.InterpolatedStringEnd => $"{Info}(ISE)",
             _ => TokenType.ToString()
         };
     }

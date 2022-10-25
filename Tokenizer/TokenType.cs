@@ -16,7 +16,7 @@ public enum TokenType
     For, ForEach, Get, Global, Goto, Greater,
     Identifier, If, Implicit, In,
     Increment, Init, Interface, Internal, InterpolatedStringEnd, InterpolatedStringMiddle,
-    InterPolatedStringStart, InterpolatedStringWhole, Is, Less,
+    InterpolatedStringStart, InterpolatedStringWhole, Is, Less,
     LineComment, Lock, LogicAnd, LogicOr, Minus, Modulus,
     Namespace, New, NewLine, Null,
     Number, Operator, Out, Override, Params, ParenthesesClose, ParenthesesOpen, Partial, Plus,

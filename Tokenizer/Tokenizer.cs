@@ -519,7 +519,7 @@ public class Tokenizer
         StringBuilder result = new();
         bool isEscapeMode = false;
         bool shouldContinue;
-        TokenType tokenType = InterPolatedStringStart;
+        TokenType tokenType = InterpolatedStringStart;
         do
         {
             (shouldContinue, isEscapeMode, tokenType) =

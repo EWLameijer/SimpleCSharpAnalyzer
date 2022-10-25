@@ -9,7 +9,7 @@ public class BaseAnalyzer
 {
     protected readonly string ContextedFilename;
     protected readonly Report Report;
-    protected const bool DoShow = true;
+    protected const bool DoShow = false;
     protected readonly List<Scope> Scopes = new();
     protected readonly IReadOnlyList<Token> Tokens;
     protected int CurrentIndex = 0;
@@ -40,10 +40,11 @@ public class BaseAnalyzer
     {
         Console.Write("Statement: ");
         Show(currentStatement);
+        HandleStatementEndingWithSemicolon(currentStatement);
         currentStatement.Clear();
     }
 
-    protected void HandleStatementEndingWithSemicolon(List<Token> currentStatement, bool postBraces)
+    protected void HandleStatementEndingWithSemicolon(List<Token> currentStatement, bool postBraces = false)
     {
         TokenType currentTokenType = Tokens[CurrentIndex].TokenType;
         if (currentStatement.Count > 0 && currentStatement[0].TokenType == For)
@@ -51,8 +52,6 @@ public class BaseAnalyzer
             ProcessForLoopSetup(currentTokenType);
         }
         else ProcessPossibleIdentifier(currentStatement);
-        CurrentIndex++;
-        currentStatement.Clear();
     }
 
     protected void HandleClosingBraceWithPossibleClosingParenthesis()

@@ -38,8 +38,10 @@ public class IdentifierAnalyzer : BaseAnalyzer
     // scan tokens until they end!
     // scan tokens until one of 3 possibilities:
     // 1: ; - there is a statement, check everything before it to see whether it is a variable or method declaration
-    // 2: { it is a block. Assert the type, then scan everything INSIDE the block [recursively]. When you return, add the closing } and check
-    //    2a: is it a class/record/struct/ -method - /if/else/while/for/foreach/switch-block? Then end it here, check current statement, clear current statement, and go process next statement
+    // 2: { it is a block. Assert the type, then scan everything INSIDE the block [recursively].
+    //    When you return, add the closing } and check
+    //    2a: is it a class/record/struct/ -method - /if/else/while/for/foreach/switch-block?
+    //    Then end it here, check current statement, clear current statement, and go process next statement
     //    2b: is it a do or new block or a switch expression? Then continue to gobble up everything until the ;
     // 3: } return
     private void ScanVariables()
@@ -52,14 +54,17 @@ public class IdentifierAnalyzer : BaseAnalyzer
             {
                 if (currentTokenType == SemiColon)
                 {
+                    currentStatement.Add(CurrentToken());
                     HandleStatement(currentStatement);
                 }
                 else if (currentTokenType == BracesOpen)
                 {
-                    currentStatement.Add(CurrentToken());
                     bool isBlockStatement = IsBlockStatement(currentStatement);
+                    currentStatement.Add(CurrentToken());
                     CurrentIndex++;
+                    AddScope(currentStatement);
                     ScanVariables();
+                    Scopes.RemoveAt(Scopes.Count - 1);
                     currentStatement.Add(CurrentToken()); // should be }
                     if (!isBlockStatement) HandleStatement(currentStatement);
                 }
