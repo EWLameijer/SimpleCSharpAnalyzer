@@ -52,22 +52,38 @@ public class IdentifierAnalyzer : BaseAnalyzer
             {
                 if (currentTokenType == SemiColon)
                 {
-                    HandleStatementEndingWithSemicolon(currentStatement, false);
+                    HandleStatement(currentStatement);
                 }
                 else if (currentTokenType == BracesOpen)
                 {
+                    currentStatement.Add(CurrentToken());
                     bool isBlockStatement = IsBlockStatement(currentStatement);
                     CurrentIndex++;
                     ScanVariables();
                     currentStatement.Add(CurrentToken()); // should be }
-                    if (!isBlockStatement) HandleStatementEndingWithSemicolon(currentStatement, false);
+                    if (!isBlockStatement) HandleStatement(currentStatement);
+                }
+                else if (currentTokenType == BracesClose)
+                {
+                    return;
+                }
+                else
+                {
+                    currentStatement.Add(CurrentToken());
                 }
             }
+            Proceed();
         }
     }
 
-    private bool IsBlockStatement(List<Token> currentStatement) =>
-        currentStatement.Select(t => t.TokenType).Any(tt => tt == Do || tt == New);
+    private static bool IsBlockStatement(List<Token> currentStatement)
+    {
+        if (currentStatement.Select(t => t.TokenType).Any(tt => tt == Do || tt == New)) return true;
+        if (currentStatement.Count < 1) return false;
+        TokenType previousToken = currentStatement[^1].TokenType;
+        if (previousToken == FatArrow || previousToken == Switch) return true;
+        return false;
+    }
 
     private void ScanVariablesOld()
     {

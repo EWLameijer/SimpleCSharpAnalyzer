@@ -9,12 +9,18 @@ public class Token
         return TokenType switch
         {
             TokenType.Assign => "=",
-            TokenType.Period => ".",
-            TokenType.ParenthesesOpen => "(",
-            TokenType.ParenthesesClose => ")",
+            TokenType.BracesClose => "}",
+            TokenType.BracesOpen => "{",
             TokenType.BracketsOpen => "[",
             TokenType.BracketsClose => "]",
+            TokenType.Comma => ",",
             TokenType.ExclamationMark => "!",
+            TokenType.FatArrow => "=>",
+            TokenType.Greater => ">",
+            TokenType.Less => "<",
+            TokenType.ParenthesesOpen => "(",
+            TokenType.ParenthesesClose => ")",
+            TokenType.Period => ".",
             _ => TokenType.ToString()
         };
     }

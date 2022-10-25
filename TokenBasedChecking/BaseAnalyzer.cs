@@ -19,6 +19,8 @@ public class BaseAnalyzer
 
     protected Token CurrentToken() => Tokens[CurrentIndex];
 
+    protected void Proceed() => CurrentIndex++;
+
     protected Token? LookForNextEndingToken(List<Token> currentStatement)
     {
         Token currentToken = Tokens[CurrentIndex];
@@ -32,6 +34,13 @@ public class BaseAnalyzer
             currentTokenType = currentToken.TokenType;
         }
         return currentToken;
+    }
+
+    protected void HandleStatement(List<Token> currentStatement)
+    {
+        Console.Write("Statement: ");
+        Show(currentStatement);
+        currentStatement.Clear();
     }
 
     protected void HandleStatementEndingWithSemicolon(List<Token> currentStatement, bool postBraces)
