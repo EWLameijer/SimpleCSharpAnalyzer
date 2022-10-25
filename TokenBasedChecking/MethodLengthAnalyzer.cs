@@ -27,43 +27,40 @@ public class MethodLengthAnalyzer : BaseAnalyzer
     private void ScanMethods()
     {
         List<Token> currentStatement = new();
-        bool postBraces = false;
-        while (CurrentIndex < Tokens.Count && Tokens[CurrentIndex].TokenType != BracesOpen)
+        while (CurrentIndex < Tokens.Count)
         {
-            Token? currentToken = LookForNextEndingToken(currentStatement);
-            if (currentToken == null) return;
-            TokenType currentTokenType = currentToken.TokenType;
-            currentStatement.Add(currentToken);
-            bool? processResult = HandleStatement(currentStatement, postBraces, currentTokenType);
-            if (processResult == null) return; else postBraces = (bool)processResult;
+            TokenType currentTokenType = CurrentTokenType();
+            if (!currentTokenType.IsSkippable())
+            {
+                if (currentTokenType == SemiColon)
+                {
+                    currentStatement.Add(CurrentToken());
+                    HandleStatement(currentStatement);
+                }
+                else if (currentTokenType == BracesOpen)
+                {
+                    bool isBlockStatement = IsBlockStatement(currentStatement);
+                    currentStatement.Add(CurrentToken());
+                    CurrentIndex++;
+                    AddScope(currentStatement);
+                    UpdateMethodNames(currentStatement);
+                    ScanMethods();
+                    Scopes.RemoveAt(Scopes.Count - 1);
+                    currentStatement.Add(CurrentToken()); // should be }
+                    if (!isBlockStatement) HandleStatement(currentStatement);
+                }
+                else if (currentTokenType == BracesClose)
+                {
+                    IfMethodScopeEndsCheckMethodLength();
+                    return;
+                }
+                else
+                {
+                    currentStatement.Add(CurrentToken());
+                }
+            }
+            Proceed();
         }
-    }
-
-    private bool? HandleStatement(List<Token> currentStatement, bool postBraces,
-        TokenType currentTokenType)
-    {
-        switch (currentTokenType)
-        {
-            case SemiColon:
-                HandleStatementEndingWithSemicolon(currentStatement, postBraces);
-                return false;
-
-            case BracesClose:
-                HandleStatementEndingInClosingBraces();
-                return null;
-
-            default: //opening braces
-                HandleStatementEndingInOpeningBraces(currentStatement);
-                return true;
-        }
-    }
-
-    private void HandleStatementEndingInOpeningBraces(List<Token> currentStatement)
-    {
-        AddScope(currentStatement);
-        UpdateMethodNames(currentStatement);
-        CurrentIndex++;
-        ScanMethods();
     }
 
     private void UpdateMethodNames(List<Token> currentStatement)
@@ -82,7 +79,6 @@ public class MethodLengthAnalyzer : BaseAnalyzer
 
     private void HandleStatementEndingInClosingBraces()
     {
-        IfMethodScopeEndsCheckMethodLength();
         Scopes.RemoveAt(Scopes.Count - 1);
         CurrentIndex++;
         // duplicate code!

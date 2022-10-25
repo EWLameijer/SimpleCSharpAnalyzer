@@ -3,9 +3,9 @@ rrf Better verbatimstringtoken, prepare for bugfix 1.6.2, 208 extra lines, code 
 OK. Zonder braces kan je OOK een while krijgen while (a) b; . Dus vang while ook dan af!
 
 1. doe crashtest na elke verbetering
-2. probeer variabelennamen weer te detecteren
-3. pas ook methodenlengtes aan
-4. probeer methodelengtes weer te detecteren
+
+4. probeer methodelengtes weer te detecteren OK. Crashtest? OK
+
 5. ruim eigen code op
 
 1/ fundament 2/ read[=1] 3/ debug

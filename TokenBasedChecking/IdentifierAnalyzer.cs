@@ -81,15 +81,6 @@ public class IdentifierAnalyzer : BaseAnalyzer
         }
     }
 
-    private static bool IsBlockStatement(List<Token> currentStatement)
-    {
-        if (currentStatement.Select(t => t.TokenType).Any(tt => tt == Do || tt == New)) return true;
-        if (currentStatement.Count < 1) return false;
-        TokenType previousToken = currentStatement[^1].TokenType;
-        if (previousToken == FatArrow || previousToken == Switch) return true;
-        return false;
-    }
-
     private void ScanVariablesOld()
     {
         List<Token> currentStatement = new();
