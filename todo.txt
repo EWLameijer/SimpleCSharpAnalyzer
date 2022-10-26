@@ -2,6 +2,8 @@
 !! doe crashtest na elke verbetering
 
 1. ruim eigen code op
+ideeen: toch 1 brace bij het scannen voor blockscope; dan Add, dan kern zelfde houden en 
+... wel, kan het niet gewoon in 1x?. Kan ik IA+MLA niet gewoon mergen?
 ---
 47 regels 
 21:47: 42 regels
@@ -23,4 +25,4 @@ Persoonlijke settings van MaxLineLength enzo...
 Tarzan: gebrek aan ?? ?. etc.
 ? check comments - commented-out code? (check for reserved words and = and () and such?
 ? magic constants?
-? repeated code?  
+? repeated code?  / DRY?

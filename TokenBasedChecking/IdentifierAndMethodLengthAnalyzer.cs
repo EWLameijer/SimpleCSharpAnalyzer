@@ -5,32 +5,139 @@ using Scope = DTOsAndUtilities.Scope;
 
 namespace TokenBasedChecking;
 
-public class BaseAnalyzer
+public class IdentifierAndMethodLengthAnalyzer
 {
-    protected readonly string ContextedFilename;
-    protected readonly Report Report;
+    private enum FileModus
+    { FileModusNotSet, TopLevel, FileScoped, Traditional }
+
+    private readonly List<(string, int)> _methodNames = new();
+    private readonly string _contextedFilename;
+    private readonly Report _report;
     protected const bool DoShow = false;
-    protected readonly List<Scope> Scopes = new();
-    protected readonly IReadOnlyList<Token> Tokens;
-    protected int CurrentIndex = 0;
-    protected bool ReportWrongIdentifierNames = false;
+    private readonly List<Scope> _scopes = new();
+    private readonly IReadOnlyList<Token> _tokens;
+    private int _currentIndex = 0;
 
-    protected TokenType CurrentTokenType() => Tokens[CurrentIndex].TokenType;
+    protected TokenType CurrentTokenType() => _tokens[_currentIndex].TokenType;
 
-    protected Token CurrentToken() => Tokens[CurrentIndex];
+    protected Token CurrentToken() => _tokens[_currentIndex];
 
-    protected void Proceed() => CurrentIndex++;
+    protected void Proceed() => _currentIndex++;
+
+    public void AddWarnings()
+    {
+        ScanMethods();
+    }
+
+    private FileModus GetFileModus()
+    {
+        if (!_tokens.Any(t => t.TokenType == Namespace)) return FileModus.TopLevel;
+        int tokenIndex = _tokens.TakeWhile(t => t.TokenType != Namespace).Count();
+        TokenType nextTokenType;
+        int indexToScan = tokenIndex;
+        do
+        {
+            indexToScan++;
+            nextTokenType = _tokens[indexToScan].TokenType;
+        } while (nextTokenType != BracesOpen && nextTokenType != SemiColon);
+        return nextTokenType == BracesOpen ? FileModus.Traditional : FileModus.FileScoped;
+    }
+
+    private void ScanMethods()
+    {
+        List<Token> currentStatement = new();
+        while (_currentIndex < _tokens.Count)
+        {
+            TokenType currentTokenType = CurrentTokenType();
+            if (!currentTokenType.IsSkippable())
+            {
+                if (currentTokenType == SemiColon)
+                {
+                    currentStatement.Add(CurrentToken());
+                    HandleStatement(currentStatement);
+                }
+                else if (currentTokenType == BracesOpen)
+                {
+                    bool isBlockStatement = IsBlockStatement(currentStatement);
+                    currentStatement.Add(CurrentToken());
+                    _currentIndex++;
+                    AddScope(currentStatement);
+                    UpdateMethodNames(currentStatement);
+                    ScanMethods();
+                    _scopes.RemoveAt(_scopes.Count - 1);
+                    IfMethodScopeEndsCheckMethodLength();
+                    currentStatement.Add(CurrentToken()); // should be }
+                    if (!isBlockStatement) HandleStatement(currentStatement);
+                }
+                else if (currentTokenType == BracesClose)
+                {
+                    return;
+                }
+                else
+                {
+                    currentStatement.Add(CurrentToken());
+                }
+            }
+            Proceed();
+        }
+    }
+
+    private void UpdateMethodNames(List<Token> currentStatement)
+    {
+        int? methodIndex = CanBeMethod(currentStatement, true);
+        if (methodIndex != null)
+        {
+            string methodName = ((ComplexToken)currentStatement[(int)methodIndex]).Info;
+            _methodNames.Add((methodName, _currentIndex));
+        }
+        else
+        {
+            _methodNames.Add(("none", _currentIndex));
+        }
+    }
+
+    private void IfMethodScopeEndsCheckMethodLength()
+    {
+        (string methodName, int tokenIndex) = _methodNames[_methodNames.Count - 1];
+        if (methodName != "none")
+        {
+            int lineCount = CountLines(tokenIndex, _currentIndex);
+            if (lineCount > 15)
+            {
+                _report.Warnings.Add($"Too long method: {methodName} " +
+                    $"(in {_contextedFilename}) is {lineCount} lines long.");
+                _report.ExtraCodeLines += lineCount - 15;
+            }
+        }
+        _methodNames.RemoveAt(_methodNames.Count - 1);
+    }
+
+    private int CountLines(int startIndex, int endIndex)
+    {
+        int newlineCount = 0;
+        bool newlineMode = false;
+        for (int i = startIndex; i < endIndex; i++)
+        {
+            if (_tokens[i].TokenType == NewLine)
+            {
+                if (!newlineMode) newlineCount++;
+                newlineMode = true;
+            }
+            else newlineMode = false;
+        }
+        return newlineCount + 1;// closing brace is also a line
+    }
 
     protected Token? LookForNextEndingToken(List<Token> currentStatement)
     {
-        Token currentToken = Tokens[CurrentIndex];
+        Token currentToken = _tokens[_currentIndex];
         TokenType currentTokenType = currentToken.TokenType;
         while (currentTokenType != SemiColon && currentTokenType != BracesOpen && currentTokenType != BracesClose)
         {
-            if (!currentTokenType.IsSkippable()) currentStatement.Add(Tokens[CurrentIndex]);
-            CurrentIndex++;
-            if (CurrentIndex == Tokens.Count) return null;
-            currentToken = Tokens[CurrentIndex];
+            if (!currentTokenType.IsSkippable()) currentStatement.Add(_tokens[_currentIndex]);
+            _currentIndex++;
+            if (_currentIndex == _tokens.Count) return null;
+            currentToken = _tokens[_currentIndex];
             currentTokenType = currentToken.TokenType;
         }
         return currentToken;
@@ -47,15 +154,14 @@ public class BaseAnalyzer
 
     protected void HandleStatement(List<Token> currentStatement)
     {
-        Console.Write("Statement: ");
-        Show(currentStatement);
+        if (DoShow) Show(currentStatement);
         HandleStatementEndingWithSemicolon(currentStatement);
         currentStatement.Clear();
     }
 
     protected void HandleStatementEndingWithSemicolon(List<Token> currentStatement, bool postBraces = false)
     {
-        TokenType currentTokenType = Tokens[CurrentIndex].TokenType;
+        TokenType currentTokenType = _tokens[_currentIndex].TokenType;
         if (currentStatement.Count > 0 && currentStatement[0].TokenType == For)
         {
             ProcessForLoopSetup(currentTokenType);
@@ -65,33 +171,34 @@ public class BaseAnalyzer
 
     protected void HandleClosingBraceWithPossibleClosingParenthesis()
     {
-        while (CurrentIndex < Tokens.Count && (Tokens[CurrentIndex].TokenType.IsSkippable() ||
-            Tokens[CurrentIndex].TokenType == ParenthesesClose))
-            CurrentIndex++;
+        while (_currentIndex < _tokens.Count && (_tokens[_currentIndex].TokenType.IsSkippable() ||
+            _tokens[_currentIndex].TokenType == ParenthesesClose))
+            _currentIndex++;
     }
 
     protected void ProcessForLoopSetup(TokenType currentTokenType)
     {
         while (currentTokenType != SemiColon)
         {
-            CurrentIndex++;
-            currentTokenType = Tokens[CurrentIndex].TokenType;
+            _currentIndex++;
+            currentTokenType = _tokens[_currentIndex].TokenType;
         }
         int depth = 0;
         while (currentTokenType != ParenthesesClose || depth > 0)
         {
             if (currentTokenType == ParenthesesOpen) depth++;
             if (currentTokenType == ParenthesesClose) depth--;
-            CurrentIndex++;
-            currentTokenType = Tokens[CurrentIndex].TokenType;
+            _currentIndex++;
+            currentTokenType = _tokens[_currentIndex].TokenType;
         }
     }
 
-    public BaseAnalyzer(FileTokenData fileData, Report report)
+    public IdentifierAndMethodLengthAnalyzer(FileTokenData fileData, Report report)
     {
-        ContextedFilename = fileData.ContextedFilename;
-        Report = report;
-        Tokens = fileData.Tokens;
+        _contextedFilename = fileData.ContextedFilename;
+        _report = report;
+        _tokens = fileData.Tokens;
+        Console.WriteLine($"{_contextedFilename} is {GetFileModus()}.");
     }
 
     internal bool IsCall(List<Token> currentStatement, int i)
@@ -150,7 +257,7 @@ public class BaseAnalyzer
         Scope basicScope = UpdateScopeWithPossibleTypeDeclaration(currentStatement);
         if (basicScope.Type != ScopeType.ScopeTypeNotSet)
         {
-            Scopes.Add(basicScope);
+            _scopes.Add(basicScope);
         }
         else
         {
@@ -171,7 +278,7 @@ public class BaseAnalyzer
         possibleScopeType = GetBackupScopeType(currentStatement, possibleScopeType);
         if (possibleScopeType != ScopeType.ScopeTypeNotSet) scopeType = possibleScopeType;
 
-        Scopes.Add(new Scope { Type = scopeType, Name = name });
+        _scopes.Add(new Scope { Type = scopeType, Name = name });
     }
 
     private ScopeType GetBackupScopeType(List<Token> currentStatement, ScopeType possibleScopeType)
@@ -250,9 +357,9 @@ public class BaseAnalyzer
         {
             string methodName = ((ComplexToken)currentStatement[i]).Info;
             if (DoShow) Console.WriteLine($"Candidate method: {methodName}");
-            if (ReportWrongIdentifierNames && !onlyParsing &&
-                !char.IsUpper(methodName[0])) Report.Warnings.Add(
-                $"Invalid method name: {methodName} (in {ContextedFilename}).");
+            if (!onlyParsing &&
+                !char.IsUpper(methodName[0])) _report.Warnings.Add(
+                $"Invalid method name: {methodName} (in {_contextedFilename}).");
             return (i, true);
         }
         if (tokenType == Assign) return (null, true);
@@ -265,7 +372,7 @@ public class BaseAnalyzer
         TokenType? prevTokenType = i > 0 ? currentStatement[i - 1].TokenType : null;
         return newBracesStack.Count == 0 && (possibleTypeStack.Count(t => t == Identifier) > 1 ||
                     possibleTypeStack.Count(t => t == Identifier) == 1 &&
-                    RepresentsClassName(currentStatement[i], Scopes)) &&
+                    RepresentsClassName(currentStatement[i], _scopes)) &&
                     IsDirectCall(currentStatement, i) && tokenType == Identifier && prevTokenType != Period;
     }
 
@@ -336,12 +443,12 @@ public class BaseAnalyzer
     private void CheckCorrectCapitalization(List<Token> currentStatement, int i,
         ScopeType currentScope, string varType)
     {
-        if (ReportWrongIdentifierNames && !CapitalizationCheck(i, currentStatement, currentScope))
+        if (!CapitalizationCheck(i, currentStatement, currentScope))
         {
             string warning = $"Invalid {varType} name: " +
-                $"{((ComplexToken)currentStatement[i]).Info} (in {ContextedFilename} - " +
+                $"{((ComplexToken)currentStatement[i]).Info} (in {_contextedFilename} - " +
                 $"{PrettyPrint(currentScope)}).";
-            Report.Warnings.Add(warning);
+            _report.Warnings.Add(warning);
         }
     }
 
@@ -368,8 +475,8 @@ public class BaseAnalyzer
             string normalName = identifierName.Substring(1);
             if (!AllCSharpKeywords.KeyWords.Contains(normalName))
             {
-                Report.Warnings.Add($"Unnecessary '@' in front of {identifierName} " +
-                    $"(in {ContextedFilename}).");
+                _report.Warnings.Add($"Unnecessary '@' in front of {identifierName} " +
+                    $"(in {_contextedFilename}).");
                 return true; // don't give second warning
             }
             startChar = identifierName[1];
@@ -389,12 +496,12 @@ public class BaseAnalyzer
 
     private ScopeType GetCurrentScope()
     {
-        ScopeType currentScope = Scopes.Count > 0 ? Scopes.Last().Type : ScopeType.File;
-        int scopeIndex = Scopes.Count - 1;
+        ScopeType currentScope = _scopes.Count > 0 ? _scopes.Last().Type : ScopeType.File;
+        int scopeIndex = _scopes.Count - 1;
         while (scopeIndex >= 0 && !currentScope.IsFoundational())
         {
-            if (Scopes[scopeIndex].Type != ScopeType.ScopeTypeNotSet)
-                currentScope = Scopes[scopeIndex].Type;
+            if (_scopes[scopeIndex].Type != ScopeType.ScopeTypeNotSet)
+                currentScope = _scopes[scopeIndex].Type;
             scopeIndex--;
         }
 
@@ -453,8 +560,8 @@ public class BaseAnalyzer
         (bool isFinished, char startChar) = GetStartCharAndName(paramName);
 
         if (!isFinished && !char.IsLower(startChar))
-            Report.Warnings.Add($"Invalid parameter name: " +
-                $"{paramName} (in {ContextedFilename}).");
+            _report.Warnings.Add($"Invalid parameter name: " +
+                $"{paramName} (in {_contextedFilename}).");
     }
 
     private (bool isFinished, char startChar) GetStartCharAndName(string paramName)
@@ -465,8 +572,8 @@ public class BaseAnalyzer
             string normalName = paramName.Substring(1);
             if (!AllCSharpKeywords.KeyWords.Contains(normalName))
             {
-                Report.Warnings.Add($"Unnecessary '@' in front of {paramName} " +
-                    $"(in {ContextedFilename}).");
+                _report.Warnings.Add($"Unnecessary '@' in front of {paramName} " +
+                    $"(in {_contextedFilename}).");
                 return (true, startChar);
             }
             startChar = paramName[1];
