@@ -3,6 +3,11 @@
 na elke feature of debug: ruim eigen code op 
 
 0. Write tool to automatically scan the diffs between an old and new file (disregarding full filepaths for now)
+	// next steps:
+	// 1. Add a ToString override for nicer display
+	// 2. make classes for the errors instead of an enum, and one parser which decides the class
+	// 3. start work on a compressor (bundle same errors)
+	// 4. start work on comparer (2 files!)
 1. check alle aanwezige repos op fouten in de scanner
 
 
