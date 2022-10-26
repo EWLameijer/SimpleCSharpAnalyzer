@@ -26,7 +26,7 @@ public class IdentifierAndMethodLengthAnalyzer
 
     public void AddWarnings()
     {
-        ScanMethods();
+        Scan();
     }
 
     private FileModus GetFileModus()
@@ -43,43 +43,40 @@ public class IdentifierAndMethodLengthAnalyzer
         return nextTokenType == BracesOpen ? FileModus.Traditional : FileModus.FileScoped;
     }
 
-    private void ScanMethods()
+    private void Scan()
     {
         List<Token> currentStatement = new();
         while (_currentIndex < _tokens.Count)
         {
             TokenType currentTokenType = CurrentTokenType();
+            if (currentTokenType == BracesClose) return;
             if (!currentTokenType.IsSkippable())
             {
+                currentStatement.Add(CurrentToken());
                 if (currentTokenType == SemiColon)
                 {
-                    currentStatement.Add(CurrentToken());
                     HandleStatement(currentStatement);
                 }
                 else if (currentTokenType == BracesOpen)
                 {
-                    bool isBlockStatement = IsBlockStatement(currentStatement);
-                    currentStatement.Add(CurrentToken());
-                    _currentIndex++;
-                    AddScope(currentStatement);
-                    UpdateMethodNames(currentStatement);
-                    ScanMethods();
-                    _scopes.RemoveAt(_scopes.Count - 1);
-                    IfMethodScopeEndsCheckMethodLength();
-                    currentStatement.Add(CurrentToken()); // should be }
-                    if (!isBlockStatement) HandleStatement(currentStatement);
-                }
-                else if (currentTokenType == BracesClose)
-                {
-                    return;
-                }
-                else
-                {
-                    currentStatement.Add(CurrentToken());
+                    HandleBracesOpen(currentStatement);
                 }
             }
             Proceed();
         }
+    }
+
+    private void HandleBracesOpen(List<Token> currentStatement)
+    {
+        bool isBlockStatement = IsBlockStatement(currentStatement);
+        _currentIndex++;
+        AddScope(currentStatement);
+        UpdateMethodNames(currentStatement);
+        Scan();
+        _scopes.RemoveAt(_scopes.Count - 1);
+        IfMethodScopeEndsCheckMethodLength();
+        currentStatement.Add(CurrentToken()); // should be }
+        if (!isBlockStatement) HandleStatement(currentStatement);
     }
 
     private void UpdateMethodNames(List<Token> currentStatement)
@@ -146,8 +143,8 @@ public class IdentifierAndMethodLengthAnalyzer
     protected static bool IsBlockStatement(List<Token> currentStatement)
     {
         if (currentStatement.Select(t => t.TokenType).Any(tt => tt == Do || tt == New)) return true;
-        if (currentStatement.Count < 1) return false;
-        TokenType previousToken = currentStatement[^1].TokenType;
+        if (currentStatement.Count < 2) return false;
+        TokenType previousToken = currentStatement[^2].TokenType;
         if (previousToken == FatArrow || previousToken == Switch) return true;
         return false;
     }

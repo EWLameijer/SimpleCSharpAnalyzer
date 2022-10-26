@@ -1,5 +1,6 @@
 1/ fundament 2/ read[=1] 3/ debug
 !! doe crashtest na elke verbetering
+29-6:34?
 
 1. ruim eigen code op
 ideeen: toch 1 brace bij het scannen voor blockscope; dan Add, dan kern zelfde houden en 
