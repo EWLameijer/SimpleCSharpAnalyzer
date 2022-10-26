@@ -2,6 +2,7 @@
 !! doe crashtest na elke verbetering
 na elke feature of debug: ruim eigen code op 
 
+0. Write tool to automatically scan the diffs between an old and new file (disregarding full filepaths for now)
 1. check alle aanwezige repos op fouten in de scanner
 
 
