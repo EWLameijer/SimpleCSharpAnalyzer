@@ -9,7 +9,7 @@ public class FileData
     public FileData(string filepath)
     {
         Lines = File.ReadAllLines(filepath);
-        string dirName = new DirectoryInfo(Path.GetDirectoryName(filepath)!).Name;
-        ContextedFilename = $"{dirName}\\{Path.GetFileName(filepath)}";
+        string[] directories = filepath.Split(Path.DirectorySeparatorChar);
+        ContextedFilename = string.Join("\\", directories.TakeLast(3));
     }
 }

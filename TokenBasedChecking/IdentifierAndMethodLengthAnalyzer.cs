@@ -50,19 +50,24 @@ public class IdentifierAndMethodLengthAnalyzer
         {
             TokenType currentTokenType = CurrentTokenType();
             if (currentTokenType == BracesClose) return;
-            if (!currentTokenType.IsSkippable())
-            {
-                currentStatement.Add(CurrentToken());
-                if (currentTokenType == SemiColon)
-                {
-                    HandleStatement(currentStatement);
-                }
-                else if (currentTokenType == BracesOpen)
-                {
-                    HandleBracesOpen(currentStatement);
-                }
-            }
+            HandleRegularToken(currentStatement, currentTokenType);
             Proceed();
+        }
+    }
+
+    private void HandleRegularToken(List<Token> currentStatement, TokenType currentTokenType)
+    {
+        if (!currentTokenType.IsSkippable())
+        {
+            currentStatement.Add(CurrentToken());
+            if (currentTokenType == SemiColon)
+            {
+                HandleStatement(currentStatement);
+            }
+            else if (currentTokenType == BracesOpen)
+            {
+                HandleBracesOpen(currentStatement);
+            }
         }
     }
 
