@@ -64,13 +64,18 @@ internal class WarningCollection
                 second._merged[key] : new List<WarningData>();
             foreach (WarningData item in entry.Value)
             {
-                string warningText = item.WarningText;
-                int idsCount = item.IdsCount;
-                if (!otherList.Any(i => i.WarningText == warningText && i.IdsCount >= idsCount))
-                {
-                    Console.WriteLine($"Missing {item}");
-                }
+                WarnIfItemNotFoundInOtherList(otherList, item);
             }
+        }
+    }
+
+    private static void WarnIfItemNotFoundInOtherList(List<WarningData> otherList, WarningData item)
+    {
+        string warningText = item.WarningText;
+        int idsCount = item.IdsCount;
+        if (!otherList.Any(i => i.WarningText == warningText && i.IdsCount >= idsCount))
+        {
+            Console.WriteLine($"Missing {item}");
         }
     }
 
@@ -83,23 +88,34 @@ internal class WarningCollection
         {
             string currentCategory = g.Key;
             Console.WriteLine(currentCategory);
-            _merged[g.Key] = new();
+            _merged[currentCategory] = new();
             IOrderedEnumerable<WarningData> ordered = g.OrderBy(v => v.ToString());
-            WarningData? last = null;
-            foreach (WarningData? currentWarning in ordered)
-            {
-                if (last == null)
-                {
-                    last = currentWarning;
-                }
-                else
-                {
-                    last = LastFromMerge(currentCategory, last, currentWarning);
-                }
-                Console.WriteLine(currentWarning);
-            }
-            if (last != null) _merged[g.Key].Add(last);
+            MergeWarnings(currentCategory, ordered);
         }
+    }
+
+    private void MergeWarnings(string currentCategory, IOrderedEnumerable<WarningData> ordered)
+    {
+        WarningData? last = null;
+        foreach (WarningData? currentWarning in ordered)
+        {
+            last = UpdateLastWarning(currentCategory, last, currentWarning);
+        }
+        if (last != null) _merged[currentCategory].Add(last);
+    }
+
+    private WarningData UpdateLastWarning(string currentCategory, WarningData? last, WarningData currentWarning)
+    {
+        if (last == null)
+        {
+            last = currentWarning;
+        }
+        else
+        {
+            last = LastFromMerge(currentCategory, last, currentWarning);
+        }
+        Console.WriteLine(currentWarning);
+        return last;
     }
 
     private WarningData LastFromMerge(string currentCategory, WarningData last, WarningData currentWarning)
