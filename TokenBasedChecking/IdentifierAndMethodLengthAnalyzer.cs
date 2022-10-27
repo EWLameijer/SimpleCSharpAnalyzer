@@ -337,21 +337,39 @@ public class IdentifierAndMethodLengthAnalyzer
     //
     public int? CanBeMethod(List<Token> currentStatement, bool onlyParsing)
     {
-        List<TokenType> newBracesStack = new();
-        List<TokenType> possibleTypeStack = new();
-        for (int i = 0; i < currentStatement.Count; i++)
+        // 1. Skip modifiers
+        int i = 0;
+        TokenType tokenType = currentStatement[i].TokenType;
+        while (tokenType.IsModifier() || tokenType.IsDeclarer())
         {
-            TokenType tokenType = currentStatement[i].TokenType;
-            if (tokenType.IsModifier() || tokenType.IsDeclarer()) continue;
-            possibleTypeStack.Add(tokenType);
-            (int newI, Token? complexIdentifier, bool canBeCorrect) = GetComplexType(currentStatement, i);
-            if (!canBeCorrect) return null;
-            (int? foundIndex, bool done) =
-                CheckMethodCloser(tokenType, newBracesStack, currentStatement, possibleTypeStack,
-                i, onlyParsing);
-            if (foundIndex != null || done) return foundIndex;
+            i++;
+            tokenType = currentStatement[i].TokenType;
         }
+
+        (int newI, Token? complexIdentifier, bool canBeCorrect) = GetComplexType(currentStatement, i);
+        if (!canBeCorrect) return null;
+        // and deal with constructors :(
+        if (IsConstructor(currentStatement, i)) return i;
+        i = newI + 1;
+        (int furtherI, Token? otherComplexIdentifier, bool canAlsoBeCorrect) = GetComplexType(currentStatement, i);
+        if (!canAlsoBeCorrect) return null;
+        if (currentStatement.Count > furtherI + 2 && currentStatement[furtherI + 1].TokenType == ParenthesesOpen)
+            return i;
         return null;
+    }
+
+    private bool IsConstructor(List<Token> currentStatement, int i)
+    {
+        if (currentStatement[i].TokenType != Identifier) return false;
+        string identifier = ((ComplexToken)currentStatement[i]).Info;
+        for (int scopeIndex = _scopes.Count - 1; scopeIndex >= 0; scopeIndex--)
+        {
+            if (_scopes[scopeIndex].Type == ScopeType.ClassRecordStruct)
+            {
+                return _scopes[scopeIndex].Name == identifier;
+            }
+        }
+        return false;
     }
 
     // get next complex identifier
@@ -371,6 +389,8 @@ public class IdentifierAndMethodLengthAnalyzer
                 if (nextTokenType == Less) return TypeParameterContents(currentStatement, i);
                 else if (nextTokenType == BracketsOpen) return (i + 2,
                         new ComplexToken { TokenType = Identifier, Info = contents + "[]" }, true);
+                else if (nextTokenType == QuestionMark) return (i + 1,
+                        new ComplexToken { TokenType = Identifier, Info = contents + "?" }, true);
                 else return (i, currentStatement[i], true);
             }
             else return (i, currentStatement[i], false);
@@ -397,7 +417,16 @@ public class IdentifierAndMethodLengthAnalyzer
             if (currentTokenType == ParenthesesOpen) depth++;
             if (currentTokenType == ParenthesesClose)
             {
-                if (depth == 0) return (j, new ComplexToken { TokenType = Identifier, Info = result.ToString() }, true);
+                if (depth == 0)
+                {
+                    if (j + 1 < currentStatement.Count && currentStatement[j + 1].TokenType == QuestionMark)
+                    {
+                        result.Append('?');
+                        j++;
+                    }
+
+                    return (j, new ComplexToken { TokenType = Identifier, Info = result.ToString() }, true);
+                }
                 depth--;
             }
         }
@@ -406,7 +435,29 @@ public class IdentifierAndMethodLengthAnalyzer
 
     private (int newIndex, Token? complexIdentifier, bool canBeCorrect) TypeParameterContents(List<Token> currentStatement, int i)
     {
-        throw new NotImplementedException();
+        StringBuilder result = new();
+        result.Append(currentStatement[i].PrettyPrint() + "<");
+        int depth = 0;
+        for (int j = i + 2; j < currentStatement.Count; j++)
+        {
+            TokenType currentTokenType = currentStatement[j].TokenType;
+            result.Append(currentStatement[j].PrettyPrint());
+            if (currentTokenType == Less) depth++;
+            if (currentTokenType == Greater)
+            {
+                if (depth == 0)
+                {
+                    if (j + 1 < currentStatement.Count && currentStatement[j + 1].TokenType == QuestionMark)
+                    {
+                        result.Append('?');
+                        j++;
+                    }
+                    return (j, new ComplexToken { TokenType = Identifier, Info = result.ToString() }, true);
+                }
+                depth--;
+            }
+        }
+        return (i, currentStatement[i], false);
     }
 
     private (int? foundIndex, bool done) CheckMethodCloser(TokenType tokenType, List<TokenType> newBracesStack,
@@ -466,6 +517,8 @@ public class IdentifierAndMethodLengthAnalyzer
         int? pos = CanBeMethod(currentStatement, false);
         if (pos != null)
         {
+            // CAN be A<T>( method)
+            while (currentStatement[(int)pos].TokenType != ParenthesesOpen) pos++;
             ProcessParameter(currentStatement, pos);
             return;
         }
@@ -615,7 +668,7 @@ public class IdentifierAndMethodLengthAnalyzer
 
     protected void ProcessParameter(List<Token> currentStatement, int? pos)
     {
-        int openParenthesisPos = (int)pos + 1;
+        int openParenthesisPos = (int)pos;
         List<Token> parameters = GetParameters(currentStatement, openParenthesisPos + 1);
         for (int index = parameters.Count - 1; index > 0; index--)
         {
