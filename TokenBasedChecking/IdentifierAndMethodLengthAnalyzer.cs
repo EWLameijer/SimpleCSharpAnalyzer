@@ -360,6 +360,7 @@ public class IdentifierAndMethodLengthAnalyzer
             if (DoShow) Console.WriteLine($"Candidate method: {methodName}");
             if (!char.IsUpper(methodName[0])) _report.Warnings.Add(
                 $"Invalid method name: {methodName} (in {_contextedFilename}).");
+            ProcessParameter(currentStatement, furtherI + 1);
             return i;
         }
         return null;
@@ -638,9 +639,8 @@ public class IdentifierAndMethodLengthAnalyzer
         return parameters;
     }
 
-    protected void ProcessParameter(List<Token> currentStatement, int pos)
+    protected void ProcessParameter(List<Token> currentStatement, int openParenthesisPos)
     {
-        int openParenthesisPos = pos;
         List<Token> parameters = GetParameters(currentStatement, openParenthesisPos + 1);
         for (int index = parameters.Count - 1; index > 0; index--)
         {

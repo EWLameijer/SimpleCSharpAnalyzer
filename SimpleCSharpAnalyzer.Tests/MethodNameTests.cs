@@ -1,6 +1,5 @@
 using DTOsAndUtilities;
 using TokenBasedChecking;
-using Tokenizing;
 
 namespace SimpleCSharpAnalyzer.Tests;
 
@@ -21,22 +20,13 @@ public class GetSingle : Base
     public void Invalid_method_names_should_be_detected()
     {
         // arrange
-        (FileTokenData fileTokenData, Report report) = Setup(InvalidMethodName);
+        (FileTokenData fileTokenData, Report report) = Utilities.Setup(InvalidMethodName);
 
         //act
         new IdentifierAndMethodLengthAnalyzer(fileTokenData, report).AddWarnings();
 
         // assert
         Assert.Single(report.Warnings);
-    }
-
-    private static (FileTokenData, Report) Setup(string text)
-    {
-        Tokenizer tokenizer = new(text.Split('\n'));
-        IReadOnlyList<Token> tokens = tokenizer.Results();
-        IReadOnlyList<Token> tokensWithoutAttributes = new TokenFilterer().Filter(tokens);
-        LineCounter counter = new(tokens);
-        return (new("", tokensWithoutAttributes), counter.CreateReport());
     }
 
     private const string DoublyReportedMethodName = @"
@@ -56,7 +46,7 @@ namespace PhoneShop.WinForms
     public void Should_not_double_report_invalid_method_names()
     {
         // arrange
-        (FileTokenData fileTokenData, Report report) = Setup(DoublyReportedMethodName);
+        (FileTokenData fileTokenData, Report report) = Utilities.Setup(DoublyReportedMethodName);
 
         //act
         new IdentifierAndMethodLengthAnalyzer(fileTokenData, report).AddWarnings();
