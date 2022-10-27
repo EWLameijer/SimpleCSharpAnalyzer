@@ -86,7 +86,7 @@ public class IdentifierAndMethodLengthAnalyzer
 
     private void UpdateMethodNames(List<Token> currentStatement)
     {
-        int? methodIndex = CanBeMethod(currentStatement, true);
+        int? methodIndex = CanBeMethod(currentStatement);
         if (methodIndex != null)
         {
             string methodName = ((ComplexToken)currentStatement[(int)methodIndex]).Info;
@@ -100,7 +100,7 @@ public class IdentifierAndMethodLengthAnalyzer
 
     private void IfMethodScopeEndsCheckMethodLength()
     {
-        (string methodName, int tokenIndex) = _methodNames[_methodNames.Count - 1];
+        (string methodName, int tokenIndex) = _methodNames[^1];
         if (methodName != "none")
         {
             int lineCount = CountLines(tokenIndex, _currentIndex);
@@ -161,7 +161,7 @@ public class IdentifierAndMethodLengthAnalyzer
         currentStatement.Clear();
     }
 
-    protected void HandleStatementEndingWithSemicolon(List<Token> currentStatement, bool postBraces = false)
+    protected void HandleStatementEndingWithSemicolon(List<Token> currentStatement)
     {
         TokenType currentTokenType = _tokens[_currentIndex].TokenType;
         if (currentStatement.Count > 0 && currentStatement[0].TokenType == For)
@@ -203,7 +203,7 @@ public class IdentifierAndMethodLengthAnalyzer
         Console.WriteLine($"{_contextedFilename} is {GetFileModus()}.");
     }
 
-    internal bool IsCall(List<Token> currentStatement, int i)
+    internal static bool IsCall(List<Token> currentStatement, int i)
     {
         if (i == currentStatement.Count - 1) return false;
         TokenType nextType = currentStatement[i + 1].TokenType;
@@ -243,7 +243,7 @@ public class IdentifierAndMethodLengthAnalyzer
         }
     }
 
-    internal bool RepresentsClassName(Token token, IReadOnlyList<Scope> scopes)
+    internal static bool RepresentsClassName(Token token, IReadOnlyList<Scope> scopes)
     {
         if (token.TokenType != Identifier) return false;
         string id = ((ComplexToken)token).Info;
@@ -275,7 +275,7 @@ public class IdentifierAndMethodLengthAnalyzer
         {
             scopeType = ScopeType.New;
         }
-        if (CanBeMethod(currentStatement, true) != null) scopeType = ScopeType.Method;
+        if (CanBeMethod(currentStatement) != null) scopeType = ScopeType.Method;
         ScopeType possibleScopeType = ScopeType.ScopeTypeNotSet;
         possibleScopeType = GetBackupScopeType(currentStatement, possibleScopeType);
         if (possibleScopeType != ScopeType.ScopeTypeNotSet) scopeType = possibleScopeType;
@@ -283,7 +283,7 @@ public class IdentifierAndMethodLengthAnalyzer
         _scopes.Add(new Scope { Type = scopeType, Name = name });
     }
 
-    private ScopeType GetBackupScopeType(List<Token> currentStatement, ScopeType possibleScopeType)
+    private static ScopeType GetBackupScopeType(List<Token> currentStatement, ScopeType possibleScopeType)
     {
         if (currentStatement.Count > 0)
         {
@@ -310,7 +310,7 @@ public class IdentifierAndMethodLengthAnalyzer
         };
     }
 
-    private Scope UpdateScopeWithPossibleTypeDeclaration(List<Token> currentStatement)
+    private static Scope UpdateScopeWithPossibleTypeDeclaration(List<Token> currentStatement)
     {
         if (currentStatement.Any(t => t.TokenType.IsTypeType()))
         {
@@ -334,7 +334,7 @@ public class IdentifierAndMethodLengthAnalyzer
     //      if next is less, get contents until you encounter greater and stackSize == 0 again => GetOrCreate<T>
     //      if THEN next is '(', it is a method!
     //
-    public int? CanBeMethod(List<Token> currentStatement, bool onlyParsing)
+    public int? CanBeMethod(List<Token> currentStatement)
     {
         // 1. Skip modifiers
         int i = 0;
@@ -376,7 +376,7 @@ public class IdentifierAndMethodLengthAnalyzer
     //         if followed by less, get contents until you encounter greater and stackSize == 0 again => Task<T>
     //         if followed by []///
     //      if next is ( get contents until you encounter ) and stacksize == 0 again
-    private (int newIndex, bool canBeCorrect) GetComplexType(List<Token> currentStatement, int i)
+    private static (int newIndex, bool canBeCorrect) GetComplexType(List<Token> currentStatement, int i)
     {
         TokenType currentTokenType = currentStatement[i].TokenType;
         if (currentTokenType == Identifier)
@@ -393,7 +393,7 @@ public class IdentifierAndMethodLengthAnalyzer
         }
     }
 
-    private (int newIndex, bool canBeCorrect) HandleIdentifier(List<Token> currentStatement, int i)
+    private static (int newIndex, bool canBeCorrect) HandleIdentifier(List<Token> currentStatement, int i)
     {
         if (i < currentStatement.Count - 1)
         {
@@ -406,7 +406,7 @@ public class IdentifierAndMethodLengthAnalyzer
         else return (i, false);
     }
 
-    private (int newIndex, bool canBeCorrect) TupleType(List<Token> currentStatement, int i)
+    private static (int newIndex, bool canBeCorrect) TupleType(List<Token> currentStatement, int i)
     {
         int depth = 0;
         for (int j = i + 1; j < currentStatement.Count; j++)
@@ -437,7 +437,7 @@ public class IdentifierAndMethodLengthAnalyzer
         return j;
     }
 
-    private (int newIndex, bool canBeCorrect) TypeParameterContents(List<Token> currentStatement, int i)
+    private static (int newIndex, bool canBeCorrect) TypeParameterContents(List<Token> currentStatement, int i)
     {
         int depth = 0;
         for (int j = i + 2; j < currentStatement.Count; j++)
@@ -466,12 +466,12 @@ public class IdentifierAndMethodLengthAnalyzer
         bool ready = ParseStraightforwardCases(currentStatement);
         if (ready) return;
         if (DoShow) Show(currentStatement);
-        int? pos = CanBeMethod(currentStatement, false);
+        int? pos = CanBeMethod(currentStatement);
         if (pos != null)
         {
             // CAN be A<T>( method)
             while (currentStatement[(int)pos].TokenType != ParenthesesOpen) pos++;
-            ProcessParameter(currentStatement, pos);
+            ProcessParameter(currentStatement, (int)pos);
             return;
         }
         CheckVariables(currentStatement);
@@ -551,7 +551,7 @@ public class IdentifierAndMethodLengthAnalyzer
         char startChar = identifierName[0];
         if (startChar == '@')
         {
-            string normalName = identifierName.Substring(1);
+            string normalName = identifierName[1..];
             if (!AllCSharpKeywords.KeyWords.Contains(normalName))
             {
                 _report.Warnings.Add($"Unnecessary '@' in front of {identifierName} " +
@@ -587,7 +587,7 @@ public class IdentifierAndMethodLengthAnalyzer
         return currentScope;
     }
 
-    private bool IsValueName(List<Token> currentStatement,
+    private static bool IsValueName(List<Token> currentStatement,
     List<TokenType> newBracesStack, List<TokenType> possibleTypeStack, int i, TokenType tokenType)
     {
         return newBracesStack.Count == 0 && possibleTypeStack.Count(t => t == Identifier) > 1 &&
@@ -618,9 +618,9 @@ public class IdentifierAndMethodLengthAnalyzer
         return parameters;
     }
 
-    protected void ProcessParameter(List<Token> currentStatement, int? pos)
+    protected void ProcessParameter(List<Token> currentStatement, int pos)
     {
-        int openParenthesisPos = (int)pos;
+        int openParenthesisPos = pos;
         List<Token> parameters = GetParameters(currentStatement, openParenthesisPos + 1);
         for (int index = parameters.Count - 1; index > 0; index--)
         {
@@ -648,7 +648,7 @@ public class IdentifierAndMethodLengthAnalyzer
         char startChar = paramName[0];
         if (startChar == '@')
         {
-            string normalName = paramName.Substring(1);
+            string normalName = paramName[1..];
             if (!AllCSharpKeywords.KeyWords.Contains(normalName))
             {
                 _report.Warnings.Add($"Unnecessary '@' in front of {paramName} " +
