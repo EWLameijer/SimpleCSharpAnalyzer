@@ -4,12 +4,12 @@ using ResultComparer;
 
 Console.WriteLine("Hello, World!");
 
-string firstFilePath = "D:\\Development\\ITvitae\\C#\\SimpleCSharpAnalyzer\\comparing_tests\\t2_1_n.txt"; //args[0];
-string secondFilePath = "D:\\Development\\ITvitae\\C#\\SimpleCSharpAnalyzer\\comparing_tests\\t2_1_o.txt"; //args[0];
+string firstFilePath = "D:\\Development\\ITvitae\\C#\\SimpleCSharpAnalyzer\\comparing_tests\\t1_4_o.txt"; //args[0];
+string secondFilePath = "D:\\Development\\ITvitae\\C#\\SimpleCSharpAnalyzer\\comparing_tests\\t1_4_n.txt"; //args[0];
 //string secondFilePath = args[1];
 
-WarningCollection allWarnings1 = new WarningCollection(firstFilePath);
-WarningCollection allWarnings2 = new WarningCollection(secondFilePath);
+WarningCollection allWarnings1 = new(firstFilePath);
+WarningCollection allWarnings2 = new(secondFilePath);
 
 Console.WriteLine("Now merging...");
 
