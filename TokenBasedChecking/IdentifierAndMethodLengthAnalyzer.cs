@@ -338,12 +338,7 @@ public class IdentifierAndMethodLengthAnalyzer
     {
         // 1. Skip modifiers
         int i = 0;
-        TokenType tokenType = currentStatement[i].TokenType;
-        while (tokenType.IsModifier() || tokenType.IsDeclarer())
-        {
-            i++;
-            tokenType = currentStatement[i].TokenType;
-        }
+        i = GetFirstIdentifier(currentStatement, i);
 
         (int newI, bool canBeCorrect) = GetComplexType(currentStatement, i);
         if (!canBeCorrect) return null;
@@ -355,6 +350,18 @@ public class IdentifierAndMethodLengthAnalyzer
         if (currentStatement.Count > furtherI + 2 && currentStatement[furtherI + 1].TokenType == ParenthesesOpen)
             return i;
         return null;
+    }
+
+    private static int GetFirstIdentifier(List<Token> currentStatement, int i)
+    {
+        TokenType tokenType = currentStatement[i].TokenType;
+        while (tokenType.IsModifier() || tokenType.IsDeclarer())
+        {
+            i++;
+            tokenType = currentStatement[i].TokenType;
+        }
+
+        return i;
     }
 
     private bool IsConstructor(List<Token> currentStatement, int i)
@@ -413,18 +420,27 @@ public class IdentifierAndMethodLengthAnalyzer
         {
             TokenType currentTokenType = currentStatement[j].TokenType;
             if (currentTokenType == ParenthesesOpen) depth++;
-            if (currentTokenType == ParenthesesClose)
-            {
-                if (depth == 0)
-                {
-                    j = AddQuestionMarkIfNeeded(currentStatement, j);
-
-                    return (j, true);
-                }
-                depth--;
-            }
+            (depth, bool shouldReturn, int newJ) =
+                HandleClosingToken(currentTokenType, depth, currentStatement, j, ParenthesesClose);
+            if (shouldReturn) return (newJ, true);
         }
         return (i, false);
+    }
+
+    private static (int depth, bool shouldReturn, int newJ) HandleClosingToken(
+        TokenType currentTokenType, int depth, List<Token> currentStatement, int j, TokenType endingToken)
+    {
+        if (currentTokenType == endingToken)
+        {
+            if (depth == 0)
+            {
+                j = AddQuestionMarkIfNeeded(currentStatement, j);
+
+                return (depth, true, j);
+            }
+            return (depth - 1, false, j);
+        }
+        return (depth, false, j);
     }
 
     private static int AddQuestionMarkIfNeeded(List<Token> currentStatement, int j)
@@ -444,18 +460,9 @@ public class IdentifierAndMethodLengthAnalyzer
         {
             TokenType currentTokenType = currentStatement[j].TokenType;
             if (currentTokenType == Less) depth++;
-            if (currentTokenType == Greater)
-            {
-                if (depth == 0)
-                {
-                    if (j + 1 < currentStatement.Count && currentStatement[j + 1].TokenType == QuestionMark)
-                    {
-                        j++;
-                    }
-                    return (j, true);
-                }
-                depth--;
-            }
+            (depth, bool shouldReturn, int newJ) =
+                HandleClosingToken(currentTokenType, depth, currentStatement, j, Greater);
+            if (shouldReturn) return (newJ, true);
         }
         return (i, false);
     }
