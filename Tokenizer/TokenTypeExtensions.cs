@@ -41,7 +41,7 @@ public static class TokenTypeExtensions
     public static bool IsModifier(this TokenType tokenType)
     {
         List<TokenType> modifiers = new() { Async, Const, Internal, Override, Public, Private,
-            Protected, Readonly, Static, Using };
+            Protected, Readonly, Static, Using, Virtual };
         return modifiers.Contains(tokenType);
     }
 
