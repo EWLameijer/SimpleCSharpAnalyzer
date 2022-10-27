@@ -1,7 +1,9 @@
 ﻿// See https://aka.ms/new-console-template for more information
+using ResultsComparer;
+
 Console.WriteLine("Hello, World!");
 
-string firstFilePath = "D:\\Development\\ITvitae\\C#\\SimpleCSharpAnalyzer\\SimpleCSharpAnalyzer\\thom2.txt"; //args[0];
+string firstFilePath = "D:\\Development\\ITvitae\\C#\\SimpleCSharpAnalyzer\\comparing_tests\\t1_9_n.txt"; //args[0];
 //string secondFilePath = args[1];
 Console.WriteLine($"Analyzing {firstFilePath}");
 string[] lines = File.ReadAllLines(firstFilePath);
@@ -12,6 +14,15 @@ List<string> reportLines = lines.SkipWhile(line => !line.StartsWith("***TOTAL"))
     TakeWhile(line => line == "" || StartsWithNumberPoint(line)).Where(line => line != "").ToList();
 IEnumerable<WarningData> errorData = reportLines.Select(line => new WarningData(line));
 foreach (WarningData ed in errorData) Console.WriteLine(ed);
+Console.WriteLine("Now merging...");
+IOrderedEnumerable<IGrouping<string, WarningData>> groups = errorData.ToLookup(e => e.WarningType).OrderBy(w => w.Key);
+foreach (IGrouping<string, WarningData>? g in groups)
+{
+    Console.WriteLine(g.Key);
+    var ordered = g.OrderBy(v => v.ToString());
+    foreach (WarningData? q in ordered) Console.WriteLine(q);
+}
+
 // then skip until 1. reached
 // while line starts with number followed by period
 // parse line
