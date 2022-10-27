@@ -349,6 +349,11 @@ public class IdentifierAndMethodLengthAnalyzer
         i = newI + 1;
         (int furtherI, bool canAlsoBeCorrect) = GetComplexType(currentStatement, i);
         if (!canAlsoBeCorrect) return null;
+        return IsAMethodAndCheckNamingStyle(currentStatement, i, furtherI);
+    }
+
+    private int? IsAMethodAndCheckNamingStyle(List<Token> currentStatement, int i, int furtherI)
+    {
         if (currentStatement.Count > furtherI + 2 && currentStatement[furtherI + 1].TokenType == ParenthesesOpen)
         {
             string methodName = ((ComplexToken)currentStatement[i]).Info;
