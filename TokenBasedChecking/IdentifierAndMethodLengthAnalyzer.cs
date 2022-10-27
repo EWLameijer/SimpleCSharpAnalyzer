@@ -377,7 +377,8 @@ public class IdentifierAndMethodLengthAnalyzer
     //         if followed by less, get contents until you encounter greater and stackSize == 0 again => Task<T>
     //         if followed by []///
     //      if next is ( get contents until you encounter ) and stacksize == 0 again
-    private (int newIndex, Token? complexIdentifier, bool canBeCorrect) GetComplexType(List<Token> currentStatement, int i)
+    private (int newIndex, Token? complexIdentifier, bool canBeCorrect)
+        GetComplexType(List<Token> currentStatement, int i)
     {
         TokenType currentTokenType = currentStatement[i].TokenType;
         if (currentTokenType == Identifier)
@@ -433,7 +434,8 @@ public class IdentifierAndMethodLengthAnalyzer
         return (i, currentStatement[i], false);
     }
 
-    private (int newIndex, Token? complexIdentifier, bool canBeCorrect) TypeParameterContents(List<Token> currentStatement, int i)
+    private (int newIndex, Token? complexIdentifier, bool canBeCorrect)
+        TypeParameterContents(List<Token> currentStatement, int i)
     {
         StringBuilder result = new();
         result.Append(currentStatement[i].PrettyPrint() + "<");

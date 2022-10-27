@@ -50,10 +50,18 @@ internal class WarningCollection
 
     public void Compare(WarningCollection other)
     {
-        foreach (KeyValuePair<string, List<WarningData>> entry in _merged)
+        Compare(this, other);
+
+        Compare(other, this);
+    }
+
+    private static void Compare(WarningCollection first, WarningCollection second)
+    {
+        foreach (KeyValuePair<string, List<WarningData>> entry in first._merged)
         {
             string key = entry.Key;
-            List<WarningData> otherList = other._merged.ContainsKey(key) ? other._merged[key] : new List<WarningData>();
+            List<WarningData> otherList = second._merged.ContainsKey(key) ?
+                second._merged[key] : new List<WarningData>();
             foreach (WarningData item in entry.Value)
             {
                 string warningText = item.WarningText;
@@ -64,30 +72,17 @@ internal class WarningCollection
                 }
             }
         }
-
-        foreach (KeyValuePair<string, List<WarningData>> entry in other._merged)
-        {
-            string key = entry.Key;
-            List<WarningData> thisList = _merged.ContainsKey(key) ? _merged[key] : new List<WarningData>();
-            foreach (WarningData item in entry.Value)
-            {
-                string warningText = item.WarningText;
-                int idsCount = item.IdsCount;
-                if (!thisList.Any(i => i.WarningText == warningText && i.IdsCount >= idsCount))
-                {
-                    Console.WriteLine($"Missing {item}");
-                }
-            }
-        }
     }
 
     private void Merge(IEnumerable<WarningData> errorData)
     {
-        IOrderedEnumerable<IGrouping<string, WarningData>> groups = errorData.ToLookup(e => e.WarningType).OrderBy(w => w.Key);
+        IOrderedEnumerable<IGrouping<string, WarningData>> groups =
+            errorData.ToLookup(e => e.WarningType).OrderBy(w => w.Key);
 
         foreach (IGrouping<string, WarningData>? g in groups)
         {
-            Console.WriteLine(g.Key);
+            string currentCategory = g.Key;
+            Console.WriteLine(currentCategory);
             _merged[g.Key] = new();
             IOrderedEnumerable<WarningData> ordered = g.OrderBy(v => v.ToString());
             WarningData? last = null;
@@ -99,19 +94,26 @@ internal class WarningCollection
                 }
                 else
                 {
-                    if (currentWarning.WarningText != last.WarningText)
-                    {
-                        _merged[g.Key].Add(last);
-                        last = currentWarning;
-                    }
-                    else
-                    {
-                        last.Merge(currentWarning);
-                    }
+                    last = LastFromMerge(currentCategory, last, currentWarning);
                 }
                 Console.WriteLine(currentWarning);
             }
             if (last != null) _merged[g.Key].Add(last);
         }
+    }
+
+    private WarningData LastFromMerge(string currentCategory, WarningData last, WarningData currentWarning)
+    {
+        if (currentWarning.WarningText != last.WarningText)
+        {
+            _merged[currentCategory].Add(last);
+            last = currentWarning;
+        }
+        else
+        {
+            last.Merge(currentWarning);
+        }
+
+        return last;
     }
 }
