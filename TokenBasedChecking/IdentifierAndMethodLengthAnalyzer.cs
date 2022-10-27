@@ -62,7 +62,7 @@ public class IdentifierAndMethodLengthAnalyzer
             currentStatement.Add(CurrentToken());
             if (currentTokenType == SemiColon)
             {
-                HandleStatement(currentStatement);
+                HandleStatementWithSemiColon(currentStatement);
             }
             else if (currentTokenType == BracesOpen)
             {
@@ -82,7 +82,7 @@ public class IdentifierAndMethodLengthAnalyzer
         _scopes.RemoveAt(_scopes.Count - 1);
         IfMethodScopeEndsCheckMethodLength();
         currentStatement.Add(CurrentToken()); // should be }
-        if (!isBlockStatement) HandleStatement(currentStatement);
+        if (!isBlockStatement) currentStatement.Clear();
     }
 
     private int? UpdateMethodNames(List<Token> currentStatement)
@@ -156,7 +156,7 @@ public class IdentifierAndMethodLengthAnalyzer
         return false;
     }
 
-    protected void HandleStatement(List<Token> currentStatement)
+    protected void HandleStatementWithSemiColon(List<Token> currentStatement)
     {
         if (DoShow) Show(currentStatement);
         HandleStatementEndingWithSemicolon(currentStatement);

@@ -6,12 +6,11 @@ So:
 	Scan
 		HandleRegularToken
 			HandleBracesOpen
-				AddScope 
-					AddNonScopeType
-						CanBeMethod
-				UpdateMethodNames
+				*UpdateMethodNames
 					CanBeMethod
-			HandleStatement
-				HandleStatementEndingWithSemicolon
+						IsAMethodAndCheckNamingStyle
+			*HandleStatement
+				*HandleStatementEndingWithSemicolon
 					ProcessPossibleIdentifier
 						CanBeMethod
+							IsAMethodAndCheckNamingStyle
