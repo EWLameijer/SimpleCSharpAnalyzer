@@ -21,6 +21,7 @@ internal class WarningData
         ["Too long method"] = MethodTooLongWarning.Parse,
         ["Too long line in"] = LineTooLongWarning.Parse,
         ["Invalid parameter name"] = InvalidParameterNameWarning.Parse,
+        ["Invalid property name"] = InvalidPropertyNameWarning.Parse,
         ["Invalid method name"] = InvalidMethodNameWarning.Parse,
         ["In"] = MalapropWarning.Parse
     };

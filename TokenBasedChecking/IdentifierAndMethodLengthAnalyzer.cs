@@ -82,7 +82,11 @@ public class IdentifierAndMethodLengthAnalyzer
         _scopes.RemoveAt(_scopes.Count - 1);
         IfMethodScopeEndsCheckMethodLength();
         currentStatement.Add(CurrentToken()); // should be }
-        if (!isBlockStatement) currentStatement.Clear();
+        if (!isBlockStatement)
+        {
+            CheckVariables(currentStatement); // property?
+            currentStatement.Clear();
+        }
     }
 
     private int? UpdateMethodNames(List<Token> currentStatement)

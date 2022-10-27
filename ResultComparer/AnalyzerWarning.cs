@@ -152,6 +152,38 @@ internal class InvalidParameterNameWarning : AnalyzerWarning
     }
 }
 
+internal class InvalidPropertyNameWarning : AnalyzerWarning
+{
+    public override string WarningType => "INVALID_PROPERTY_NAME";
+
+    private const int PropertyNameIndex = 3;
+    private const int FileNameIndex = 5;
+
+    private readonly string _propertyName;
+
+    private InvalidPropertyNameWarning(string propertyName, string filename) : base(filename[..^2])
+    {
+        _propertyName = propertyName;
+    }
+
+    public override string ToString() => $"{WarningType}: {_propertyName} in {Filename}";
+
+    public static InvalidPropertyNameWarning Parse(string[] lineParts) =>
+        new(lineParts[PropertyNameIndex], lineParts[FileNameIndex]);
+
+    public override bool Equals(object? obj)
+    {
+        if (obj is not InvalidPropertyNameWarning) return false;
+        InvalidPropertyNameWarning other = (InvalidPropertyNameWarning)obj;
+        return _propertyName == other._propertyName && Filename == other.Filename;
+    }
+
+    public override int GetHashCode()
+    {
+        return base.GetHashCode();
+    }
+}
+
 internal class InvalidMethodNameWarning : AnalyzerWarning
 {
     public override string WarningType => "INVALID_METHOD_NAME";
@@ -189,7 +221,7 @@ internal class MalapropWarning : AnalyzerWarning
     public override string WarningType => "INVALID_TYPE_USAGE";
 
     private const int MalapropIndex = 7;
-    private const int FileNameIndex = 2;
+    private const int FileNameIndex = 1;
 
     private readonly string _malaprop;
 

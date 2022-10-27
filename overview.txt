@@ -16,3 +16,6 @@ So:
 							IsAMethodAndCheckNamingStyle
 
 CheckParameterName -> ProcessParameter -> ProcessPossibleIdentifier -> HandleStatementEndingWithSemicolon -> HandleStatementWithSemiColon
+
+// for variables AND properties -quite some properties end with {}
+CheckCorrectCapitalization -> VariableNameAtThisLocation -> CheckCurrentVariableCandidate -> CheckVariables -> ProcessPossibleIdentifier
