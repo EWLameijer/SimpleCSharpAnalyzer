@@ -16,11 +16,46 @@ IEnumerable<WarningData> errorData = reportLines.Select(line => new WarningData(
 foreach (WarningData ed in errorData) Console.WriteLine(ed);
 Console.WriteLine("Now merging...");
 IOrderedEnumerable<IGrouping<string, WarningData>> groups = errorData.ToLookup(e => e.WarningType).OrderBy(w => w.Key);
+Dictionary<string, List<WarningData>> merged = new();
 foreach (IGrouping<string, WarningData>? g in groups)
 {
     Console.WriteLine(g.Key);
-    var ordered = g.OrderBy(v => v.ToString());
-    foreach (WarningData? q in ordered) Console.WriteLine(q);
+    merged[g.Key] = new();
+    IOrderedEnumerable<WarningData> ordered = g.OrderBy(v => v.ToString());
+    WarningData last = null;
+    foreach (WarningData? currentWarning in ordered)
+    {
+        if (last == null)
+        {
+            last = currentWarning;
+        }
+        else
+        {
+            if (currentWarning.WarningText != last.WarningText)
+            {
+                merged[g.Key].Append(last);
+                last = currentWarning;
+            }
+            else
+            {
+                last.Merge(currentWarning);
+            }
+        }
+        Console.WriteLine(currentWarning);
+    }
+    merged[g.Key].Append(last);
+}
+
+Console.WriteLine("Merged!");
+
+foreach (KeyValuePair<string, List<WarningData>> g in merged)
+{
+    Console.WriteLine(g.Key);
+    IOrderedEnumerable<WarningData> ordered = g.Value.OrderBy(v => v.ToString());
+    foreach (WarningData? currentWarning in ordered)
+    {
+        Console.WriteLine(currentWarning);
+    }
 }
 
 // then skip until 1. reached
