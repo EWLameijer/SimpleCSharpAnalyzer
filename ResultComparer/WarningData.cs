@@ -4,7 +4,9 @@ namespace ResultsComparer;
 
 internal class WarningData
 {
-    private readonly List<int> _ids;
+    private readonly List<int> _ids = new();
+
+    public int IdsCount => _ids.Count;
 
     private readonly AnalyzerWarning _warning;
 
@@ -18,14 +20,15 @@ internal class WarningData
         ["Invalid variable name"] = InvalidVariableNameWarning.Parse,
         ["Too long method"] = MethodTooLongWarning.Parse,
         ["Too long line in"] = LineTooLongWarning.Parse,
-        ["Invalid parameter name"] = InvalidParameterNameWarning.Parse
+        ["Invalid parameter name"] = InvalidParameterNameWarning.Parse,
+        ["Invalid method name"] = InvalidMethodNameWarning.Parse
     };
 
     public WarningData(string line)
     {
         string idAsString = string.Join("", line.TakeWhile(c => char.IsDigit(c)));
         string startOfError = string.Concat(line.Skip(idAsString.Length + 2));
-        _ids.Append(int.Parse(idAsString));
+        _ids.Add(int.Parse(idAsString));
         // Console.WriteLine($"Id is {_id}, line is {startOfError}");
         _warning = Parse(startOfError);
     }
@@ -43,6 +46,7 @@ internal class WarningData
 
     public override string ToString()
     {
-        return $"{_warning} [{_ids}]";
+        string[] idsAsStrings = _ids.Select(i => $"{i}").ToArray();
+        return $"{_warning} [{string.Join(", ", idsAsStrings)}]";
     }
 }

@@ -6,7 +6,9 @@ internal abstract class AnalyzerWarning
 
     protected AnalyzerWarning(string filename)
     {
-        Filename = filename;
+        string[] parts = filename.Split("\\");
+
+        Filename = string.Join("\\", parts.TakeLast(2));
     }
 
     public abstract string WarningType { get; }
@@ -142,6 +144,38 @@ internal class InvalidParameterNameWarning : AnalyzerWarning
         if (obj is not InvalidParameterNameWarning) return false;
         InvalidParameterNameWarning other = (InvalidParameterNameWarning)obj;
         return _parameterName == other._parameterName && Filename == other.Filename;
+    }
+
+    public override int GetHashCode()
+    {
+        return base.GetHashCode();
+    }
+}
+
+internal class InvalidMethodNameWarning : AnalyzerWarning
+{
+    public override string WarningType => "INVALID_METHOD_NAME";
+
+    private const int MethodNameIndex = 3;
+    private const int FileNameIndex = 5;
+
+    private readonly string _methodName;
+
+    private InvalidMethodNameWarning(string parameterName, string filename) : base(filename[..^2])
+    {
+        _methodName = parameterName;
+    }
+
+    public override string ToString() => $"{WarningType}: {_methodName} in {Filename}";
+
+    public static InvalidMethodNameWarning Parse(string[] lineParts) =>
+        new(lineParts[MethodNameIndex], lineParts[FileNameIndex]);
+
+    public override bool Equals(object? obj)
+    {
+        if (obj is not InvalidMethodNameWarning) return false;
+        InvalidMethodNameWarning other = (InvalidMethodNameWarning)obj;
+        return _methodName == other._methodName && Filename == other.Filename;
     }
 
     public override int GetHashCode()
