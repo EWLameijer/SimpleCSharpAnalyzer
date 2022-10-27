@@ -25,4 +25,25 @@ void DrawPhoneInformation(Phone selectedPhone, int PressedKey)
         // assert
         Assert.Single(report.Warnings);
     }
+
+    private const string SingleDetectionInInterfaces = @"
+namespace PhoneShop.Domain;
+
+public interface IBrandService
+{
+    Task Delete(Guid Id);
+}";
+
+    [Fact]
+    public void Should_detect_singly_also_in_interface()
+    {
+        // arrange
+        (FileTokenData fileTokenData, Report report) = Utilities.Setup(SingleDetectionInInterfaces);
+
+        //act
+        new IdentifierAndMethodLengthAnalyzer(fileTokenData, report).AddWarnings();
+
+        // assert
+        Assert.Single(report.Warnings);
+    }
 }

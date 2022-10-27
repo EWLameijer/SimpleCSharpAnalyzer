@@ -496,10 +496,8 @@ public class IdentifierAndMethodLengthAnalyzer
         {
             // CAN be A<T>( method)
             while (currentStatement[(int)pos].TokenType != ParenthesesOpen) pos++;
-            ProcessParameter(currentStatement, (int)pos);
-            return;
         }
-        CheckVariables(currentStatement);
+        else CheckVariables(currentStatement);
     }
 
     private void CheckVariables(List<Token> currentStatement)

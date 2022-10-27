@@ -4,8 +4,8 @@ using ResultComparer;
 
 Console.WriteLine("Hello, World!");
 
-string firstFilePath = "D:\\Development\\ITvitae\\C#\\SimpleCSharpAnalyzer\\comparing_tests\\t1_6_o.txt"; //args[0];
-string secondFilePath = "D:\\Development\\ITvitae\\C#\\SimpleCSharpAnalyzer\\comparing_tests\\t1_6_n.txt"; //args[0];
+string firstFilePath = "D:\\Development\\ITvitae\\C#\\SimpleCSharpAnalyzer\\comparing_tests\\t2_2_o.txt"; //args[0];
+string secondFilePath = "D:\\Development\\ITvitae\\C#\\SimpleCSharpAnalyzer\\comparing_tests\\t2_2_n.txt"; //args[0];
 //string secondFilePath = args[1];
 
 WarningCollection allWarnings1 = new(firstFilePath);
