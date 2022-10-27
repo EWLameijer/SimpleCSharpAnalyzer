@@ -1,9 +1,9 @@
 ﻿using DTOsAndUtilities;
 using Tokenizing;
 
-namespace CSharpParser;
+namespace SimpleCSharpAnalyzer;
 
-internal class LineCounter
+public class LineCounter
 {
     private readonly IReadOnlyList<Token> _tokens;
     private int _codeLines;
@@ -18,7 +18,7 @@ internal class LineCounter
         _tokens = tokens;
     }
 
-    internal Report CreateReport()
+    public Report CreateReport()
     {
         ClassifyLines();
         return new Report

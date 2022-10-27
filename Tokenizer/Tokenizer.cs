@@ -17,6 +17,13 @@ public class Tokenizer
 
     public IReadOnlyList<Token> Results()
     {
+        if (_parsedTokens.Count == 0)
+        {
+            while (HasNextToken())
+            {
+                Get();
+            }
+        }
         return _parsedTokens;
     }
 

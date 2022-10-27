@@ -21,4 +21,9 @@
     </PackageReference>
   </ItemGroup>
 
+  <ItemGroup>
+    <ProjectReference Include="..\SimpleCSharpAnalyzer\SimpleCSharpAnalyzer.csproj" />
+    <ProjectReference Include="..\TokenBasedChecking\TokenBasedChecking.csproj" />
+  </ItemGroup>
+
 </Project>

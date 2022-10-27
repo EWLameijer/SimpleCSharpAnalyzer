@@ -9,6 +9,7 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Tokenizing", "Tokenizer\Tok
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution Items", "{20EFFC21-EA71-42F9-9A8E-74EA0A029CEC}"
 	ProjectSection(SolutionItems) = preProject
+		overview.txt = overview.txt
 		todo.txt = todo.txt
 	EndProjectSection
 EndProject
@@ -18,7 +19,7 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "DTOsAndUtilities", "DTOsAnd
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "SimpleCSharpAnalyzer.Tests", "SimpleCSharpAnalyzer.Tests\SimpleCSharpAnalyzer.Tests.csproj", "{B1049A70-0CE4-4E67-B436-50FE26663AC2}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ResultComparer", "ResultComparer\ResultComparer.csproj", "{C07A5D46-4CCE-4165-A563-087860305D1D}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "ResultComparer", "ResultComparer\ResultComparer.csproj", "{C07A5D46-4CCE-4165-A563-087860305D1D}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution

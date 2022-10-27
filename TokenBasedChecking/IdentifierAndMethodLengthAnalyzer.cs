@@ -75,8 +75,9 @@ public class IdentifierAndMethodLengthAnalyzer
     {
         bool isBlockStatement = IsBlockStatement(currentStatement);
         _currentIndex++;
-        AddScope(currentStatement);
-        UpdateMethodNames(currentStatement);
+        int? methodIndex = UpdateMethodNames(currentStatement);
+        AddScope(currentStatement, methodIndex);
+
         Scan();
         _scopes.RemoveAt(_scopes.Count - 1);
         IfMethodScopeEndsCheckMethodLength();
@@ -84,7 +85,7 @@ public class IdentifierAndMethodLengthAnalyzer
         if (!isBlockStatement) HandleStatement(currentStatement);
     }
 
-    private void UpdateMethodNames(List<Token> currentStatement)
+    private int? UpdateMethodNames(List<Token> currentStatement)
     {
         int? methodIndex = CanBeMethod(currentStatement);
         if (methodIndex != null)
@@ -96,6 +97,7 @@ public class IdentifierAndMethodLengthAnalyzer
         {
             _methodNames.Add(("none", _currentIndex));
         }
+        return methodIndex;
     }
 
     private void IfMethodScopeEndsCheckMethodLength()
@@ -254,7 +256,7 @@ public class IdentifierAndMethodLengthAnalyzer
         return false;
     }
 
-    internal void AddScope(List<Token> currentStatement)
+    internal void AddScope(List<Token> currentStatement, int? methodIndex)
     {
         Scope basicScope = UpdateScopeWithPossibleTypeDeclaration(currentStatement);
         if (basicScope.Type != ScopeType.ScopeTypeNotSet)
@@ -263,11 +265,11 @@ public class IdentifierAndMethodLengthAnalyzer
         }
         else
         {
-            AddNonTypeScope(currentStatement);
+            AddNonTypeScope(currentStatement, methodIndex);
         }
     }
 
-    private void AddNonTypeScope(List<Token> currentStatement)
+    private void AddNonTypeScope(List<Token> currentStatement, int? methodIndex)
     {
         ScopeType scopeType = ScopeType.ScopeTypeNotSet;
         string name = "unknown";
@@ -275,7 +277,7 @@ public class IdentifierAndMethodLengthAnalyzer
         {
             scopeType = ScopeType.New;
         }
-        if (CanBeMethod(currentStatement) != null) scopeType = ScopeType.Method;
+        if (methodIndex != null) scopeType = ScopeType.Method;
         ScopeType possibleScopeType = ScopeType.ScopeTypeNotSet;
         possibleScopeType = GetBackupScopeType(currentStatement, possibleScopeType);
         if (possibleScopeType != ScopeType.ScopeTypeNotSet) scopeType = possibleScopeType;
@@ -348,7 +350,13 @@ public class IdentifierAndMethodLengthAnalyzer
         (int furtherI, bool canAlsoBeCorrect) = GetComplexType(currentStatement, i);
         if (!canAlsoBeCorrect) return null;
         if (currentStatement.Count > furtherI + 2 && currentStatement[furtherI + 1].TokenType == ParenthesesOpen)
+        {
+            string methodName = ((ComplexToken)currentStatement[i]).Info;
+            if (DoShow) Console.WriteLine($"Candidate method: {methodName}");
+            if (!char.IsUpper(methodName[0])) _report.Warnings.Add(
+                $"Invalid method name: {methodName} (in {_contextedFilename}).");
             return i;
+        }
         return null;
     }
 

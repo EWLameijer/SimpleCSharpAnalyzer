@@ -1,0 +1,17 @@
+CanBeMethod -> ProcessPossibleIdentifier -> HandleStatementEndingWithSemicolon -> HandleStatement -> HandleRegularToken -> Scan 
+			-> UpdateMethodNames -> HandleBracesOpen -> HandleRegularToken
+			-> AddNonTypeScope -> AddScope -> HandleBracesOpen
+
+So:
+	Scan
+		HandleRegularToken
+			HandleBracesOpen
+				AddScope 
+					AddNonScopeType
+						CanBeMethod
+				UpdateMethodNames
+					CanBeMethod
+			HandleStatement
+				HandleStatementEndingWithSemicolon
+					ProcessPossibleIdentifier
+						CanBeMethod

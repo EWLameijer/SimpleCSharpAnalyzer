@@ -1,5 +1,4 @@
-﻿using CSharpParser;
-using DTOsAndUtilities;
+﻿using DTOsAndUtilities;
 using SimpleCSharpAnalyzer;
 using TokenBasedChecking;
 using Tokenizing;
@@ -30,14 +29,9 @@ foreach (string relevantFileName in relevantFileNames)
 {
     FileData fileData = new(relevantFileName);
 
-    Tokenizer tokenizer = new(fileData.Lines);
-
     Console.WriteLine($"\n***{fileData.ContextedFilename}***");
 
-    while (tokenizer.HasNextToken())
-    {
-        tokenizer.Get();
-    }
+    Tokenizer tokenizer = new(fileData.Lines);
     IReadOnlyList<Token> tokens = tokenizer.Results();
     IReadOnlyList<Token> tokensWithoutAttributes = new TokenFilterer().Filter(tokens);
     (IReadOnlyList<Token> atLessIdentifiers, List<string> warnings) =

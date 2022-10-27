@@ -2,7 +2,7 @@
 
 namespace SimpleCSharpAnalyzer;
 
-internal class TokenFilterer
+public class TokenFilterer
 {
     public IReadOnlyList<Token> Filter(IReadOnlyList<Token> tokens) =>
         HandlePragmas(HandleDecimalLiterals(FilterOutAttributes(tokens)));
