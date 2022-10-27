@@ -1,5 +1,4 @@
-﻿using System.Text;
-using DTOsAndUtilities;
+﻿using DTOsAndUtilities;
 using Tokenizing;
 using static Tokenizing.TokenType;
 using Scope = DTOsAndUtilities.Scope;
@@ -346,12 +345,12 @@ public class IdentifierAndMethodLengthAnalyzer
             tokenType = currentStatement[i].TokenType;
         }
 
-        (int newI, Token? complexIdentifier, bool canBeCorrect) = GetComplexType(currentStatement, i);
+        (int newI, bool canBeCorrect) = GetComplexType(currentStatement, i);
         if (!canBeCorrect) return null;
         // and deal with constructors :(
         if (IsConstructor(currentStatement, i)) return i;
         i = newI + 1;
-        (int furtherI, Token? otherComplexIdentifier, bool canAlsoBeCorrect) = GetComplexType(currentStatement, i);
+        (int furtherI, bool canAlsoBeCorrect) = GetComplexType(currentStatement, i);
         if (!canAlsoBeCorrect) return null;
         if (currentStatement.Count > furtherI + 2 && currentStatement[furtherI + 1].TokenType == ParenthesesOpen)
             return i;
@@ -377,24 +376,12 @@ public class IdentifierAndMethodLengthAnalyzer
     //         if followed by less, get contents until you encounter greater and stackSize == 0 again => Task<T>
     //         if followed by []///
     //      if next is ( get contents until you encounter ) and stacksize == 0 again
-    private (int newIndex, Token? complexIdentifier, bool canBeCorrect)
-        GetComplexType(List<Token> currentStatement, int i)
+    private (int newIndex, bool canBeCorrect) GetComplexType(List<Token> currentStatement, int i)
     {
         TokenType currentTokenType = currentStatement[i].TokenType;
         if (currentTokenType == Identifier)
         {
-            string contents = ((ComplexToken)currentStatement[i]).Info;
-            if (i < currentStatement.Count - 1)
-            {
-                TokenType nextTokenType = currentStatement[i + 1].TokenType;
-                if (nextTokenType == Less) return TypeParameterContents(currentStatement, i);
-                else if (nextTokenType == BracketsOpen) return (i + 2,
-                        new ComplexToken { TokenType = Identifier, Info = contents + "[]" }, true);
-                else if (nextTokenType == QuestionMark) return (i + 1,
-                        new ComplexToken { TokenType = Identifier, Info = contents + "?" }, true);
-                else return (i, currentStatement[i], true);
-            }
-            else return (i, currentStatement[i], false);
+            return HandleIdentifier(currentStatement, i);
         }
         else if (currentTokenType == ParenthesesOpen)
         {
@@ -402,48 +389,60 @@ public class IdentifierAndMethodLengthAnalyzer
         }
         else
         {
-            return (i, null, false);
+            return (i, false);
         }
     }
 
-    private (int newIndex, Token? complexIdentifier, bool canBeCorrect) TupleType(List<Token> currentStatement, int i)
+    private (int newIndex, bool canBeCorrect) HandleIdentifier(List<Token> currentStatement, int i)
     {
-        StringBuilder result = new();
-        result.Append("(");
+        if (i < currentStatement.Count - 1)
+        {
+            TokenType nextTokenType = currentStatement[i + 1].TokenType;
+            if (nextTokenType == Less) return TypeParameterContents(currentStatement, i);
+            else if (nextTokenType == BracketsOpen) return (i + 2, true);
+            else if (nextTokenType == QuestionMark) return (i + 1, true);
+            else return (i, true);
+        }
+        else return (i, false);
+    }
+
+    private (int newIndex, bool canBeCorrect) TupleType(List<Token> currentStatement, int i)
+    {
         int depth = 0;
         for (int j = i + 1; j < currentStatement.Count; j++)
         {
             TokenType currentTokenType = currentStatement[j].TokenType;
-            result.Append(currentStatement[i].PrettyPrint());
             if (currentTokenType == ParenthesesOpen) depth++;
             if (currentTokenType == ParenthesesClose)
             {
                 if (depth == 0)
                 {
-                    if (j + 1 < currentStatement.Count && currentStatement[j + 1].TokenType == QuestionMark)
-                    {
-                        result.Append('?');
-                        j++;
-                    }
+                    j = AddQuestionMarkIfNeeded(currentStatement, j);
 
-                    return (j, new ComplexToken { TokenType = Identifier, Info = result.ToString() }, true);
+                    return (j, true);
                 }
                 depth--;
             }
         }
-        return (i, currentStatement[i], false);
+        return (i, false);
     }
 
-    private (int newIndex, Token? complexIdentifier, bool canBeCorrect)
-        TypeParameterContents(List<Token> currentStatement, int i)
+    private static int AddQuestionMarkIfNeeded(List<Token> currentStatement, int j)
     {
-        StringBuilder result = new();
-        result.Append(currentStatement[i].PrettyPrint() + "<");
+        if (j + 1 < currentStatement.Count && currentStatement[j + 1].TokenType == QuestionMark)
+        {
+            j++;
+        }
+
+        return j;
+    }
+
+    private (int newIndex, bool canBeCorrect) TypeParameterContents(List<Token> currentStatement, int i)
+    {
         int depth = 0;
         for (int j = i + 2; j < currentStatement.Count; j++)
         {
             TokenType currentTokenType = currentStatement[j].TokenType;
-            result.Append(currentStatement[j].PrettyPrint());
             if (currentTokenType == Less) depth++;
             if (currentTokenType == Greater)
             {
@@ -451,63 +450,14 @@ public class IdentifierAndMethodLengthAnalyzer
                 {
                     if (j + 1 < currentStatement.Count && currentStatement[j + 1].TokenType == QuestionMark)
                     {
-                        result.Append('?');
                         j++;
                     }
-                    return (j, new ComplexToken { TokenType = Identifier, Info = result.ToString() }, true);
+                    return (j, true);
                 }
                 depth--;
             }
         }
-        return (i, currentStatement[i], false);
-    }
-
-    private (int? foundIndex, bool done) CheckMethodCloser(TokenType tokenType, List<TokenType> newBracesStack,
-        List<Token> currentStatement, List<TokenType> possibleTypeStack, int i, bool onlyParsing)
-    {
-        if (tokenType.IsOpeningType()) newBracesStack.Add(tokenType);
-        else if (tokenType.IsClosingType()) CheckForwardBraces(tokenType, newBracesStack);
-        else
-        {
-            return CheckWhetherLineIsMethod(currentStatement, i, newBracesStack, possibleTypeStack,
-                onlyParsing);
-        }
-        return (null, false);
-    }
-
-    private (int? foundIndex, bool done) CheckWhetherLineIsMethod(List<Token> currentStatement, int i,
-        List<TokenType> newBracesStack, List<TokenType> possibleTypeStack, bool onlyParsing)
-    {
-        TokenType tokenType = currentStatement[i].TokenType;
-        if (TokenIsMethodName(currentStatement, i, newBracesStack,
-            possibleTypeStack, tokenType))
-        {
-            string methodName = ((ComplexToken)currentStatement[i]).Info;
-            if (DoShow) Console.WriteLine($"Candidate method: {methodName}");
-            if (!onlyParsing &&
-                !char.IsUpper(methodName[0])) _report.Warnings.Add(
-                $"Invalid method name: {methodName} (in {_contextedFilename}).");
-            return (i, true);
-        }
-        if (tokenType == Assign) return (null, true);
-        return (null, false);
-    }
-
-    private bool TokenIsMethodName(List<Token> currentStatement, int i, List<TokenType> newBracesStack,
-        List<TokenType> possibleTypeStack, TokenType tokenType)
-    {
-        TokenType? prevTokenType = i > 0 ? currentStatement[i - 1].TokenType : null;
-        return newBracesStack.Count == 0 && (possibleTypeStack.Count(t => t == Identifier) > 1 ||
-                    possibleTypeStack.Count(t => t == Identifier) == 1 &&
-                    RepresentsClassName(currentStatement[i], _scopes)) &&
-                    IsDirectCall(currentStatement, i) && tokenType == Identifier && prevTokenType != Period;
-    }
-
-    private static bool IsDirectCall(List<Token> currentStatement, int i)
-    {
-        if (i == currentStatement.Count - 1) return false;
-        TokenType nextType = currentStatement[i + 1].TokenType;
-        return nextType == ParenthesesOpen;
+        return (i, false);
     }
 
     protected void ProcessPossibleIdentifier(List<Token> currentStatement)

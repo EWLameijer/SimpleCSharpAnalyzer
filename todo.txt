@@ -4,14 +4,12 @@ na elke feature of debug: ruim eigen code op
 
 1. Too long method: CanBeMethod (in SimpleCSharpAnalyzer\TokenBasedChecking\IdentifierAndMethodLengthAnalyzer.cs) is 20 lines long.
 
-2. Too long method: GetComplexType (in SimpleCSharpAnalyzer\TokenBasedChecking\IdentifierAndMethodLengthAnalyzer.cs) is 26 lines long.
+2. Too long method: TupleType (in SimpleCSharpAnalyzer\TokenBasedChecking\IdentifierAndMethodLengthAnalyzer.cs) is 18 lines long.
 
-3. Too long method: TupleType (in SimpleCSharpAnalyzer\TokenBasedChecking\IdentifierAndMethodLengthAnalyzer.cs) is 25 lines long.
+3. Too long method: TypeParameterContents (in SimpleCSharpAnalyzer\TokenBasedChecking\IdentifierAndMethodLengthAnalyzer.cs) is 21 lines long.
 
-4. Too long method: TypeParameterContents (in SimpleCSharpAnalyzer\TokenBasedChecking\IdentifierAndMethodLengthAnalyzer.cs) is 25 lines long.
-
-4 warnings in total
-36 extra code lines
+3 warnings in total
+14 extra code lines
 
 Bug: does not add the proper scope type for a method 
 Het probleem is 
