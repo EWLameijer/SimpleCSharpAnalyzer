@@ -183,3 +183,35 @@ internal class InvalidMethodNameWarning : AnalyzerWarning
         return base.GetHashCode();
     }
 }
+
+internal class MalapropWarning : AnalyzerWarning
+{
+    public override string WarningType => "INVALID_TYPE_USAGE";
+
+    private const int MalapropIndex = 7;
+    private const int FileNameIndex = 2;
+
+    private readonly string _malaprop;
+
+    private MalapropWarning(string malapropName, string filename) : base(filename[..^2])
+    {
+        _malaprop = malapropName;
+    }
+
+    public override string ToString() => $"{WarningType}: {_malaprop} in {Filename}";
+
+    public static MalapropWarning Parse(string[] lineParts) =>
+        new(lineParts[MalapropIndex], lineParts[FileNameIndex]);
+
+    public override bool Equals(object? obj)
+    {
+        if (obj is not MalapropWarning) return false;
+        MalapropWarning other = (MalapropWarning)obj;
+        return _malaprop == other._malaprop && Filename == other.Filename;
+    }
+
+    public override int GetHashCode()
+    {
+        return base.GetHashCode();
+    }
+}

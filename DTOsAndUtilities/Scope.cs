@@ -3,7 +3,7 @@
 public enum ScopeType
 {
     ScopeTypeNotSet, File, Namespace, ClassRecordStruct, Method,
-    If, While, Do, For, Foreach, New, Else
+    If, While, Do, For, Foreach, New, Else, Try, Catch, Finally
 }
 
 public static class ScopeTypeExtensions

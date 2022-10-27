@@ -27,13 +27,6 @@ public class Tokenizer
         BuildComplexTokensDictionary();
     }
 
-    private Token StoreTokenWithConsume(Token token)
-    {
-        _nextCharIndex++;
-        _parsedTokens.Add(token);
-        return token;
-    }
-
     private Token StoreTokenWithConsume(TokenType tokenType)
     {
         _nextCharIndex++;
@@ -340,7 +333,7 @@ public class Tokenizer
         do
         {
             _nextCharIndex++;
-            (Token finalToken, bool isBreak) = HandleVerbatimChar(result, finalTokenType,
+            (Token? finalToken, bool isBreak) = HandleVerbatimChar(result, finalTokenType,
                 nonFinalTokenType);
             if (finalToken != null) return finalToken;
             if (isBreak) break;

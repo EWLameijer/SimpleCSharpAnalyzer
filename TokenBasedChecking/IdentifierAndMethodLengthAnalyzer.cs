@@ -1,4 +1,5 @@
-﻿using DTOsAndUtilities;
+﻿using System.Text;
+using DTOsAndUtilities;
 using Tokenizing;
 using static Tokenizing.TokenType;
 using Scope = DTOsAndUtilities.Scope;
@@ -293,15 +294,18 @@ public class IdentifierAndMethodLengthAnalyzer
         return possibleScopeType;
     }
 
-    private ScopeType GetAlternativeScopeType(List<Token> currentStatement)
+    private static ScopeType GetAlternativeScopeType(List<Token> currentStatement)
     {
         return currentStatement[0].TokenType switch
         {
+            Catch => ScopeType.Catch,
+            Do => ScopeType.Do,
             If => ScopeType.If,
             Else => ScopeType.Else,
+            Finally => ScopeType.Finally,
             ForEach => ScopeType.Foreach,
             For => ScopeType.For,
-            Do => ScopeType.Do,
+            Try => ScopeType.Try,
             While => ScopeType.While,
             _ => ScopeType.ScopeTypeNotSet
         };
@@ -320,6 +324,17 @@ public class IdentifierAndMethodLengthAnalyzer
         return new Scope { Type = ScopeType.ScopeTypeNotSet, Name = "unknown" };
     }
 
+    // pseudocode:
+    // public async Task<T> GetOrCreate<T>(string key, Func<Task<T>> createItem)
+    // DONE skip all modifiers => Task<T> GetOrCreate<T>(string key, Func<Task<T>> createItem)
+    // get next complex identifier
+    //      if next is identifier
+    //         if followed by less, get contents until you encounter greater and stackSize == 0 again => Task<T>
+    //      if next is ( get contents until you encounter ) and stacksize == 0 again
+    // get identifier
+    //      if next is less, get contents until you encounter greater and stackSize == 0 again => GetOrCreate<T>
+    //      if THEN next is '(', it is a method!
+    //
     public int? CanBeMethod(List<Token> currentStatement, bool onlyParsing)
     {
         List<TokenType> newBracesStack = new();
@@ -329,12 +344,69 @@ public class IdentifierAndMethodLengthAnalyzer
             TokenType tokenType = currentStatement[i].TokenType;
             if (tokenType.IsModifier() || tokenType.IsDeclarer()) continue;
             possibleTypeStack.Add(tokenType);
+            (int newI, Token? complexIdentifier, bool canBeCorrect) = GetComplexType(currentStatement, i);
+            if (!canBeCorrect) return null;
             (int? foundIndex, bool done) =
                 CheckMethodCloser(tokenType, newBracesStack, currentStatement, possibleTypeStack,
                 i, onlyParsing);
             if (foundIndex != null || done) return foundIndex;
         }
         return null;
+    }
+
+    // get next complex identifier
+    //      if next is identifier
+    //         if followed by less, get contents until you encounter greater and stackSize == 0 again => Task<T>
+    //         if followed by []///
+    //      if next is ( get contents until you encounter ) and stacksize == 0 again
+    private (int newIndex, Token? complexIdentifier, bool canBeCorrect) GetComplexType(List<Token> currentStatement, int i)
+    {
+        TokenType currentTokenType = currentStatement[i].TokenType;
+        if (currentTokenType == Identifier)
+        {
+            string contents = ((ComplexToken)currentStatement[i]).Info;
+            if (i < currentStatement.Count - 1)
+            {
+                TokenType nextTokenType = currentStatement[i + 1].TokenType;
+                if (nextTokenType == Less) return TypeParameterContents(currentStatement, i);
+                else if (nextTokenType == BracketsOpen) return (i + 2,
+                        new ComplexToken { TokenType = Identifier, Info = contents + "[]" }, true);
+                else return (i, currentStatement[i], true);
+            }
+            else return (i, currentStatement[i], false);
+        }
+        else if (currentTokenType == ParenthesesOpen)
+        {
+            return TupleType(currentStatement, i);
+        }
+        else
+        {
+            return (i, null, false);
+        }
+    }
+
+    private (int newIndex, Token? complexIdentifier, bool canBeCorrect) TupleType(List<Token> currentStatement, int i)
+    {
+        StringBuilder result = new();
+        result.Append("(");
+        int depth = 0;
+        for (int j = i + 1; j < currentStatement.Count; j++)
+        {
+            TokenType currentTokenType = currentStatement[j].TokenType;
+            result.Append(currentStatement[i].PrettyPrint());
+            if (currentTokenType == ParenthesesOpen) depth++;
+            if (currentTokenType == ParenthesesClose)
+            {
+                if (depth == 0) return (j, new ComplexToken { TokenType = Identifier, Info = result.ToString() }, true);
+                depth--;
+            }
+        }
+        return (i, currentStatement[i], false);
+    }
+
+    private (int newIndex, Token? complexIdentifier, bool canBeCorrect) TypeParameterContents(List<Token> currentStatement, int i)
+    {
+        throw new NotImplementedException();
     }
 
     private (int? foundIndex, bool done) CheckMethodCloser(TokenType tokenType, List<TokenType> newBracesStack,
@@ -525,7 +597,7 @@ public class IdentifierAndMethodLengthAnalyzer
         Console.WriteLine("STATEMENT: " + string.Join(" ", readable));
     }
 
-    private List<Token> GetParameters(List<Token> currentStatement, int openingPos)
+    private static List<Token> GetParameters(List<Token> currentStatement, int openingPos)
     {
         int depth = 0;
         int currentPos = openingPos;

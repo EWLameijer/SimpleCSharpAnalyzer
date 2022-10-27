@@ -58,7 +58,7 @@ internal class WarningCollection
             {
                 string warningText = item.WarningText;
                 int idsCount = item.IdsCount;
-                if (!otherList.Any(i => i.WarningText == warningText && i.IdsCount == idsCount))
+                if (!otherList.Any(i => i.WarningText == warningText && i.IdsCount >= idsCount))
                 {
                     Console.WriteLine($"Missing {item}");
                 }
@@ -73,7 +73,7 @@ internal class WarningCollection
             {
                 string warningText = item.WarningText;
                 int idsCount = item.IdsCount;
-                if (!thisList.Any(i => i.WarningText == warningText && i.IdsCount == idsCount))
+                if (!thisList.Any(i => i.WarningText == warningText && i.IdsCount >= idsCount))
                 {
                     Console.WriteLine($"Missing {item}");
                 }

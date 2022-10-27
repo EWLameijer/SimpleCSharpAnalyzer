@@ -21,7 +21,8 @@ internal class WarningData
         ["Too long method"] = MethodTooLongWarning.Parse,
         ["Too long line in"] = LineTooLongWarning.Parse,
         ["Invalid parameter name"] = InvalidParameterNameWarning.Parse,
-        ["Invalid method name"] = InvalidMethodNameWarning.Parse
+        ["Invalid method name"] = InvalidMethodNameWarning.Parse,
+        ["In"] = MalapropWarning.Parse
     };
 
     public WarningData(string line)
@@ -29,7 +30,6 @@ internal class WarningData
         string idAsString = string.Join("", line.TakeWhile(c => char.IsDigit(c)));
         string startOfError = string.Concat(line.Skip(idAsString.Length + 2));
         _ids.Add(int.Parse(idAsString));
-        // Console.WriteLine($"Id is {_id}, line is {startOfError}");
         _warning = Parse(startOfError);
     }
 
