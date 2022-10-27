@@ -32,3 +32,11 @@ CheckParameterName -> ProcessParameter -> ProcessPossibleIdentifier -> HandleSta
 
 // for variables AND properties -quite some properties end with {}
 CheckCorrectCapitalization -> VariableNameAtThisLocation -> CheckCurrentVariableCandidate -> CheckVariables -> ProcessPossibleIdentifier
+
+Scan
+	HandleRegularToken
+		HandleBracesOpen
+			CheckVariables
+				CheckCurrentVariableCandidate
+					VariableNameAtThisLocation
+						CheckCorrectCapitalization

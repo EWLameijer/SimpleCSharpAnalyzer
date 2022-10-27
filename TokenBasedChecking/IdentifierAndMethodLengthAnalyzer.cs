@@ -515,7 +515,9 @@ public class IdentifierAndMethodLengthAnalyzer
     List<TokenType> newBracesStack, List<TokenType> possibleTypeStack, int index)
     {
         TokenType tokenType = currentStatement[index].TokenType;
+        if (tokenType == TokenType.Enum) return true;
         if (tokenType.IsModifier() || tokenType.IsDeclarer()) return false;
+
         possibleTypeStack.Add(tokenType);
         if (tokenType == Assign) return true;
         if (tokenType.IsOpeningType()) newBracesStack.Add(tokenType);
