@@ -6,7 +6,7 @@ namespace SimpleCSharpAnalyzer.Tests;
 
 internal static class Utilities
 {
-    internal static (FileTokenData, Report) Setup(string text)
+    internal static (FileAsTokens, Report) Setup(string text)
     {
         Tokenizer tokenizer = new(text.Split('\n'));
         IReadOnlyList<Token> tokens = tokenizer.Results();

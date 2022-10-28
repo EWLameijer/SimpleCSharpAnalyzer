@@ -202,7 +202,7 @@ public class IdentifierAndMethodLengthAnalyzer
         }
     }
 
-    public IdentifierAndMethodLengthAnalyzer(FileTokenData fileData, Report report)
+    public IdentifierAndMethodLengthAnalyzer(FileAsTokens fileData, Report report)
     {
         _contextedFilename = fileData.ContextedFilename;
         _report = report;

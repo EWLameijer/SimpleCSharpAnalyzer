@@ -17,7 +17,7 @@ internal static class Services
     public void Should_report_erroneous_property_names()
     {
         // arrange
-        (FileTokenData fileTokenData, Report report) = Utilities.Setup(ErroneousPropertyName);
+        (FileAsTokens fileTokenData, Report report) = Utilities.Setup(ErroneousPropertyName);
 
         //act
         new IdentifierAndMethodLengthAnalyzer(fileTokenData, report).AddWarnings();
@@ -37,7 +37,7 @@ public enum LogLevel : byte {
     public void Should_not_report_enum_as_property()
     {
         // arrange
-        (FileTokenData fileTokenData, Report report) = Utilities.Setup(EnumPossiblySeenAsPropert);
+        (FileAsTokens fileTokenData, Report report) = Utilities.Setup(EnumPossiblySeenAsPropert);
 
         //act
         new IdentifierAndMethodLengthAnalyzer(fileTokenData, report).AddWarnings();

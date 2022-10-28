@@ -5,7 +5,7 @@ namespace FileHandling;
 
 internal static class LineLengthChecker
 {
-    public static void AddWarnings(FileData fileData, Report report)
+    public static void AddWarnings(FileAsLines fileData, Report report)
     {
         for (int i = 0; i < fileData.Lines.Count; i++)
         {

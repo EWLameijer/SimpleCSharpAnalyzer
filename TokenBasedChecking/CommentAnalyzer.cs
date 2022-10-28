@@ -9,7 +9,7 @@ public class CommentAnalyzer
     private readonly Report _report;
     private readonly IReadOnlyList<Token> _tokens;
 
-    public CommentAnalyzer(FileTokenData fileData, Report report)
+    public CommentAnalyzer(FileAsTokens fileData, Report report)
     {
         _contextedFilename = fileData.ContextedFilename;
         _report = report;

@@ -1,18 +1,21 @@
-﻿using Tokenizing;
+﻿using DTOsAndUtilities;
+using Tokenizing;
 
 namespace TokenBasedChecking;
 
 public static class InappropriateAtsHandler
 {
-    public static List<string> GetWarnings(string contextedFilename, IReadOnlyList<Token> tokens)
+    public static List<string> GetWarnings(FileAsTokens fileTokenData)
     {
         List<string> warnings = new();
+        IReadOnlyList<Token> tokens = fileTokenData.Tokens;
         for (int i = 0; i < tokens.Count; i++)
         {
             Token current = tokens[i];
             if (current.TokenType == TokenType.Identifier)
             {
-                WarnIfIdentifierInappropiatelyStartsWithAt(contextedFilename, warnings, current);
+                WarnIfIdentifierInappropiatelyStartsWithAt(fileTokenData.ContextedFilename,
+                    warnings, current);
             }
         }
         return warnings;

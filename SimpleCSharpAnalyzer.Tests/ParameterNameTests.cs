@@ -17,7 +17,7 @@ void DrawPhoneInformation(Phone selectedPhone, int PressedKey)
     public void Should_detect_wrongly_cased_parameter()
     {
         // arrange
-        (FileTokenData fileTokenData, Report report) = Utilities.Setup(DetectWrongParameter);
+        (FileAsTokens fileTokenData, Report report) = Utilities.Setup(DetectWrongParameter);
 
         //act
         new IdentifierAndMethodLengthAnalyzer(fileTokenData, report).AddWarnings();
@@ -38,7 +38,7 @@ public interface IBrandService
     public void Should_detect_singly_also_in_interface()
     {
         // arrange
-        (FileTokenData fileTokenData, Report report) = Utilities.Setup(SingleDetectionInInterfaces);
+        (FileAsTokens fileTokenData, Report report) = Utilities.Setup(SingleDetectionInInterfaces);
 
         //act
         new IdentifierAndMethodLengthAnalyzer(fileTokenData, report).AddWarnings();

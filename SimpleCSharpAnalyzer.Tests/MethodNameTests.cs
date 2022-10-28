@@ -20,7 +20,7 @@ public class GetSingle : Base
     public void Invalid_method_names_should_be_detected()
     {
         // arrange
-        (FileTokenData fileTokenData, Report report) = Utilities.Setup(InvalidMethodName);
+        (FileAsTokens fileTokenData, Report report) = Utilities.Setup(InvalidMethodName);
 
         //act
         new IdentifierAndMethodLengthAnalyzer(fileTokenData, report).AddWarnings();
@@ -46,7 +46,7 @@ namespace PhoneShop.WinForms
     public void Should_not_double_report_invalid_method_names()
     {
         // arrange
-        (FileTokenData fileTokenData, Report report) = Utilities.Setup(DoublyReportedMethodName);
+        (FileAsTokens fileTokenData, Report report) = Utilities.Setup(DoublyReportedMethodName);
 
         //act
         new IdentifierAndMethodLengthAnalyzer(fileTokenData, report).AddWarnings();

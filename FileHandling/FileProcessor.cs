@@ -11,6 +11,7 @@ public enum AnalysisMode
 public class FileProcessor
 {
     private readonly List<string> _filenames;
+    private readonly Report _globalReport = new();
 
     public string PathName { get; private set; } = null!;
 
@@ -25,46 +26,45 @@ public class FileProcessor
 
     public Report Process(AnalysisMode analysisMode)
     {
-        Report totalReport = new();
         foreach (string relevantFileName in _filenames)
         {
-            FileData fileData = new(relevantFileName);
+            FileAsLines fileData = new(relevantFileName);
 
             Console.WriteLine($"\n***{fileData.ContextedFilename}***");
 
             Tokenizer tokenizer = new(fileData.Lines);
             IReadOnlyList<Token> tokens = tokenizer.Results();
-            Report report = PerformAnalyses(fileData, tokens, analysisMode);
-            report.Show();
-            totalReport.Add(report);
+            Report fileReport = PerformAnalyses(fileData, tokens, analysisMode);
+            fileReport.Show();
+            _globalReport.Add(fileReport);
         }
-        return totalReport;
+        return _globalReport;
     }
 
-    private static Report PerformAnalyses(FileData fileData, IReadOnlyList<Token> tokens,
+    private static Report PerformAnalyses(FileAsLines fileData, IReadOnlyList<Token> tokens,
         AnalysisMode analysisMode)
     {
         Debug.Assert(analysisMode != AnalysisMode.AnalysisModeNotSet);
         LineCounter counter = new(tokens);
         Report report = counter.CreateReport();
         IReadOnlyList<Token> tokensWithoutAttributes = new TokenFilterer().Filter(tokens);
-        FileTokenData fileTokenData = new(fileData.ContextedFilename, tokensWithoutAttributes);
+        FileAsTokens fileTokenData = new(fileData.ContextedFilename, tokensWithoutAttributes);
         if (analysisMode == AnalysisMode.CommentsOnly)
-        {
             new CommentAnalyzer(fileTokenData, report).AddWarnings();
-        }
-        else
-        {
-            LineLengthChecker.AddWarnings(fileData, report);
-
-            List<string> warnings = InappropriateAtsHandler.GetWarnings(fileData.ContextedFilename,
-                tokensWithoutAttributes);
-            report.Warnings.AddRange(warnings);
-
-            new IdentifierAndMethodLengthAnalyzer(fileTokenData, report).AddWarnings();
-            new MalapropAnalyzer(fileTokenData, report).AddWarnings();
-        }
+        else DoFullAnalysis(fileData, report, fileTokenData);
         return report;
+    }
+
+    private static void DoFullAnalysis(FileAsLines fileData, Report report,
+        FileAsTokens fileTokenData)
+    {
+        LineLengthChecker.AddWarnings(fileData, report);
+
+        List<string> warnings = InappropriateAtsHandler.GetWarnings(fileTokenData);
+        report.Warnings.AddRange(warnings);
+
+        new IdentifierAndMethodLengthAnalyzer(fileTokenData, report).AddWarnings();
+        new MalapropAnalyzer(fileTokenData, report).AddWarnings();
     }
 
     public void GetPathName(string[] args, string query)

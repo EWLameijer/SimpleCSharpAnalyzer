@@ -10,7 +10,7 @@ public class MalapropAnalyzer
     private readonly string _contextedFilename;
     private readonly Report _report;
 
-    public MalapropAnalyzer(FileTokenData fileData, Report report)
+    public MalapropAnalyzer(FileAsTokens fileData, Report report)
     {
         _tokens = fileData.Tokens;
         _contextedFilename = fileData.ContextedFilename;

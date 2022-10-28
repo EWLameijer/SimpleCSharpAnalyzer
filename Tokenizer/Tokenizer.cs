@@ -580,7 +580,7 @@ public class Tokenizer
         return new ComplexToken { TokenType = SingleQuotedString, Info = stringContents };
     }
 
-    private class TextPosition
+    private sealed class TextPosition
     {
         public int LineIndex { get; set; }
         public int CharIndex { get; set; }

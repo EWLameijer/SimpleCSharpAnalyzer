@@ -22,7 +22,7 @@ public class GetSingle : Base
     public void Should_report_lack_of_blank_lines_between_methods()
     {
         // arrange
-        (FileTokenData fileTokenData, Report report) = Utilities.Setup(LackOfBlankLineBetweenMethods);
+        (FileAsTokens fileTokenData, Report report) = Utilities.Setup(LackOfBlankLineBetweenMethods);
 
         //act
         new IdentifierAndMethodLengthAnalyzer(fileTokenData, report).AddWarnings();
@@ -49,7 +49,7 @@ namespace Phoneshop.WinForms
     public void Should_report_absence_of_blank_line_before_constructor()
     {
         // arrange
-        (FileTokenData fileTokenData, Report report) = Utilities.Setup(BlankLineAlsoNeededBeforeConstructor);
+        (FileAsTokens fileTokenData, Report report) = Utilities.Setup(BlankLineAlsoNeededBeforeConstructor);
 
         //act
         new IdentifierAndMethodLengthAnalyzer(fileTokenData, report).AddWarnings();
