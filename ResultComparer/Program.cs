@@ -1,12 +1,9 @@
-﻿// See https://aka.ms/new-console-template for more information
-
-using ResultComparer;
+﻿using ResultComparer;
 
 Console.WriteLine("Hello, World!");
 
-string firstFilePath = "D:\\Development\\ITvitae\\C#\\SimpleCSharpAnalyzer\\comparing_tests\\t28o.txt"; //args[0];
-string secondFilePath = "D:\\Development\\ITvitae\\C#\\SimpleCSharpAnalyzer\\comparing_tests\\t28n.txt"; //args[0];
-//string secondFilePath = args[1];
+string firstFilePath = "D:\\Development\\ITvitae\\C#\\SimpleCSharpAnalyzer\\comparing_tests\\t28o.txt";
+string secondFilePath = "D:\\Development\\ITvitae\\C#\\SimpleCSharpAnalyzer\\comparing_tests\\t28n.txt";
 
 WarningCollection allWarnings1 = new(firstFilePath);
 WarningCollection allWarnings2 = new(secondFilePath);
@@ -21,8 +18,3 @@ allWarnings2.Show();
 Console.WriteLine("Differences?");
 
 allWarnings1.Compare(allWarnings2);
-
-// then skip until 1. reached
-// while line starts with number followed by period
-// parse line
-// Show results

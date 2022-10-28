@@ -1,4 +1,6 @@
-﻿namespace Tokenizing;
+﻿using static Tokenizing.TokenType;
+
+namespace Tokenizing;
 
 public class Token
 {
@@ -6,19 +8,19 @@ public class Token
 
     private readonly Dictionary<TokenType, string> _tokenTypeRepresentations = new()
     {
-        [TokenType.Assign] = "=",
-        [TokenType.BracesClose] = "}",
-        [TokenType.BracesOpen] = "{",
-        [TokenType.BracketsOpen] = "[",
-        [TokenType.BracketsClose] = "]",
-        [TokenType.Comma] = ",",
-        [TokenType.ExclamationMark] = "!",
-        [TokenType.FatArrow] = "=>",
-        [TokenType.Greater] = ">",
-        [TokenType.Less] = "<",
-        [TokenType.ParenthesesOpen] = "(",
-        [TokenType.ParenthesesClose] = ")",
-        [TokenType.Period] = "."
+        [Assign] = "=",
+        [BracesClose] = "}",
+        [BracesOpen] = "{",
+        [BracketsOpen] = "[",
+        [BracketsClose] = "]",
+        [Comma] = ",",
+        [ExclamationMark] = "!",
+        [FatArrow] = "=>",
+        [Greater] = ">",
+        [Less] = "<",
+        [ParenthesesOpen] = "(",
+        [ParenthesesClose] = ")",
+        [Period] = "."
     };
 
     public virtual string PrettyPrint() =>
@@ -38,11 +40,13 @@ public class ComplexToken : Token
     {
         return TokenType switch
         {
-            TokenType.Identifier => $"{Info}(Id)",
+            BlockCommentStart or BlockCommentMiddle or BlockCommentWhole or BlockCommentEnd => $"/* {Info} */",
+            LineComment => $"// {Info}",
+            Identifier => $"{Info}(Id)",
             TokenType.String => $"{Info}(STR)",
-            TokenType.InterpolatedStringStart => $"{Info}(ISS)",
-            TokenType.InterpolatedStringMiddle => $"{Info}(ISM)",
-            TokenType.InterpolatedStringEnd => $"{Info}(ISE)",
+            InterpolatedStringStart => $"{Info}(ISS)",
+            InterpolatedStringMiddle => $"{Info}(ISM)",
+            InterpolatedStringEnd => $"{Info}(ISE)",
             _ => TokenType.ToString()
         };
     }

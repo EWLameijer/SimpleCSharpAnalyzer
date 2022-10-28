@@ -1,7 +1,7 @@
 ﻿using DTOsAndUtilities;
 using Tokenizing;
 
-namespace SimpleCSharpAnalyzer;
+namespace FileHandling;
 
 public class LineCounter
 {

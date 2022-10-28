@@ -2,14 +2,19 @@
 !! doe crashtest na elke verbetering
 na elke feature of debug: ruim eigen code op 
 
-1. Too long method: CanBeMethod (in SimpleCSharpAnalyzer\TokenBasedChecking\IdentifierAndMethodLengthAnalyzer.cs) is 18 lines long.
+NOW:
+filter comments on 1 item (so act/arrange etc should not be a problem)
 
 IDEAS:
-(gebrek aan) lege regels tussen methodes rapporteren
-Als aantal parameters groter is dan ???
+
+
+? magic constants? Probleem: redelijk vaak!
+? check comments - commented-out code? (check for reserved words and = and () and such? Probleem: redelijk vaak!
+
+Als aantal parameters groter is dan ??? Probleem - zelden [bij business code]
 
 Tarzan: gebrek aan ?? ?. etc.
-? check comments - commented-out code? (check for reserved words and = and () and such?
-? magic constants?
+
+
 ? McCabe complexity
 ? repeated code?  / DRY?

@@ -1,7 +1,7 @@
 ﻿using DTOsAndUtilities;
 using TokenBasedChecking;
 
-namespace SimpleCSharpAnalyzer;
+namespace FileHandling;
 
 internal static class LineLengthChecker
 {

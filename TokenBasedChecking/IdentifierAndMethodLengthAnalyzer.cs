@@ -330,26 +330,13 @@ public class IdentifierAndMethodLengthAnalyzer
         return new Scope { Type = ScopeType.ScopeTypeNotSet, Name = "unknown" };
     }
 
-    // pseudocode:
-    // public async Task<T> GetOrCreate<T>(string key, Func<Task<T>> createItem)
-    // DONE skip all modifiers => Task<T> GetOrCreate<T>(string key, Func<Task<T>> createItem)
-    // get next complex identifier
-    //      if next is identifier
-    //         if followed by less, get contents until you encounter greater and stackSize == 0 again => Task<T>
-    //      if next is ( get contents until you encounter ) and stacksize == 0 again
-    // get identifier
-    //      if next is less, get contents until you encounter greater and stackSize == 0 again => GetOrCreate<T>
-    //      if THEN next is '(', it is a method!
-    //
     public int? CanBeMethod(List<Token> currentStatement)
     {
-        // 1. Skip modifiers
         int i = 0;
         i = GetFirstIdentifier(currentStatement, i);
 
         (int newI, bool canBeCorrect) = GetComplexType(currentStatement, i);
         if (!canBeCorrect) return null;
-        // and deal with constructors :(
         if (IsConstructor(currentStatement, i)) return i;
         i = newI + 1;
         (int furtherI, bool canAlsoBeCorrect) = GetComplexType(currentStatement, i);

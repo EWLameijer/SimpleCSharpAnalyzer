@@ -1,6 +1,6 @@
 ﻿using Tokenizing;
 
-namespace SimpleCSharpAnalyzer;
+namespace FileHandling;
 
 public class TokenFilterer
 {

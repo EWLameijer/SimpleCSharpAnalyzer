@@ -56,15 +56,6 @@ public class Tokenizer
         return token;
     }
 
-    /* Get
-     * Check whether there is a next token (HasNextToken). If not, throw an exception
-     * If there IS, go to the first non-whitespace character (adding newlines to the ParseLog)
-     * if it is '/', check the next character.
-     * If that is '/' too,
-    */
-
-    /*SHORTEN*/
-
     public Token? Get()
     {
         if (!HasNextToken()) throw new EndOfStreamException();
@@ -513,7 +504,6 @@ public class Tokenizer
         return new ComplexToken { TokenType = TokenType.String, Info = stringContents };
     }
 
-    // TODO: {{ escapes {, so
     private Token GetInterpolatedStringToken()
     {
         StringBuilder result = new();

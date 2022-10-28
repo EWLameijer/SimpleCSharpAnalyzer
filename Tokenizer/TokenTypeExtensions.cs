@@ -2,10 +2,6 @@
 
 using static TokenType;
 
-/*
- * Testing commentlines
- * */
-
 public static class TokenTypeExtensions
 {
     public static bool IsCommentType(this TokenType tokenType)
