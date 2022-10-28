@@ -380,19 +380,28 @@ public class IdentifierAndMethodLengthAnalyzer
         for (int i = methodIndex; i >= 0; i--)
         {
             TokenType currentTokenType = _tokens[i].TokenType;
-            if (currentTokenType == BracesOpen) return;
-            if (currentTokenType is SemiColon or BracesClose)
-            {
-                if (!subsequentNewlines) _report.Warnings.Add(
-                    $"Missing blank line before {methodName} in {_contextedFilename}.");
-                return;
-            }
-            if (currentTokenType == NewLine)
-            {
-                if (lastWasNewline) subsequentNewlines = true;
-                lastWasNewline = true;
-            }
+            (bool done, subsequentNewlines, lastWasNewline) = HandleBlankLineCheckingToken(
+                currentTokenType, subsequentNewlines, lastWasNewline, methodName);
+            if (done) return;
         }
+    }
+
+    private (bool done, bool subsequentNewlines, bool lastNewline) HandleBlankLineCheckingToken(
+        TokenType currentTokenType, bool subsequentNewlines, bool lastWasNewline, string methodName)
+    {
+        if (currentTokenType == BracesOpen) return (true, subsequentNewlines, lastWasNewline);
+        if (currentTokenType is SemiColon or BracesClose)
+        {
+            if (!subsequentNewlines) _report.Warnings.Add(
+                $"Missing blank line before {methodName} in {_contextedFilename}.");
+            return (true, subsequentNewlines, lastWasNewline);
+        }
+        if (currentTokenType == NewLine)
+        {
+            if (lastWasNewline) subsequentNewlines = true;
+            lastWasNewline = true;
+        }
+        return (false, subsequentNewlines, lastWasNewline);
     }
 
     private static int GetFirstIdentifier(List<Token> currentStatement, int i)
