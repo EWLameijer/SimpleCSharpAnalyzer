@@ -365,10 +365,34 @@ public class IdentifierAndMethodLengthAnalyzer
             if (DoShow) Console.WriteLine($"Candidate method: {methodName}");
             if (!char.IsUpper(methodName[0])) _report.Warnings.Add(
                 $"Invalid method name: {methodName} (in {_contextedFilename}).");
+            int methodIndex = _currentIndex - currentStatement.Count + furtherI;
+            CheckBlankLineBeforeMethod(methodName, methodIndex);
             ProcessParameter(currentStatement, furtherI + 1);
             return i;
         }
         return null;
+    }
+
+    private void CheckBlankLineBeforeMethod(string methodName, int methodIndex)
+    {
+        bool subsequentNewlines = false;
+        bool lastWasNewline = false;
+        for (int i = methodIndex; i >= 0; i--)
+        {
+            TokenType currentTokenType = _tokens[i].TokenType;
+            if (currentTokenType == BracesOpen) return;
+            if (currentTokenType is SemiColon or BracesClose)
+            {
+                if (!subsequentNewlines) _report.Warnings.Add(
+                    $"Missing blank line before {methodName} in {_contextedFilename}.");
+                return;
+            }
+            if (currentTokenType == NewLine)
+            {
+                if (lastWasNewline) subsequentNewlines = true;
+                lastWasNewline = true;
+            }
+        }
     }
 
     private static int GetFirstIdentifier(List<Token> currentStatement, int i)
