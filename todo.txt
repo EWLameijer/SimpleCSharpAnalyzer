@@ -2,36 +2,13 @@
 !! doe crashtest na elke verbetering
 na elke feature of debug: ruim eigen code op 
 
-1. Too long method: CanBeMethod (in SimpleCSharpAnalyzer\TokenBasedChecking\IdentifierAndMethodLengthAnalyzer.cs) is 20 lines long.
-
-2. Too long method: TupleType (in SimpleCSharpAnalyzer\TokenBasedChecking\IdentifierAndMethodLengthAnalyzer.cs) is 18 lines long.
-
-3. Too long method: TypeParameterContents (in SimpleCSharpAnalyzer\TokenBasedChecking\IdentifierAndMethodLengthAnalyzer.cs) is 21 lines long.
-
-3 warnings in total
-14 extra code lines
-
-Bug: does not add the proper scope type for a method 
-Het probleem is 
-public async Task<T> GetOrCreate<T>(string key, Func<Task<T>> createItem)
-Hoe parse ik dit?
-Sla public en async over
-Task<T>
-(int a, int b)
-
-
-
-
-0. Write tool to automatically scan the diffs between an old and new file (disregarding full filepaths for now)
-	
-1. check alle aanwezige repos op fouten in de scanner
-
-
 IDEAS:
+Persoonlijke settings van MaxLineLength enzo...
 (gebrek aan) lege regels tussen methodes rapporteren
 Als aantal parameters groter is dan ???
-Persoonlijke settings van MaxLineLength enzo...
+
 Tarzan: gebrek aan ?? ?. etc.
 ? check comments - commented-out code? (check for reserved words and = and () and such?
 ? magic constants?
+? McCabe complexity
 ? repeated code?  / DRY?

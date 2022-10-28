@@ -107,14 +107,15 @@ public class IdentifierAndMethodLengthAnalyzer
     private void IfMethodScopeEndsCheckMethodLength()
     {
         (string methodName, int tokenIndex) = _methodNames[^1];
+        int maxLineLength = WarningSettings.MaxMethodLength;
         if (methodName != "none")
         {
             int lineCount = CountLines(tokenIndex, _currentIndex);
-            if (lineCount > 15)
+            if (lineCount > maxLineLength)
             {
                 _report.Warnings.Add($"Too long method: {methodName} " +
                     $"(in {_contextedFilename}) is {lineCount} lines long.");
-                _report.ExtraCodeLines += lineCount - 15;
+                _report.ExtraCodeLines += lineCount - maxLineLength;
             }
         }
         _methodNames.RemoveAt(_methodNames.Count - 1);

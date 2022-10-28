@@ -4,20 +4,15 @@ using TokenBasedChecking;
 using Tokenizing;
 
 string pathname;
-string[] arguments;
-const int DefaultMaxLineLength = 120;
-int maxLineLength = DefaultMaxLineLength;
 if (args.Length == 0)
 {
+    Console.WriteLine("Code-analyzator (edit de settings.txt om de gevoeligheid aan te passen)");
     Console.Write("Geef de naam van de directory waarvan je de code-regels wilt tellen: ");
-    arguments = Console.ReadLine()!.Split();
-    pathname = arguments[0];
-    if (arguments.Length > 1) maxLineLength = int.TryParse(arguments[1], out int max) ? max : DefaultMaxLineLength;
+    pathname = Console.ReadLine()!;
 }
 else
 {
     pathname = args[0];
-    if (args.Length == 2) maxLineLength = int.TryParse(args[1], out int max) ? max : DefaultMaxLineLength;
 }
 
 List<string> csFiles = Directory.GetFiles(pathname, "*.cs", SearchOption.AllDirectories).ToList();
@@ -34,13 +29,12 @@ foreach (string relevantFileName in relevantFileNames)
     Tokenizer tokenizer = new(fileData.Lines);
     IReadOnlyList<Token> tokens = tokenizer.Results();
     IReadOnlyList<Token> tokensWithoutAttributes = new TokenFilterer().Filter(tokens);
-    (IReadOnlyList<Token> atLessIdentifiers, List<string> warnings) =
-        HandleInappropriateAts(fileData.ContextedFilename, tokensWithoutAttributes);
+    List<string> warnings = HandleInappropriateAts(fileData.ContextedFilename, tokensWithoutAttributes);
     LineCounter counter = new(tokens);
     FileTokenData fileTokenData = new(fileData.ContextedFilename, tokensWithoutAttributes);
     Report report = counter.CreateReport();
     report.Warnings.AddRange(warnings);
-    LineLengthChecker.AddWarnings(fileData, report, maxLineLength);
+    LineLengthChecker.AddWarnings(fileData, report);
     new IdentifierAndMethodLengthAnalyzer(fileTokenData, report).AddWarnings();
     new MalapropAnalyzer(fileTokenData, report).AddWarnings();
     report.Show();
@@ -50,8 +44,7 @@ foreach (string relevantFileName in relevantFileNames)
 Console.WriteLine($"\n***TOTAL ({pathname})***");
 totalReport.Show();
 
-(IReadOnlyList<Token> tokens, List<string> warnings)
-    HandleInappropriateAts(string contextedFilename, IReadOnlyList<Token> tokens)
+List<string> HandleInappropriateAts(string contextedFilename, IReadOnlyList<Token> tokens)
 {
     List<Token> output = new();
     List<string> warnings = new();
@@ -63,7 +56,7 @@ totalReport.Show();
             WarnIfIdentifierInappropiatelyStartsWithAt(contextedFilename, warnings, current);
         }
     }
-    return (output, warnings);
+    return warnings;
 }
 
 static void WarnIfIdentifierInappropiatelyStartsWithAt(string contextedFilename, List<string> warnings, Token current)
