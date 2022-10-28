@@ -2,8 +2,8 @@
 using FileHandling;
 
 FileProcessor fileProcessor = new(args,
-    @"Code-analyzator (edit de settings.txt om de gevoeligheid aan te passen)
-Geef de naam van de directory waarvan je de code wilt analyseren: ");
+    @"Code-analyzer (edit 'settings.txt' to adjust its sensitivity)
+Please enter the name of the directory which contains the code you wish to analyze: ");
 
 Report totalReport = fileProcessor.Process(AnalysisMode.Full);
 

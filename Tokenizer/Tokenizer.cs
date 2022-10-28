@@ -558,7 +558,7 @@ public class Tokenizer
         {
             nextToken = Get()!;
         } while (nextToken.TokenType != BracesClose);
-        _parsedTokens.RemoveAt(_parsedTokens.Count - 1);// get rid of }
+        _parsedTokens.RemoveAt(_parsedTokens.Count - 1); // get rid of }
         _nextCharIndex--; // so won't skip " or such
         return tokenType;
     }

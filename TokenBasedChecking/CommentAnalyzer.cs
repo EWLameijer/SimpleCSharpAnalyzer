@@ -22,11 +22,8 @@ public class CommentAnalyzer
         {
             if (_tokens[i].TokenType.IsCommentType())
             {
-                string contents = ((ComplexToken)_tokens[i]).Info;
-                string[] words = contents.Trim().Split();
-                if (words.Length > 1)
-                    _report.Warnings.Add(
-                        $"Commented-out code in {_contextedFilename}: {_tokens[i].PrettyPrint()}");
+                _report.Warnings.Add(
+                    $"Commented-out code in {_contextedFilename}: {_tokens[i].PrettyPrint()}");
             }
         }
     }
