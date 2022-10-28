@@ -7,10 +7,10 @@ public class TokenFilterer
     public IReadOnlyList<Token> Filter(IReadOnlyList<Token> tokens) =>
         HandlePragmas(HandleDecimalLiterals(FilterOutAttributes(tokens)));
 
-    private IReadOnlyList<Token> HandlePragmas(IReadOnlyList<Token> tokens) =>
+    private static IReadOnlyList<Token> HandlePragmas(IReadOnlyList<Token> tokens) =>
         tokens.Where(t => t.TokenType != TokenType.Pragma).ToList();
 
-    private IReadOnlyList<Token> HandleDecimalLiterals(IReadOnlyList<Token> tokens)
+    private static IReadOnlyList<Token> HandleDecimalLiterals(IReadOnlyList<Token> tokens)
     {
         List<Token> output = new() { tokens[0] };
         for (int i = 1; i < tokens.Count; i++) // start at 1(!), as m must always be preceded by number
@@ -20,7 +20,7 @@ public class TokenFilterer
         return output;
     }
 
-    private void ProcessPossibleDecimalToken(Token current, List<Token> output)
+    private static void ProcessPossibleDecimalToken(Token current, List<Token> output)
     {
         int previousIndex = output.Count - 1;
         Token previousToken = output[previousIndex];
@@ -69,7 +69,7 @@ public class TokenFilterer
     ((ComplexToken)current).Info.ToLower() == "m" &&
     previous.TokenType == TokenType.Number;
 
-    private TokenType LastRealType(IReadOnlyList<Token> tokens, int i)
+    private static TokenType LastRealType(IReadOnlyList<Token> tokens, int i)
     {
         for (int investigatedIndex = i - 1; investigatedIndex > 0; investigatedIndex--)
         {
