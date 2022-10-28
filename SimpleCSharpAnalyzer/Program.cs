@@ -7,7 +7,7 @@ string pathname;
 if (args.Length == 0)
 {
     Console.WriteLine("Code-analyzator (edit de settings.txt om de gevoeligheid aan te passen)");
-    Console.Write("Geef de naam van de directory waarvan je de code-regels wilt tellen: ");
+    Console.Write("Geef de naam van de directory waarvan je de code wilt analyseren: ");
     pathname = Console.ReadLine()!;
 }
 else

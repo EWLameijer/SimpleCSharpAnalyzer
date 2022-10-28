@@ -30,4 +30,31 @@ public class GetSingle : Base
         // assert
         Assert.Single(report.Warnings);
     }
+
+    private const string BlankLineAlsoNeededBeforeConstructor = @"
+using Microsoft.Extensions.DependencyInjection;
+
+namespace Phoneshop.WinForms
+{
+    public partial class PhoneOverview : Form
+    {
+        List<Phone> _phoneList = new();
+        public PhoneOverview(IPhoneService service)
+        {
+        }
+    }
+}";
+
+    [Fact]
+    public void Should_report_absence_of_blank_line_before_constructor()
+    {
+        // arrange
+        (FileTokenData fileTokenData, Report report) = Utilities.Setup(BlankLineAlsoNeededBeforeConstructor);
+
+        //act
+        new IdentifierAndMethodLengthAnalyzer(fileTokenData, report).AddWarnings();
+
+        // assert
+        Assert.Single(report.Warnings);
+    }
 }

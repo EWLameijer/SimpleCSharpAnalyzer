@@ -2,8 +2,9 @@
 !! doe crashtest na elke verbetering
 na elke feature of debug: ruim eigen code op 
 
+1. Too long method: CanBeMethod (in SimpleCSharpAnalyzer\TokenBasedChecking\IdentifierAndMethodLengthAnalyzer.cs) is 18 lines long.
+
 IDEAS:
-Persoonlijke settings van MaxLineLength enzo...
 (gebrek aan) lege regels tussen methodes rapporteren
 Als aantal parameters groter is dan ???
 

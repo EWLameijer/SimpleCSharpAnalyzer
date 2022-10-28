@@ -350,7 +350,12 @@ public class IdentifierAndMethodLengthAnalyzer
         (int newI, bool canBeCorrect) = GetComplexType(currentStatement, i);
         if (!canBeCorrect) return null;
         // and deal with constructors :(
-        if (IsConstructor(currentStatement, i)) return i;
+        if (IsConstructor(currentStatement, i))
+        {
+            CheckBlankLineBeforeMethod(((ComplexToken)currentStatement[i]).Info,
+                _currentIndex - currentStatement.Count + i);
+            return i;
+        }
         i = newI + 1;
         (int furtherI, bool canAlsoBeCorrect) = GetComplexType(currentStatement, i);
         if (!canAlsoBeCorrect) return null;
@@ -418,7 +423,8 @@ public class IdentifierAndMethodLengthAnalyzer
 
     private bool IsConstructor(List<Token> currentStatement, int i)
     {
-        if (currentStatement[i].TokenType != Identifier) return false;
+        if (currentStatement[i].TokenType != Identifier || currentStatement.Count < i + 2
+            || currentStatement[i + 1].TokenType != ParenthesesOpen) return false;
         string identifier = ((ComplexToken)currentStatement[i]).Info;
         for (int scopeIndex = _scopes.Count - 1; scopeIndex >= 0; scopeIndex--)
         {
