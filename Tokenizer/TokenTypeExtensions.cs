@@ -7,7 +7,7 @@ public static class TokenTypeExtensions
     public static bool IsCommentType(this TokenType tokenType)
     {
         List<TokenType> commentTypes = new() { BlockCommentEnd, BlockCommentMiddle,
-            BlockCommentStart, BlockCommentWhole, LineComment};
+            BlockCommentStart, BlockCommentWhole, DocComment, LineComment};
         return commentTypes.Contains(tokenType);
     }
 

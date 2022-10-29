@@ -8,7 +8,8 @@ NOW:
 
 commit version 
 
-// handle /// comments...
+1. handle space before ( if ( follows if/while/for/foreach (or any keyword) 
+2. handle interpolated strings ($"...{")
 
 
 2. Too long method: AddWarnings (in SimpleCSharpAnalyzer\TokenBasedChecking\CommentAnalyzer.cs) is 17 lines long.
