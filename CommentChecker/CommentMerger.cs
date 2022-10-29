@@ -37,23 +37,27 @@ internal static class CommentMerger
 
     private static Dictionary<string, List<string>> MergeComments(Report report)
     {
-        // example input line:
-        // "Commented-out code in SimpleCSharpAnalyzer\CommentChecker\CommentMerger.cs: // raw strings are NOT numbered"
-        const int FilePathIndex = 3;
-
         Dictionary<string, List<string>> mergedComments = new();
         foreach (string warning in report.Warnings)
         {
-            string[] parts = warning.Split(' ');
-            string path = parts[FilePathIndex][..^1];
-            string comment = string.Join(" ", parts.Skip(FilePathIndex + 1)).Trim();
-            if (!mergedComments.ContainsKey(comment))
-            {
-                mergedComments[comment] = new List<string>();
-            }
-            mergedComments[comment].Add(path);
+            MergeCommentIntoResult(mergedComments, warning);
         }
 
         return mergedComments;
+    }
+
+    private static void MergeCommentIntoResult(Dictionary<string, List<string>> mergedComments, string warning)
+    {
+        // example input line:
+        // "Commented-out code in SimpleCSharpAnalyzer\CommentChecker\CommentMerger.cs: // raw strings are NOT numbered"
+        const int FilePathIndex = 3;
+        string[] parts = warning.Split(' ');
+        string path = parts[FilePathIndex][..^1];
+        string comment = string.Join(" ", parts.Skip(FilePathIndex + 1)).Trim();
+        if (!mergedComments.ContainsKey(comment))
+        {
+            mergedComments[comment] = new List<string>();
+        }
+        mergedComments[comment].Add(path);
     }
 }

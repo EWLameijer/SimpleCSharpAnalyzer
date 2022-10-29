@@ -111,7 +111,7 @@ public class IdentifierAndMethodLengthAnalyzer
         int maxLineLength = WarningSettings.MaxMethodLength;
         if (methodName != "none")
         {
-            int lineCount = CountLines(tokenIndex, _currentIndex);
+            int lineCount = new MethodLineCounter(tokenIndex, _currentIndex, _tokens).Count();
             if (lineCount > maxLineLength)
             {
                 _report.Warnings.Add($"Too long method: {methodName} " +
@@ -122,29 +122,47 @@ public class IdentifierAndMethodLengthAnalyzer
         _methodNames.RemoveAt(_methodNames.Count - 1);
     }
 
-    private int CountLines(int startIndex, int endIndex)
+    private sealed class MethodLineCounter
     {
-        Debug.Assert(_tokens[startIndex - 1].TokenType == BracesOpen);
-        int newlineCount = 0;
-        bool newlineMode = false;
-        bool lineOnlyCommentMode = false;
-        for (int i = startIndex; i < endIndex; i++)
+        private int _newlineCount = 0;
+        private bool _newlineMode = false;
+        private bool _commentLineMode = false;
+        private readonly int _startIndex;
+        private readonly int _endIndex;
+        private readonly IReadOnlyList<Token> _tokens;
+
+        public MethodLineCounter(int startIndex, int endIndex, IReadOnlyList<Token> tokens)
         {
-            TokenType currentTokenType = _tokens[i].TokenType;
-            if (currentTokenType == NewLine)
-            {
-                if (!newlineMode && !lineOnlyCommentMode) newlineCount++;
-                newlineMode = true;
-                lineOnlyCommentMode = true;
-            }
-            else if (currentTokenType.IsCommentType()) newlineMode = false;
-            else
-            {
-                lineOnlyCommentMode = false;
-                newlineMode = false;
-            }
+            _startIndex = startIndex;
+            _endIndex = endIndex;
+            _tokens = tokens;
         }
-        return newlineCount + 1;// closing brace is also a line
+
+        public int Count()
+        {
+            Debug.Assert(_tokens[_startIndex - 1].TokenType == BracesOpen);
+            for (int i = _startIndex; i < _endIndex; i++)
+            {
+                TokenType currentTokenType = _tokens[i].TokenType;
+                if (currentTokenType == NewLine) HandleNewline();
+                else if (currentTokenType.IsCommentType()) _newlineMode = false;
+                else HandleRegularToken();
+            }
+            return _newlineCount + 1;// closing brace is also a line
+        }
+
+        private void HandleRegularToken()
+        {
+            _commentLineMode = false;
+            _newlineMode = false;
+        }
+
+        private void HandleNewline()
+        {
+            if (!_newlineMode && !_commentLineMode) _newlineCount++;
+            _newlineMode = true;
+            _commentLineMode = true;
+        }
     }
 
     protected Token? LookForNextEndingToken(List<Token> currentStatement)
