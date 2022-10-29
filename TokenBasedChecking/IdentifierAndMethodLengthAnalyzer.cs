@@ -1,4 +1,5 @@
-﻿using DTOsAndUtilities;
+﻿using System.Diagnostics;
+using DTOsAndUtilities;
 using Tokenizing;
 using static Tokenizing.TokenType;
 using Scope = DTOsAndUtilities.Scope;
@@ -123,16 +124,25 @@ public class IdentifierAndMethodLengthAnalyzer
 
     private int CountLines(int startIndex, int endIndex)
     {
+        Debug.Assert(_tokens[startIndex - 1].TokenType == BracesOpen);
         int newlineCount = 0;
         bool newlineMode = false;
+        bool lineOnlyCommentMode = false;
         for (int i = startIndex; i < endIndex; i++)
         {
-            if (_tokens[i].TokenType == NewLine)
+            TokenType currentTokenType = _tokens[i].TokenType;
+            if (currentTokenType == NewLine)
             {
-                if (!newlineMode) newlineCount++;
+                if (!newlineMode && !lineOnlyCommentMode) newlineCount++;
                 newlineMode = true;
+                lineOnlyCommentMode = true;
             }
-            else newlineMode = false;
+            else if (currentTokenType.IsCommentType()) newlineMode = false;
+            else
+            {
+                lineOnlyCommentMode = false;
+                newlineMode = false;
+            }
         }
         return newlineCount + 1;// closing brace is also a line
     }
@@ -156,8 +166,8 @@ public class IdentifierAndMethodLengthAnalyzer
     {
         if (currentStatement.Select(t => t.TokenType).Any(tt => tt == Do || tt == New)) return true;
         if (currentStatement.Count < 2) return false;
-        TokenType previousToken = currentStatement[^2].TokenType;
-        if (previousToken == FatArrow || previousToken == Switch) return true;
+        TokenType previousTokenType = currentStatement[^2].TokenType;
+        if (previousTokenType == FatArrow || previousTokenType == TokenType.Switch) return true;
         return false;
     }
 
