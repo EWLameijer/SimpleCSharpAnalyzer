@@ -6,20 +6,10 @@ na elke feature of debug: ruim eigen code op
 
 NOW:
 
-commit version 
-
 1. handle space before ( if ( follows if/while/for/foreach (or any keyword) 
 2. handle interpolated strings ($"...{")
 
 
-2. Too long method: AddWarnings (in SimpleCSharpAnalyzer\TokenBasedChecking\CommentAnalyzer.cs) is 17 lines long.
-
-3. Too long method: GetNext3LinesOrLess (in SimpleCSharpAnalyzer\TokenBasedChecking\CommentAnalyzer.cs) is 35 lines long.
-
-4. Too long method: GetPrevious3LinesOrLess (in SimpleCSharpAnalyzer\TokenBasedChecking\CommentAnalyzer.cs) is 24 lines long.
-
-4 warnings in total
-32 extra code lines
 
 clean up version after code analysis
 

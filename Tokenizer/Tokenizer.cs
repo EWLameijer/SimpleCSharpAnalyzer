@@ -77,24 +77,24 @@ public class Tokenizer
     private Token HandlePossibleComment()
     {
         _nextCharIndex++;
-        char nextChar = _lines[_currentLineIndex][_nextCharIndex];
-        if (nextChar == '/')
-        {
-            TokenType commentType = LineComment;
-            _nextCharIndex++;
-            if (_nextCharIndex < _lines[_currentLineIndex].Length &&
-                _lines[_currentLineIndex][_nextCharIndex] == '/')
-            {
-                _nextCharIndex++;
-                commentType = DocComment;
-            }
-            string contents = _lines[_currentLineIndex][_nextCharIndex..].Trim();
-            _nextCharIndex = _lines[_currentLineIndex].Length - 1; // don't skip newline!
-            return StoreTokenWithoutConsume(commentType, contents);
-        }
-        else if (nextChar == '*')
-            return StoreTokenWithoutConsume(GetBlockComment());
+        char nextChar = CurrentChar();
+        if (nextChar == '/') return HandleLineOrDocComment();
+        else if (nextChar == '*') return StoreTokenWithoutConsume(GetBlockComment());
         else return StoreTokenWithoutConsume(Division);
+    }
+
+    private Token HandleLineOrDocComment()
+    {
+        TokenType commentType = LineComment;
+        _nextCharIndex++;
+        if (_nextCharIndex < _lines[_currentLineIndex].Length && CurrentChar() == '/')
+        {
+            _nextCharIndex++;
+            commentType = DocComment;
+        }
+        string contents = _lines[_currentLineIndex][_nextCharIndex..].Trim();
+        _nextCharIndex = _lines[_currentLineIndex].Length - 1; // don't skip newline!
+        return StoreTokenWithoutConsume(commentType, contents);
     }
 
     private Token GetIdentifierOrKeyword(char currentChar)
