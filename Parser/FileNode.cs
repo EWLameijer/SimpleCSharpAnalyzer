@@ -13,7 +13,7 @@ public class FileNode : Node
 
     public static FileNode Get(ParsePosition position)
     {
-        UsingsNode usingsNode = UsingsNode.Get(position);
+        UsingsNode usingsNode = UsingsNode.Get(position); // works!
         NamespaceNode namespaceNode = NamespaceNode.Get(position);
         return new FileNode(usingsNode, namespaceNode);
     }

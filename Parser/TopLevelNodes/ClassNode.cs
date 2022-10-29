@@ -1,9 +1,19 @@
-﻿using Tokenizing;
+﻿using System.Diagnostics;
+using Tokenizing;
 
 namespace Parser.TopLevelNodes;
 
 internal class ClassNode : TopLevelNode
 {
+    private readonly string _name;
+    private readonly List<Token> _ancestors;
+
+    public ClassNode(string name, List<Token> ancestors)
+    {
+        _name = name;
+        _ancestors = ancestors;
+    }
+
     // first token is "class"
     public static ClassNode Get(ParsePosition position, List<Token> modifiers)
     {
@@ -11,6 +21,10 @@ internal class ClassNode : TopLevelNode
         string className = ((ComplexToken)position.CurrentToken()).Info;
         position.Proceed(); // expect : or {
         List<Token> ancestors = GetAncestors(position);
+        position.SkipWhitespace();
+        Debug.Assert(position.CurrentTokenType() == TokenType.BracesOpen);
+        position.SkipWhitespace();
+        return new ClassNode(className, ancestors);
     }
 
     private static List<Token> GetAncestors(ParsePosition position)

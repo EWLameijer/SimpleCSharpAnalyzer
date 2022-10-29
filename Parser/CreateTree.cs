@@ -15,9 +15,4 @@ public class CreateTree
     {
         return FileNode.Get(_position);
     }
-
-    private NamespaceNode GetNameSpace()
-    {
-        throw new NotImplementedException();
-    }
 }

@@ -1,0 +1,2 @@
+MaxMethodLength = 15 # Visser asks 15, 42 finds 25 enough
+MaxLineLength = 120 # 100 is very showable on most windows without horizontal scrolling, 150 not
