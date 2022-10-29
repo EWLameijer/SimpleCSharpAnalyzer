@@ -65,13 +65,18 @@ public class CommentAnalyzer
                 if (currentTokenType == Newline) HandleNewline(currentToken);
                 else if (currentTokenType.IsCommentType()) HandleComment(currentToken);
                 else HandleRegularToken();
-                string text = NiceDisplay(currentToken);
-                string spacing = Spacing(_previousTokenType, currentToken.TokenType);
-                _result.Append(spacing + text);
+                UpdateResult(currentToken);
                 _sufficientLines = _linesSoFar >= 3;
-                _previousTokenType = currentToken.TokenType;
             }
             return (afterCommentIndex, _result.ToString(), _remainingComment.ToString().Trim());
+        }
+
+        private void UpdateResult(Token currentToken)
+        {
+            string text = NiceDisplay(currentToken);
+            string spacing = Spacing(_previousTokenType, currentToken.TokenType);
+            _result.Append(spacing + text);
+            _previousTokenType = currentToken.TokenType;
         }
 
         private void HandleRegularToken()
@@ -126,10 +131,7 @@ public class CommentAnalyzer
             if (ct.TokenType == TokenType.String) baseText = $"\"{baseText}\"";
             return baseText;
         }
-        else
-        {
-            return token.PrettyPrint().ToLower();
-        }
+        else return token.PrettyPrint().ToLower();
     }
 
     /*
@@ -143,7 +145,7 @@ public class CommentAnalyzer
         private int _linesSoFar = -1;
         private bool _newlineMode = false;
         private readonly StringBuilder _result = new();
-        private TokenType? followingTokenType = null;
+        private TokenType? _followingTokenType = null;
 
         public string Previous3Lines(int i, IReadOnlyList<Token> tokens)
         {
@@ -152,8 +154,8 @@ public class CommentAnalyzer
                 Token currentToken = tokens[beforeCommentIndex];
                 if (currentToken.TokenType == TokenType.Newline) HandleNewline();
                 else _newlineMode = false;
-                _result.Insert(0, NiceDisplay(currentToken) + Spacing(currentToken.TokenType, followingTokenType));
-                followingTokenType = currentToken.TokenType;
+                _result.Insert(0, NiceDisplay(currentToken) + Spacing(currentToken.TokenType, _followingTokenType));
+                _followingTokenType = currentToken.TokenType;
                 _sufficientLines = _linesSoFar >= 3;
             }
             return _result.ToString();
