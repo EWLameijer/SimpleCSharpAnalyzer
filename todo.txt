@@ -9,8 +9,11 @@ NOW:
 commit version 
 
 make version that gives 3 lines of context on top and bottom (or 7 lines, ending sooner after blank line)
+... THIS works. However, how to store and retrieve properly?
 commit version 
 clean up version after code analysis
+
+// In main program: ALWAYS report TODO-comments separately, unless they're ignored
 
 // check CommentChecker notes or think of own new milestone
 

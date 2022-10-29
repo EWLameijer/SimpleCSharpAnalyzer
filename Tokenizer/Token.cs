@@ -18,9 +18,11 @@ public class Token
         [FatArrow] = "=>",
         [Greater] = ">",
         [Less] = "<",
+        [NewLine] = "\n",
         [ParenthesesOpen] = "(",
         [ParenthesesClose] = ")",
-        [Period] = "."
+        [Period] = ".",
+        [SemiColon] = ";"
     };
 
     public virtual string PrettyPrint() =>

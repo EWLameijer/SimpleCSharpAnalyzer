@@ -2,65 +2,69 @@
 
 namespace CommentChecker;
 
+internal record CommentContext(string Filepath, string Context);
+
 internal static class CommentMerger
 {
     public static void Merge(Report report, string pathName)
     {
-        Dictionary<string, List<string>> mergedComments = MergeComments(report);
+        Dictionary<string, List<CommentContext>> mergedComments = MergeComments(report);
         List<string> toStorage = new();
         string storageFilename = pathName.Replace("\\", "_") + ".txt";
-        string[] ignoredLines = File.ReadAllLines(storageFilename);
-        foreach (KeyValuePair<string, List<string>> entry in mergedComments)
+        List<string> ignoredLines = File.ReadAllLines(storageFilename).ToList();
+        foreach (KeyValuePair<string, List<CommentContext>> entry in mergedComments)
         {
-            if (ignoredLines.Contains(entry.Key)) continue;
+            string storageFormat = ToStorageFormat(entry.Key);
+            if (ignoredLines.Contains(storageFormat)) continue;
             DisplayMergedComment(entry);
 
-            AskForAction(toStorage, entry);
+            AskForAction(toStorage, entry.Key);
         }
-
-        File.WriteAllLines(storageFilename, toStorage);
+        List<string> newEntries = toStorage.Select(k => ToStorageFormat(k)).ToList();
+        ignoredLines.AddRange(newEntries);
+        File.WriteAllLines(storageFilename, ignoredLines);
     }
 
-    private static void AskForAction(List<string> toStorage, KeyValuePair<string, List<string>> entry)
+    private static string ToStorageFormat(string input) => input.Replace("\n", "-\\n");
+
+    private static void AskForAction(List<string> toStorage, string key)
     {
         Console.WriteLine("What do you want to do with this comment?");
         Console.WriteLine("a. Approve: it is stored and you won't be asked about it again");
-        Console.WriteLine("b. Handle: remove it from the file(s)");
-        Console.WriteLine("c. Skip (for now), decide how to handle it later.");
+        // Console.WriteLine("b. Handle: remove it from the file(s)");
+        Console.WriteLine("b. Skip (for now), decide how to handle it later.");
         char answer = char.ToLower(Console.ReadKey().KeyChar!);
-        if (answer == 'a') toStorage.Add(entry.Key);
+        if (answer == 'a') toStorage.Add(key);
     }
 
-    private static void DisplayMergedComment(KeyValuePair<string, List<string>> entry)
+    private static void DisplayMergedComment(KeyValuePair<string, List<CommentContext>> entry)
     {
-        IEnumerable<IGrouping<string, string>> occurrences = entry.Value.GroupBy(p => p);
-        string result = string.Join(", ", occurrences.Select(o => $"{o.Count()}x {string.Join(", ", o)}"));
-        Console.WriteLine($"\n\n{entry.Key}\n[{result}]\n");
+        Console.WriteLine("\n************************************************************\n");
+        IEnumerable<IGrouping<string, CommentContext>> occurrences = entry.Value.GroupBy(p => p.Filepath);
+        string result = string.Join(", ", occurrences.Select(o => $"{o.Count()}x {o.Key}"));
+        Console.WriteLine($"\n\n{entry.Value[0].Context}\n[{result}]\n");
     }
 
-    private static Dictionary<string, List<string>> MergeComments(Report report)
+    private static Dictionary<string, List<CommentContext>> MergeComments(Report report)
     {
-        Dictionary<string, List<string>> mergedComments = new();
-        foreach (string warning in report.Warnings)
+        Dictionary<string, List<CommentContext>> mergedComments = new();
+        foreach (CommentData commentData in report.Comments)
         {
-            MergeCommentIntoResult(mergedComments, warning);
+            MergeCommentIntoResult(mergedComments, commentData);
         }
 
         return mergedComments;
     }
 
-    private static void MergeCommentIntoResult(Dictionary<string, List<string>> mergedComments, string warning)
+    private static void MergeCommentIntoResult(Dictionary<string,
+        List<CommentContext>> mergedComments, CommentData commentData)
     {
-        // example input line:
-        // "Commented-out code in SimpleCSharpAnalyzer\CommentChecker\CommentMerger.cs: // raw strings are NOT numbered"
-        const int FilePathIndex = 3;
-        string[] parts = warning.Split(' ');
-        string path = parts[FilePathIndex][..^1];
-        string comment = string.Join(" ", parts.Skip(FilePathIndex + 1)).Trim();
+        string path = commentData.Path;
+        string comment = commentData.Comment;
         if (!mergedComments.ContainsKey(comment))
         {
-            mergedComments[comment] = new List<string>();
+            mergedComments[comment] = new List<CommentContext>();
         }
-        mergedComments[comment].Add(path);
+        mergedComments[comment].Add(new CommentContext(path, commentData.Context));
     }
 }

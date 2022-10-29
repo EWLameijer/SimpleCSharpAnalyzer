@@ -1,5 +1,7 @@
 ﻿namespace DTOsAndUtilities;
 
+public record CommentData(string Path, string Comment, string Context);
+
 public class Report
 {
     public int SetupLines { get; set; }
@@ -14,6 +16,8 @@ public class Report
 
     public List<string> Warnings { get; set; } = new();
 
+    public List<CommentData> Comments { get; set; } = new();
+
     public void Add(Report other)
     {
         SetupLines += other.SetupLines;
@@ -23,6 +27,7 @@ public class Report
         CommentLines += other.CommentLines;
         ExtraCodeLines += other.ExtraCodeLines;
         Warnings.AddRange(other.Warnings);
+        Comments.AddRange(other.Comments);
     }
 
     public void Show()

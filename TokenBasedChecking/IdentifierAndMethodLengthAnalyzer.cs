@@ -363,11 +363,11 @@ public class IdentifierAndMethodLengthAnalyzer
         int i = 0;
         i = GetFirstIdentifier(currentStatement, i);
 
-        (int newI, bool canBeCorrect) = GetComplexType(currentStatement, i);
+        (int newI, bool canBeCorrect) = GetCSharpType(currentStatement, i);
         if (!canBeCorrect) return null;
         if (IsConstructor(currentStatement, i)) return i;
         i = newI + 1;
-        (int furtherI, bool canAlsoBeCorrect) = GetComplexType(currentStatement, i);
+        (int furtherI, bool canAlsoBeCorrect) = GetCSharpType(currentStatement, i);
         if (!canAlsoBeCorrect) return null;
         return IsAMethodAndCheckNamingStyle(currentStatement, i, furtherI);
     }
@@ -456,12 +456,8 @@ public class IdentifierAndMethodLengthAnalyzer
         return false;
     }
 
-    // get next complex identifier
-    //      if next is identifier
-    //         if followed by less, get contents until you encounter greater and stackSize == 0 again => Task<T>
-    //         if followed by []///
-    //      if next is ( get contents until you encounter ) and stacksize == 0 again
-    private static (int newIndex, bool canBeCorrect) GetComplexType(List<Token> currentStatement, int i)
+    // should handle simple types like int as well as List<T> or (int x, bool y)
+    private static (int newIndex, bool canBeCorrect) GetCSharpType(List<Token> currentStatement, int i)
     {
         TokenType currentTokenType = currentStatement[i].TokenType;
         if (currentTokenType == Identifier)
