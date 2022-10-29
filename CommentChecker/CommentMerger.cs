@@ -11,7 +11,17 @@ internal static class CommentMerger
         Dictionary<string, List<CommentContext>> mergedComments = MergeComments(report);
         List<string> toStorage = new();
         string storageFilename = pathName.Replace("\\", "_") + ".txt";
-        List<string> ignoredLines = File.ReadAllLines(storageFilename).ToList();
+        List<string> ignoredLines = File.Exists(storageFilename) ?
+            File.ReadAllLines(storageFilename).ToList() : new();
+        HandleEachMergedComment(mergedComments, toStorage, ignoredLines);
+        List<string> newEntries = toStorage.Select(k => ToStorageFormat(k)).ToList();
+        ignoredLines.AddRange(newEntries);
+        File.WriteAllLines(storageFilename, ignoredLines);
+    }
+
+    private static void HandleEachMergedComment(Dictionary<string,
+        List<CommentContext>> mergedComments, List<string> toStorage, List<string> ignoredLines)
+    {
         foreach (KeyValuePair<string, List<CommentContext>> entry in mergedComments)
         {
             string storageFormat = ToStorageFormat(entry.Key);
@@ -20,9 +30,6 @@ internal static class CommentMerger
 
             AskForAction(toStorage, entry.Key);
         }
-        List<string> newEntries = toStorage.Select(k => ToStorageFormat(k)).ToList();
-        ignoredLines.AddRange(newEntries);
-        File.WriteAllLines(storageFilename, ignoredLines);
     }
 
     private static string ToStorageFormat(string input) => input.Replace("\n", "-\\n");

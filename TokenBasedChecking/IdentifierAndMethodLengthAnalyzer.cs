@@ -40,7 +40,7 @@ public class IdentifierAndMethodLengthAnalyzer
         {
             indexToScan++;
             nextTokenType = _tokens[indexToScan].TokenType;
-        } while (nextTokenType != BracesOpen && nextTokenType != SemiColon);
+        } while (nextTokenType != BracesOpen && nextTokenType != Semicolon);
         return nextTokenType == BracesOpen ? FileModus.Traditional : FileModus.FileScoped;
     }
 
@@ -61,7 +61,7 @@ public class IdentifierAndMethodLengthAnalyzer
         if (!currentTokenType.IsSkippable())
         {
             currentStatement.Add(CurrentToken());
-            if (currentTokenType == SemiColon)
+            if (currentTokenType == Semicolon)
             {
                 HandleStatementWithSemiColon(currentStatement);
             }
@@ -144,7 +144,7 @@ public class IdentifierAndMethodLengthAnalyzer
             for (int i = _startIndex; i < _endIndex; i++)
             {
                 TokenType currentTokenType = _tokens[i].TokenType;
-                if (currentTokenType == NewLine) HandleNewline();
+                if (currentTokenType == Newline) HandleNewline();
                 else if (currentTokenType.IsCommentType()) _newlineMode = false;
                 else HandleRegularToken();
             }
@@ -169,7 +169,7 @@ public class IdentifierAndMethodLengthAnalyzer
     {
         Token currentToken = _tokens[_currentIndex];
         TokenType currentTokenType = currentToken.TokenType;
-        while (currentTokenType != SemiColon && currentTokenType != BracesOpen && currentTokenType != BracesClose)
+        while (currentTokenType != Semicolon && currentTokenType != BracesOpen && currentTokenType != BracesClose)
         {
             if (!currentTokenType.IsSkippable()) currentStatement.Add(_tokens[_currentIndex]);
             _currentIndex++;
@@ -215,7 +215,7 @@ public class IdentifierAndMethodLengthAnalyzer
 
     protected void ProcessForLoopSetup(TokenType currentTokenType)
     {
-        while (currentTokenType != SemiColon)
+        while (currentTokenType != Semicolon)
         {
             _currentIndex++;
             currentTokenType = _tokens[_currentIndex].TokenType;
@@ -405,13 +405,13 @@ public class IdentifierAndMethodLengthAnalyzer
         TokenType currentTokenType, bool subsequentNewlines, bool lastWasNewline, string methodName)
     {
         if (currentTokenType == BracesOpen) return (true, subsequentNewlines, lastWasNewline);
-        if (currentTokenType is SemiColon or BracesClose)
+        if (currentTokenType is Semicolon or BracesClose)
         {
             if (!subsequentNewlines) _report.Warnings.Add(
                 $"Missing blank line before {methodName} in {_contextedFilename}.");
             return (true, subsequentNewlines, lastWasNewline);
         }
-        if (currentTokenType == NewLine)
+        if (currentTokenType == Newline)
         {
             if (lastWasNewline) subsequentNewlines = true;
             lastWasNewline = true;

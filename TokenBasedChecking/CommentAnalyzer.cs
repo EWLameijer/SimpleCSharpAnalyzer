@@ -2,6 +2,8 @@
 using DTOsAndUtilities;
 using Tokenizing;
 
+using static Tokenizing.TokenType;
+
 namespace TokenBasedChecking;
 
 public class CommentAnalyzer
@@ -24,65 +26,104 @@ public class CommentAnalyzer
         {
             if (_tokens[i].TokenType.IsCommentType())
             {
-                int originalI = i;
-                StringBuilder context = new();
-                context.Append(GetPrevious3LinesOrLess(i));
-                context.Append(_tokens[i].PrettyPrint());
-                (i, string following, string remainingComment) = GetNext3LinesOrLess(i);
-                context.Append(following);
-                CommentData commentData = new(_contextedFilename,
-                    _tokens[originalI].PrettyPrint() + remainingComment, context.ToString());
-                _report.Comments.Add(commentData);
+                i = HandleComment(i);
             }
         }
     }
 
-    private (int i, string following, string remainingComment) GetNext3LinesOrLess(int i)
+    private int HandleComment(int i)
     {
-        bool sufficientLines = false;
-        int linesSoFar = 0;
-        bool newlineMode = false;
-        bool stillInComment = true;
-        string remainingComment = "";
-        StringBuilder result = new();
-        int afterCommentIndex = i + 1;
-        for (; afterCommentIndex < _tokens.Count && !sufficientLines; afterCommentIndex++)
-        {
-            Token currentToken = _tokens[afterCommentIndex];
-            TokenType currentTokenType = currentToken.TokenType;
-            if (currentTokenType == TokenType.NewLine)
-            {
-                if (stillInComment) remainingComment += NiceDisplay(currentToken);
-                if (newlineMode && !stillInComment) sufficientLines = true;
-                if (!stillInComment) linesSoFar++;
-                newlineMode = true;
-            }
-            else if (currentTokenType.IsCommentType())
-            {
-                if (stillInComment) remainingComment += NiceDisplay(currentToken);
-                newlineMode = false;
-            }
-            else
-            {
-                newlineMode = false;
-                stillInComment = false;
-            }
-            string text = NiceDisplay(currentToken);
-            result.Append(text + " ");
-            sufficientLines = linesSoFar >= 3;
-        }
-        return (afterCommentIndex, result.ToString(), remainingComment.Trim());
+        int originalI = i;
+        StringBuilder context = new();
+        context.Append(new PrecedingContextGetter().Previous3Lines(i, _tokens));
+        context.Append(_tokens[i].PrettyPrint());
+        (i, string following, string remainingComment) = new FollowingContextGetter().Next3Lines(i, _tokens);
+        context.Append(following);
+        CommentData commentData = new(_contextedFilename,
+            _tokens[originalI].PrettyPrint() + remainingComment, context.ToString());
+        _report.Comments.Add(commentData);
+        return i;
     }
 
-    private string NiceDisplay(Token token)
+    private class FollowingContextGetter
+    {
+        private bool _sufficientLines = false;
+        private int _linesSoFar = 0;
+        private bool _newlineMode = false;
+        private bool _stillInComment = true;
+        private readonly StringBuilder _remainingComment = new();
+        private readonly StringBuilder _result = new();
+        private TokenType? _previousTokenType = null;
+
+        public (int i, string following, string remainingComment) Next3Lines(int i, IReadOnlyList<Token> tokens)
+        {
+            int afterCommentIndex = i + 1;
+            for (; afterCommentIndex < tokens.Count && !_sufficientLines; afterCommentIndex++)
+            {
+                Token currentToken = tokens[afterCommentIndex];
+                TokenType currentTokenType = currentToken.TokenType;
+                if (currentTokenType == Newline) HandleNewline(currentToken);
+                else if (currentTokenType.IsCommentType()) HandleComment(currentToken);
+                else HandleRegularToken();
+                string text = NiceDisplay(currentToken);
+                string spacing = Spacing(_previousTokenType, currentToken.TokenType);
+                _result.Append(spacing + text);
+                _sufficientLines = _linesSoFar >= 3;
+                _previousTokenType = currentToken.TokenType;
+            }
+            return (afterCommentIndex, _result.ToString(), _remainingComment.ToString().Trim());
+        }
+
+        private void HandleRegularToken()
+        {
+            _newlineMode = false;
+            _stillInComment = false;
+        }
+
+        private void HandleComment(Token currentToken)
+        {
+            if (_stillInComment) _remainingComment.Append(NiceDisplay(currentToken));
+            _newlineMode = false;
+        }
+
+        private void HandleNewline(Token currentToken)
+        {
+            if (_stillInComment) _remainingComment.Append(NiceDisplay(currentToken));
+            if (_newlineMode && !_stillInComment) _sufficientLines = true;
+            if (!_stillInComment) _linesSoFar++;
+            _newlineMode = true;
+        }
+    }
+
+    private static readonly List<TokenType> _noSpaceBefore = new() { BracketsClose, BracketsOpen,
+        Comma, Greater, Less, ParenthesesClose, ParenthesesOpen, Period, QuestionMark, Semicolon };
+
+    private static readonly List<TokenType> _noSpaceAfter = new() { BracketsOpen, ExclamationMark,
+        Less, Newline, ParenthesesOpen, Period };
+
+    private static string Spacing(TokenType? previousTokenType, TokenType? currentTokenType)
+    {
+        if (previousTokenType == null) return "";
+        TokenType ptt = (TokenType)previousTokenType;
+        if (_noSpaceAfter.Contains(ptt)) return "";
+
+        if (currentTokenType == null) return "";
+        TokenType ctt = (TokenType)currentTokenType;
+        if (_noSpaceBefore.Contains(ctt)) return "";
+
+        return " ";
+    }
+
+    private static string NiceDisplay(Token token)
     {
         if (token is ComplexToken ct)
         {
             string baseText = ct.Info;
-            if (ct.TokenType == TokenType.LineComment) baseText = "// " + baseText;
-            if (ct.TokenType == TokenType.BlockCommentWhole) baseText = "/* " + baseText + "*/";
-            if (ct.TokenType == TokenType.BlockCommentEnd) baseText += "*/";
-            if (ct.TokenType == TokenType.BlockCommentStart) baseText = "/* " + baseText;
+            if (ct.TokenType == LineComment) baseText = "// " + baseText;
+            if (ct.TokenType == BlockCommentWhole) baseText = "/* " + baseText + "*/";
+            if (ct.TokenType == BlockCommentEnd) baseText += "*/";
+            if (ct.TokenType == BlockCommentStart) baseText = "/* " + baseText;
+            if (ct.TokenType == TokenType.String) baseText = $"\"{baseText}\"";
             return baseText;
         }
         else
@@ -91,29 +132,38 @@ public class CommentAnalyzer
         }
     }
 
-    private string GetPrevious3LinesOrLess(int i)
+    /*
+     *  using PhoneShop . Business ; // 1: get
+ using PhoneShop . Domain . Interfaces ;
+     */
+
+    private class PrecedingContextGetter
     {
-        bool sufficientLines = false;
-        int linesSoFar = -1;
-        bool newlineMode = false;
-        StringBuilder result = new();
-        for (int beforeCommentIndex = i - 1; beforeCommentIndex >= 0 && !sufficientLines; beforeCommentIndex--)
+        private bool _sufficientLines = false;
+        private int _linesSoFar = -1;
+        private bool _newlineMode = false;
+        private readonly StringBuilder _result = new();
+        private TokenType? followingTokenType = null;
+
+        public string Previous3Lines(int i, IReadOnlyList<Token> tokens)
         {
-            Token currentToken = _tokens[beforeCommentIndex];
-            if (currentToken.TokenType == TokenType.NewLine)
+            for (int beforeCommentIndex = i - 1; beforeCommentIndex >= 0 && !_sufficientLines; beforeCommentIndex--)
             {
-                if (newlineMode) sufficientLines = true;
-                linesSoFar++;
-                newlineMode = true;
+                Token currentToken = tokens[beforeCommentIndex];
+                if (currentToken.TokenType == TokenType.Newline) HandleNewline();
+                else _newlineMode = false;
+                _result.Insert(0, NiceDisplay(currentToken) + Spacing(currentToken.TokenType, followingTokenType));
+                followingTokenType = currentToken.TokenType;
+                _sufficientLines = _linesSoFar >= 3;
             }
-            else
-            {
-                newlineMode = false;
-            }
-            string text = currentToken is ComplexToken ct ? ct.Info : currentToken.PrettyPrint().ToLower();
-            result.Insert(0, text + " ");
-            sufficientLines = linesSoFar >= 3;
+            return _result.ToString();
         }
-        return result.ToString();
+
+        private void HandleNewline()
+        {
+            if (_newlineMode) _sufficientLines = true;
+            _linesSoFar++;
+            _newlineMode = true;
+        }
     }
 }

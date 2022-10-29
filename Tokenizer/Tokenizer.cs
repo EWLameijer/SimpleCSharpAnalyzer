@@ -131,7 +131,7 @@ public class Tokenizer
                 char ch = _lines[_currentLineIndex][_nextCharIndex];
                 if (!char.IsWhiteSpace(ch)) return;
                 if (ch == '\n')
-                    _parsedTokens.Add(new Token { TokenType = NewLine });
+                    _parsedTokens.Add(new Token { TokenType = Newline });
                 _nextCharIndex++;
             }
         }
@@ -167,7 +167,7 @@ public class Tokenizer
         ['.'] = Period,
         ['?'] = QuestionMark,
         ['!'] = ExclamationMark,
-        [';'] = SemiColon,
+        [';'] = Semicolon,
         [':'] = Colon,
         ['^'] = Caret,
         ['*'] = Times,
@@ -248,7 +248,7 @@ public class Tokenizer
         _currentLineIndex++;
         _nextCharIndex = -1; // will soon need to start at 0
         _parsedTokens.Add(new ComplexToken { TokenType = nonFinishType, Info = result.ToString() });
-        _parsedTokens.Add(new Token { TokenType = NewLine });
+        _parsedTokens.Add(new Token { TokenType = Newline });
     }
 
     private Token GetDollarToken()
@@ -344,7 +344,7 @@ public class Tokenizer
         _currentLineIndex++;
         _nextCharIndex = -1; // will soon need to start at 0
         _parsedTokens.Add(new ComplexToken { TokenType = nonFinalTokenType, Info = result.ToString() });
-        _parsedTokens.Add(new Token { TokenType = NewLine });
+        _parsedTokens.Add(new Token { TokenType = Newline });
     }
 
     private (Token? finalToken, bool isBreak) HandleVerbatimChar(StringBuilder result,

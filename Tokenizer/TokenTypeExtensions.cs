@@ -13,7 +13,7 @@ public static class TokenTypeExtensions
 
     public static bool IsSkippable(this TokenType tokenType)
     {
-        return tokenType == NewLine || tokenType.IsCommentType();
+        return tokenType == Newline || tokenType.IsCommentType();
     }
 
     public static bool IsBraceType(this TokenType tokenType)

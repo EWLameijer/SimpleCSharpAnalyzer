@@ -44,7 +44,7 @@ public class LineCounter
 
     private void ProcessToken(List<Token> lineTokens, Token token)
     {
-        if (token.TokenType == TokenType.NewLine)
+        if (token.TokenType == TokenType.Newline)
         {
             ClassifyLine(lineTokens);
             lineTokens.Clear();
