@@ -367,13 +367,12 @@ public class Tokenizer
 
     private Token? HandleDoubleQuotes(StringBuilder result, TokenType finalTokenType)
     {
-        if (NextChar() != '"')
+        _nextCharIndex++;
+        return CurrentChar() != '"' ? new ComplexToken
         {
-            _nextCharIndex++;
-            return new ComplexToken { TokenType = finalTokenType, Info = result.ToString() };
-        }
-        else _nextCharIndex += 2; // skip next double quote
-        return null;
+            TokenType = finalTokenType,
+            Info = result.ToString()
+        } : null;
     }
 
     // note: is a copy of verbatim processing.

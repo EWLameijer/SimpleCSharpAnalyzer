@@ -2,8 +2,6 @@
 !! doe crashtest na elke verbetering
 na elke feature of debug: ruim eigen code op 
 
-Hypothesis: I also count comment lines for some reason?
-
 NOW:
 1. Too long method: Merge (in SimpleCSharpAnalyzer\CommentChecker\CommentMerger.cs) is 32 lines long.
 clean up version after code analysis
