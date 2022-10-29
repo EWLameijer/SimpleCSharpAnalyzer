@@ -8,12 +8,16 @@ NOW:
 
 1. handle space before ( if ( follows if/while/for/foreach (or any keyword) 
 2. handle interpolated strings ($"...{")
+3. if those are okay, check 20 comments for new improvements
+4. if those are okay, make the comments green, for example, to focus on them more easily
+5. in main program, ALWAYS report TODO-comments separately, unless they're ignored
+6. in main program, report if there are unapproved comments (as a single warning)
 
 
 
 clean up version after code analysis
 
-// In main program: ALWAYS report TODO-comments separately, unless they're ignored
+// In main program: 
 
 // check CommentChecker notes or think of own new milestone
 
