@@ -1,0 +1,42 @@
+﻿using DTOsAndUtilities;
+
+namespace CommentChecker;
+
+internal static class CommentMerger
+{
+    public static void Merge(Report report, string pathName)
+    {
+        // example input line:
+        // "Commented-out code in SimpleCSharpAnalyzer\CommentChecker\CommentMerger.cs: // raw strings are NOT numbered"
+        const int FilePathIndex = 3;
+
+        Dictionary<string, List<string>> mergedComments = new();
+        foreach (string warning in report.Warnings)
+        {
+            string[] parts = warning.Split(' ');
+            string path = parts[FilePathIndex][..^1];
+            string comment = string.Join(" ", parts.Skip(FilePathIndex + 1)).Trim();
+            if (!mergedComments.ContainsKey(comment))
+            {
+                mergedComments[comment] = new List<string>();
+            }
+            mergedComments[comment].Add(path);
+        }
+        List<string> toStorage = new();
+        foreach (KeyValuePair<string, List<string>> entry in mergedComments)
+        {
+            IEnumerable<IGrouping<string, string>> occurrences = entry.Value.GroupBy(p => p);
+            string result = string.Join(", ", occurrences.Select(o => $"{o.Count()}x {string.Join(", ", o)}"));
+            Console.WriteLine($"\n\n{entry.Key}\n[{result}]\n");
+
+            Console.WriteLine("What do you want to do with this comment?");
+            Console.WriteLine("a. Approve: it is stored and you won't be asked about it again");
+            Console.WriteLine("b. Handle: remove it from the file(s)");
+            Console.WriteLine("c. Skip (for now), decide how to handle it later.");
+            char answer = char.ToLower(Console.ReadKey().KeyChar!);
+            if (answer == 'a') toStorage.Add(entry.Key);
+        }
+        string storageFilename = pathName.Replace("\\", "_") + ".txt";
+        File.WriteAllLines(storageFilename, toStorage);
+    }
+}

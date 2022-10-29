@@ -3,7 +3,18 @@
 na elke feature of debug: ruim eigen code op 
 
 NOW:
-filter comments on 1 item (so act/arrange etc should not be a problem)
+commit current version
+clean up version after code analysis
+
+make version that actually reads saved comments
+commit version 
+clean up version after code analysis
+
+make version that gives 3 lines of context on top and bottom (or 7 lines, ending sooner after blank line)
+commit version 
+clean up version after code analysis
+
+// check CommentChecker notes or think of own new milestone
 
 IDEAS:
 
