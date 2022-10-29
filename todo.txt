@@ -2,13 +2,11 @@
 !! doe crashtest na elke verbetering
 na elke feature of debug: ruim eigen code op 
 
-NOW:
-1. Too long method: Merge (in SimpleCSharpAnalyzer\CommentChecker\CommentMerger.cs) is 32 lines long.
-clean up version after code analysis
+// Za-av: maak nieuwe release wegens bugfixes
 
-make version that actually reads saved comments
+NOW:
+
 commit version 
-clean up version after code analysis
 
 make version that gives 3 lines of context on top and bottom (or 7 lines, ending sooner after blank line)
 commit version 

@@ -8,13 +8,16 @@ internal static class CommentMerger
     {
         Dictionary<string, List<string>> mergedComments = MergeComments(report);
         List<string> toStorage = new();
+        string storageFilename = pathName.Replace("\\", "_") + ".txt";
+        string[] ignoredLines = File.ReadAllLines(storageFilename);
         foreach (KeyValuePair<string, List<string>> entry in mergedComments)
         {
+            if (ignoredLines.Contains(entry.Key)) continue;
             DisplayMergedComment(entry);
 
             AskForAction(toStorage, entry);
         }
-        string storageFilename = pathName.Replace("\\", "_") + ".txt";
+
         File.WriteAllLines(storageFilename, toStorage);
     }
 
