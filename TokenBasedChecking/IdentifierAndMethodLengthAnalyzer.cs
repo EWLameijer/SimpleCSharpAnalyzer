@@ -148,7 +148,7 @@ public class IdentifierAndMethodLengthAnalyzer
                 else if (currentTokenType.IsCommentType()) _newlineMode = false;
                 else HandleRegularToken();
             }
-            return _newlineCount + 1;// closing brace is also a line
+            return _newlineCount + 1; // closing brace is also a line
         }
 
         private void HandleRegularToken()

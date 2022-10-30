@@ -86,6 +86,7 @@ public class Tokenizer
 
     private Token HandleLineOrDocComment()
     {
+        int startingIndex = _nextCharIndex - 1;
         TokenType commentType = LineComment;
         _nextCharIndex++;
         if (_nextCharIndex < _lines[_currentLineIndex].Length && CurrentChar() == '/')
@@ -94,7 +95,6 @@ public class Tokenizer
             commentType = DocComment;
         }
         string contents = _lines[_currentLineIndex][_nextCharIndex..].Trim();
-        int startingIndex = _nextCharIndex;
         _nextCharIndex = _lines[_currentLineIndex].Length - 1; // don't skip newline!
         return StoreTokenWithoutConsume(commentType, startingIndex, contents);
     }

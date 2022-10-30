@@ -1,6 +1,7 @@
 ﻿namespace DTOsAndUtilities;
 
-public record CommentData(string Path, string Comment, string Context);
+public record CommentData(string Path, string Comment, string PrecedingContext,
+    string FollowingContext);
 
 public class Report
 {

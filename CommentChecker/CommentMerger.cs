@@ -2,7 +2,7 @@
 
 namespace CommentChecker;
 
-internal record CommentContext(string Filepath, string Context);
+internal record CommentContext(string Filepath, string PrecedingContext, string FollowingContext);
 
 internal static class CommentMerger
 {
@@ -49,7 +49,13 @@ internal static class CommentMerger
         Console.WriteLine("\n************************************************************\n");
         IEnumerable<IGrouping<string, CommentContext>> occurrences = entry.Value.GroupBy(p => p.Filepath);
         string result = string.Join(", ", occurrences.Select(o => $"{o.Count()}x {o.Key}"));
-        Console.WriteLine($"\n\n{entry.Value[0].Context}\n[{result}]\n");
+        CommentContext commentWithContext = entry.Value[0];
+        Console.Write(commentWithContext.PrecedingContext);
+        Console.ForegroundColor = ConsoleColor.Green;
+        Console.Write(entry.Key);
+        Console.ForegroundColor = ConsoleColor.White;
+        Console.WriteLine(commentWithContext.FollowingContext);
+        Console.WriteLine($"\n[{result}]\n");
     }
 
     private static Dictionary<string, List<CommentContext>> MergeComments(Report report)
@@ -72,6 +78,7 @@ internal static class CommentMerger
         {
             mergedComments[comment] = new List<CommentContext>();
         }
-        mergedComments[comment].Add(new CommentContext(path, commentData.Context));
+        mergedComments[comment].Add(new CommentContext(path,
+            commentData.PrecedingContext, commentData.FollowingContext));
     }
 }

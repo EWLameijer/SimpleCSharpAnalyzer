@@ -48,7 +48,7 @@ public class FileProcessor
         LineCounter counter = new(tokens);
         Report report = counter.CreateReport();
         IReadOnlyList<Token> tokensWithoutAttributes = new TokenFilterer().Filter(tokens);
-        FileAsTokens fileTokenData = new(fileData.ContextedFilename, tokensWithoutAttributes);
+        FileAsTokens fileTokenData = new(fileData.FilePath, tokensWithoutAttributes);
         if (analysisMode == AnalysisMode.CommentsOnly)
             new CommentAnalyzer(fileTokenData, report).AddWarnings();
         else DoFullAnalysis(fileData, report, fileTokenData);

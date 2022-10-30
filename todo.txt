@@ -2,12 +2,8 @@
 !! doe crashtest na elke verbetering
 na elke feature of debug: ruim eigen code op 
 
-// Za-av: maak nieuwe release wegens bugfixes
+// Can release (nicer comments)
 
-1. make release (after testing both execs)
-2. use the anchor coordinates to easily display the code correctly in the preview
-3. if those are okay, check 20 comments for new improvements
-4. if those are okay, make the comments green, for example, to focus on them more easily
 5. in main program, ALWAYS report TODO-comments separately, unless they're ignored
 6. in main program, report if there are unapproved comments (as a single warning)
 7? allow removal of comments? Or opening via notepad or any user-specified program?
@@ -17,20 +13,10 @@ na elke feature of debug: ruim eigen code op
 
 clean up version after code analysis
 
-// In main program: 
-
-// check CommentChecker notes or think of own new milestone
 
 IDEAS:
-
-
 ? magic constants? Probleem: redelijk vaak!
-? check comments - commented-out code? (check for reserved words and = and () and such? Probleem: redelijk vaak!
-
 Als aantal parameters groter is dan ??? Probleem - zelden [bij business code]
-
 Tarzan: gebrek aan ?? ?. etc.
-
-
 ? McCabe complexity
 ? repeated code?  / DRY?

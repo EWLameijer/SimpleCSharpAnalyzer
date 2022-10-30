@@ -4,12 +4,14 @@ namespace DTOsAndUtilities;
 
 public class FileAsTokens
 {
-    public string ContextedFilename { get; }
+    public string ContextedFilename => FileUtils.GetContextedFilename(FilePath);
     public IReadOnlyList<Token> Tokens { get; }
 
-    public FileAsTokens(string contextedFilename, IReadOnlyList<Token> tokens)
+    public string FilePath { get; init; }
+
+    public FileAsTokens(string filePath, IReadOnlyList<Token> tokens)
     {
-        ContextedFilename = contextedFilename;
+        FilePath = filePath;
         Tokens = tokens;
     }
 }

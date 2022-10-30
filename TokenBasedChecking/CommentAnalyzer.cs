@@ -6,15 +6,19 @@ using static Tokenizing.TokenType;
 
 namespace TokenBasedChecking;
 
+internal record Position(int LineIndex, int CharIndex);
+
 public class CommentAnalyzer
 {
     private readonly string _contextedFilename;
     private readonly Report _report;
     private readonly IReadOnlyList<Token> _tokens;
+    private readonly string _filePath;
 
     public CommentAnalyzer(FileAsTokens fileData, Report report)
     {
         _contextedFilename = fileData.ContextedFilename;
+        _filePath = fileData.FilePath;
         _report = report;
         _tokens = fileData.Tokens;
     }
@@ -34,13 +38,11 @@ public class CommentAnalyzer
     private int HandleComment(int i)
     {
         int originalI = i;
-        StringBuilder context = new();
-        context.Append(new PrecedingContextGetter().Previous3Lines(i, _tokens));
-        context.Append(_tokens[i].PrettyPrint());
-        (i, string following, string remainingComment) = new FollowingContextGetter().Next3Lines(i, _tokens);
-        context.Append(following);
-        CommentData commentData = new(_contextedFilename,
-            _tokens[originalI].PrettyPrint() + remainingComment, context.ToString());
+        string precedingContext = new PrecedingContextGetter().Previous3Lines(i, _tokens, _filePath);
+        while (_tokens[i].TokenType.IsCommentType() || _tokens[i].TokenType == Newline) i++;
+        string comment = GetStringFromFile(_filePath, _tokens[originalI], _tokens[i]);
+        (i, string followingContext) = new FollowingContextGetter().Next3Lines(i, _tokens, _filePath);
+        CommentData commentData = new(_contextedFilename, comment, precedingContext, followingContext);
         _report.Comments.Add(commentData);
         return i;
     }
@@ -55,9 +57,10 @@ public class CommentAnalyzer
         private readonly StringBuilder _result = new();
         private TokenType? _previousTokenType = null;
 
-        public (int i, string following, string remainingComment) Next3Lines(int i, IReadOnlyList<Token> tokens)
+        public (int i, string following) Next3Lines(int i,
+            IReadOnlyList<Token> tokens, string filePath)
         {
-            int afterCommentIndex = i + 1;
+            int afterCommentIndex = i;
             for (; afterCommentIndex < tokens.Count && !_sufficientLines; afterCommentIndex++)
             {
                 Token currentToken = tokens[afterCommentIndex];
@@ -68,7 +71,8 @@ public class CommentAnalyzer
                 UpdateResult(currentToken);
                 _sufficientLines = _linesSoFar >= 3;
             }
-            return (afterCommentIndex, _result.ToString(), _remainingComment.ToString().Trim());
+            afterCommentIndex--;
+            return (afterCommentIndex, GetStringFromFile(filePath, tokens[i], tokens[afterCommentIndex]));
         }
 
         private void UpdateResult(Token currentToken)
@@ -134,31 +138,26 @@ public class CommentAnalyzer
         else return token.PrettyPrint().ToLower();
     }
 
-    /*
-     *  using PhoneShop . Business ; // 1: get
- using PhoneShop . Domain . Interfaces ;
-     */
-
     private class PrecedingContextGetter
     {
         private bool _sufficientLines = false;
         private int _linesSoFar = -1;
         private bool _newlineMode = false;
-        private readonly StringBuilder _result = new();
-        private TokenType? _followingTokenType = null;
 
-        public string Previous3Lines(int i, IReadOnlyList<Token> tokens)
+        public string Previous3Lines(int i, IReadOnlyList<Token> tokens, string filePath)
         {
-            for (int beforeCommentIndex = i - 1; beforeCommentIndex >= 0 && !_sufficientLines; beforeCommentIndex--)
+            Token startCommentToken = tokens[i];
+            int beforeCommentIndex = i - 1;
+            for (; beforeCommentIndex >= 0 && !_sufficientLines; beforeCommentIndex--)
             {
                 Token currentToken = tokens[beforeCommentIndex];
                 if (currentToken.TokenType == Newline) HandleNewline();
                 else _newlineMode = false;
-                _result.Insert(0, NiceDisplay(currentToken) + Spacing(currentToken.TokenType, _followingTokenType));
-                _followingTokenType = currentToken.TokenType;
                 _sufficientLines = _linesSoFar >= 3;
             }
-            return _result.ToString();
+            beforeCommentIndex++;
+            Token startContextToken = tokens[beforeCommentIndex];
+            return GetStringFromFile(filePath, startContextToken, startCommentToken);
         }
 
         private void HandleNewline()
@@ -167,5 +166,20 @@ public class CommentAnalyzer
             _linesSoFar++;
             _newlineMode = true;
         }
+    }
+
+    private static string GetStringFromFile(string filePath, Token startToken, Token endToken)
+    {
+        if (startToken.LineNumber == endToken.LineNumber &&
+            startToken.CharacterIndex == endToken.CharacterIndex) return "";
+        string[] lines = File.ReadAllLines(filePath);
+        StringBuilder result = new();
+        result.Append(lines[startToken.LineNumber][startToken.CharacterIndex..] + '\n');
+        for (int i = startToken.LineNumber + 1; i < endToken.LineNumber; i++)
+        {
+            result.Append(lines[i] + '\n');
+        }
+        result.Append(lines[endToken.LineNumber][..endToken.CharacterIndex]);
+        return result.ToString();
     }
 }
