@@ -368,3 +368,4 @@ FodyWeavers.xsd
 /run.lnk
 /goutput*
 /growTest.bat
+/_*.txt

@@ -34,7 +34,7 @@ public class FileProcessor
 
             Tokenizer tokenizer = new(fileData.Lines);
             IReadOnlyList<Token> tokens = tokenizer.Results();
-            Report fileReport = PerformAnalyses(fileData, tokens, analysisMode);
+            Report fileReport = PerformAnalyses(fileData, tokens, analysisMode, PathName);
             fileReport.Show();
             _globalReport.Add(fileReport);
         }
@@ -42,15 +42,15 @@ public class FileProcessor
     }
 
     private static Report PerformAnalyses(FileAsLines fileData, IReadOnlyList<Token> tokens,
-        AnalysisMode analysisMode)
+        AnalysisMode analysisMode, string basePath)
     {
         Debug.Assert(analysisMode != AnalysisMode.AnalysisModeNotSet);
         LineCounter counter = new(tokens);
         Report report = counter.CreateReport();
         IReadOnlyList<Token> tokensWithoutAttributes = new TokenFilterer().Filter(tokens);
-        FileAsTokens fileTokenData = new(fileData.FilePath, tokensWithoutAttributes);
+        FileAsTokens fileTokenData = new(fileData.FilePath, tokensWithoutAttributes, basePath);
         if (analysisMode == AnalysisMode.CommentsOnly)
-            new CommentAnalyzer(fileTokenData, report).AddWarnings();
+            new CommentAnalyzer(fileTokenData, report).AddCommentAnalysis();
         else DoFullAnalysis(fileData, report, fileTokenData);
         return report;
     }
@@ -62,7 +62,7 @@ public class FileProcessor
 
         List<string> warnings = InappropriateAtsHandler.GetWarnings(fileTokenData);
         report.Warnings.AddRange(warnings);
-
+        new CommentAnalyzer(fileTokenData, report).AddWarnings();
         new IdentifierAndMethodLengthAnalyzer(fileTokenData, report).AddWarnings();
         new MalapropAnalyzer(fileTokenData, report).AddWarnings();
     }

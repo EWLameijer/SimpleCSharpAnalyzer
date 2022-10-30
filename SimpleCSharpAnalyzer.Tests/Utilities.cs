@@ -12,6 +12,6 @@ internal static class Utilities
         IReadOnlyList<Token> tokens = tokenizer.Results();
         IReadOnlyList<Token> tokensWithoutAttributes = new TokenFilterer().Filter(tokens);
         LineCounter counter = new(tokens);
-        return (new("", tokensWithoutAttributes), counter.CreateReport());
+        return (new("", tokensWithoutAttributes, ""), counter.CreateReport());
     }
 }

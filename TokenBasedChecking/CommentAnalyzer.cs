@@ -14,6 +14,8 @@ public class CommentAnalyzer
     private readonly Report _report;
     private readonly IReadOnlyList<Token> _tokens;
     private readonly string _filePath;
+    private int _unapprovedComments = 0;
+    private readonly string _basePath;
 
     public CommentAnalyzer(FileAsTokens fileData, Report report)
     {
@@ -21,10 +23,24 @@ public class CommentAnalyzer
         _filePath = fileData.FilePath;
         _report = report;
         _tokens = fileData.Tokens;
+        _basePath = fileData.BasePath;
     }
 
     //  $"Commented-out code in {_contextedFilename}: {context}");
     public void AddWarnings()
+    {
+        for (int i = 0; i < _tokens.Count; i++)
+        {
+            if (_tokens[i].TokenType.IsCommentType())
+            {
+                i = WarnForCommentsIfNeeded(i);
+            }
+        }
+        if (_unapprovedComments > 0) _report.Warnings.Add(
+            $"Unapproved comments in {_contextedFilename}, please use the CommentChecker tool.");
+    }
+
+    public void AddCommentAnalysis()
     {
         for (int i = 0; i < _tokens.Count; i++)
         {
@@ -47,15 +63,23 @@ public class CommentAnalyzer
         return i;
     }
 
+    private int WarnForCommentsIfNeeded(int i)
+    {
+        int originalI = i;
+        while (_tokens[i].TokenType.IsCommentType() || _tokens[i].TokenType == Newline) i++;
+        string comment = GetStringFromFile(_filePath, _tokens[originalI], _tokens[i]);
+        if (comment.Contains("todo", StringComparison.InvariantCultureIgnoreCase))
+            _report.Warnings.Add($"TODO comment in {_contextedFilename}: {comment}");
+        if (!CommentArchiver.ContainsComment(_basePath, comment)) _unapprovedComments++;
+        return i;
+    }
+
     private class FollowingContextGetter
     {
         private bool _sufficientLines = false;
-        private int _linesSoFar = 0;
+        private readonly int _linesSoFar = 0;
         private bool _newlineMode = false;
-        private bool _stillInComment = true;
-        private readonly StringBuilder _remainingComment = new();
-        private readonly StringBuilder _result = new();
-        private TokenType? _previousTokenType = null;
+        private int? _internalComment = null;
 
         public (int i, string following) Next3Lines(int i,
             IReadOnlyList<Token> tokens, string filePath)
@@ -65,77 +89,27 @@ public class CommentAnalyzer
             {
                 Token currentToken = tokens[afterCommentIndex];
                 TokenType currentTokenType = currentToken.TokenType;
-                if (currentTokenType == Newline) HandleNewline(currentToken);
-                else if (currentTokenType.IsCommentType()) HandleComment(currentToken);
-                else HandleRegularToken();
-                UpdateResult(currentToken);
+                if (currentTokenType == Newline) HandleNewline();
+                else if (currentTokenType.IsCommentType()) HandleComment(afterCommentIndex);
+                else _newlineMode = false;
                 _sufficientLines = _linesSoFar >= 3;
             }
-            afterCommentIndex--;
-            return (afterCommentIndex, GetStringFromFile(filePath, tokens[i], tokens[afterCommentIndex]));
+            int nextIndex = (_internalComment ?? afterCommentIndex) - 1;
+            return (nextIndex, GetStringFromFile(filePath, tokens[i], tokens[afterCommentIndex - 1]));
         }
 
-        private void UpdateResult(Token currentToken)
-        {
-            string text = NiceDisplay(currentToken);
-            string spacing = Spacing(_previousTokenType, currentToken.TokenType);
-            _result.Append(spacing + text);
-            _previousTokenType = currentToken.TokenType;
-        }
 
-        private void HandleRegularToken()
+        private void HandleComment(int currentIndex)
         {
-            _newlineMode = false;
-            _stillInComment = false;
-        }
-
-        private void HandleComment(Token currentToken)
-        {
-            if (_stillInComment) _remainingComment.Append(NiceDisplay(currentToken));
+            _internalComment ??= currentIndex;
             _newlineMode = false;
         }
 
-        private void HandleNewline(Token currentToken)
+        private void HandleNewline()
         {
-            if (_stillInComment) _remainingComment.Append(NiceDisplay(currentToken));
-            if (_newlineMode && !_stillInComment) _sufficientLines = true;
-            if (!_stillInComment) _linesSoFar++;
+            if (_newlineMode) _sufficientLines = true;
             _newlineMode = true;
         }
-    }
-
-    private static readonly List<TokenType> _noSpaceBefore = new() { BracketsClose, BracketsOpen,
-        Comma, Greater, Less, ParenthesesClose, ParenthesesOpen, Period, QuestionMark, Semicolon };
-
-    private static readonly List<TokenType> _noSpaceAfter = new() { BracketsOpen, ExclamationMark,
-        Less, Newline, ParenthesesOpen, Period };
-
-    private static string Spacing(TokenType? previousTokenType, TokenType? currentTokenType)
-    {
-        if (previousTokenType == null) return "";
-        TokenType ptt = (TokenType)previousTokenType;
-        if (_noSpaceAfter.Contains(ptt)) return "";
-
-        if (currentTokenType == null) return "";
-        TokenType ctt = (TokenType)currentTokenType;
-        if (_noSpaceBefore.Contains(ctt)) return "";
-
-        return " ";
-    }
-
-    private static string NiceDisplay(Token token)
-    {
-        if (token is ComplexToken ct)
-        {
-            string baseText = ct.Info;
-            if (ct.TokenType == LineComment) baseText = "// " + baseText;
-            if (ct.TokenType == BlockCommentWhole) baseText = "/* " + baseText + "*/";
-            if (ct.TokenType == BlockCommentEnd) baseText += "*/";
-            if (ct.TokenType == BlockCommentStart) baseText = "/* " + baseText;
-            if (ct.TokenType == TokenType.String) baseText = $"\"{baseText}\"";
-            return baseText;
-        }
-        else return token.PrettyPrint().ToLower();
     }
 
     private class PrecedingContextGetter

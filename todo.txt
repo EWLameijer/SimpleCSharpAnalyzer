@@ -4,17 +4,9 @@ na elke feature of debug: ruim eigen code op
 
 // Can release (nicer comments)
 
-5. in main program, ALWAYS report TODO-comments separately, unless they're ignored
-6. in main program, report if there are unapproved comments (as a single warning)
-7? allow removal of comments? Or opening via notepad or any user-specified program?
-
-
-
-
-clean up version after code analysis
-
 
 IDEAS:
+7? allow removal of comments? Or opening via notepad or any user-specified program?
 ? magic constants? Probleem: redelijk vaak!
 Als aantal parameters groter is dan ??? Probleem - zelden [bij business code]
 Tarzan: gebrek aan ?? ?. etc.
