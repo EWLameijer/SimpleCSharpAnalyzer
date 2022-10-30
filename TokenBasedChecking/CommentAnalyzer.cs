@@ -77,7 +77,7 @@ public class CommentAnalyzer
     private class FollowingContextGetter
     {
         private bool _sufficientLines = false;
-        private readonly int _linesSoFar = 0;
+        private int _linesSoFar = 0;
         private bool _newlineMode = false;
         private int? _internalComment = null;
 
@@ -98,7 +98,6 @@ public class CommentAnalyzer
             return (nextIndex, GetStringFromFile(filePath, tokens[i], tokens[afterCommentIndex - 1]));
         }
 
-
         private void HandleComment(int currentIndex)
         {
             _internalComment ??= currentIndex;
@@ -109,6 +108,7 @@ public class CommentAnalyzer
         {
             if (_newlineMode) _sufficientLines = true;
             _newlineMode = true;
+            _linesSoFar++;
         }
     }
 
