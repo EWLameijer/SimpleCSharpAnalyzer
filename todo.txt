@@ -7,6 +7,8 @@ na elke feature of debug: ruim eigen code op
 Spend 4x15 checking student code (esp of phase 1). Also ask 2nd phase for tryout and feedback...
 
 IDEAS:
+te lang blok in program.cs
+blank lines tussen properties.
 7? allow removal of comments? Or opening via notepad or any user-specified program?
 ? magic constants? Probleem: redelijk vaak!
 Als aantal parameters groter is dan ??? Probleem - zelden [bij business code]

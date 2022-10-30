@@ -26,7 +26,7 @@ internal static class Services
         Assert.Single(report.Warnings);
     }
 
-    private const string EnumPossiblySeenAsPropert = @"
+    private const string EnumPossiblySeenAsProperty = @"
 namespace Phoneshop.Logging.Common;
 
 public enum LogLevel : byte {
@@ -37,7 +37,7 @@ public enum LogLevel : byte {
     public void Should_not_report_enum_as_property()
     {
         // arrange
-        (FileAsTokens fileTokenData, Report report) = Utilities.Setup(EnumPossiblySeenAsPropert);
+        (FileAsTokens fileTokenData, Report report) = Utilities.Setup(EnumPossiblySeenAsProperty);
 
         // act
         new IdentifierAndMethodLengthAnalyzer(fileTokenData, report).AddWarnings();
