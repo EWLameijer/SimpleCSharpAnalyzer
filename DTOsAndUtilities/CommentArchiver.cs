@@ -17,8 +17,13 @@ public class CommentArchiver
             File.ReadAllLines(storageFilename).ToList() : new();
     }
 
-    private static string FilenameFromPath(string pathName) =>
-        pathName.Replace("\\", "_") + ".txt";
+    private static string FilenameFromPath(string pathName)
+    {
+        string drivelessPathname = pathName[1] == ':' ? pathName[2..] : pathName;
+        string fileName = FileUtils.ExecutablePath() + "\\" + drivelessPathname.Replace("\\", "_") + ".txt";
+        Console.WriteLine("Filename " + fileName);
+        return fileName;
+    }
 
     public static void Store(string pathName, List<string> comments)
     {

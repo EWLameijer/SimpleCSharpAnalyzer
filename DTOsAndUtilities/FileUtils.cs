@@ -7,4 +7,10 @@ internal static class FileUtils
         string[] directories = filePath.Split(Path.DirectorySeparatorChar);
         return string.Join("\\", directories.TakeLast(3));
     }
+
+    internal static string ExecutablePath()
+    {
+        string strExeFilePath = System.Reflection.Assembly.GetExecutingAssembly().Location;
+        return Path.GetDirectoryName(strExeFilePath)!;
+    }
 }
