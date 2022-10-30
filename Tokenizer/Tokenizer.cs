@@ -241,12 +241,7 @@ public class Tokenizer
         int startIndex, StringBuilder result, TokenType finishType, TokenType nonFinishType)
     {
         if (ch == '*' && NextChar() == '/')
-        {
-            _nextCharIndex += 2;
-            Token finalToken = new ComplexToken(finishType, _currentLineIndex, startIndex,
-                result.ToString());
-            return (finalToken, false);
-        }
+            return HandleBlockCommentEnd(startIndex, result, finishType);
         if (ch == '\n')
         {
             StoreNextBlockCommentLine(result, startIndex, nonFinishType);
@@ -254,6 +249,15 @@ public class Tokenizer
         }
         result.Append(ch);
         return (null, false);
+    }
+
+    private (Token finalToken, bool startNewline) HandleBlockCommentEnd(
+        int startIndex, StringBuilder result, TokenType finishType)
+    {
+        _nextCharIndex += 2;
+        Token finalToken = new ComplexToken(finishType, _currentLineIndex, startIndex,
+            result.ToString());
+        return (finalToken, false);
     }
 
     private void StoreNextBlockCommentLine(StringBuilder result, int startCharIndex,
@@ -404,11 +408,7 @@ public class Tokenizer
         int startCharIndex = _nextCharIndex;
         _nextCharIndex++;
         char ch = CurrentChar();
-        if (ch == '+')
-        {
-            _nextCharIndex++;
-            return new Token(Increment, _currentLineIndex, startCharIndex);
-        }
+        if (ch == '+') return TokenAt(Increment, startCharIndex);
         return new Token(Plus, _currentLineIndex, startCharIndex);
     }
 
@@ -417,11 +417,7 @@ public class Tokenizer
         int startCharIndex = _nextCharIndex;
         _nextCharIndex++;
         char ch = CurrentChar();
-        if (ch == '-')
-        {
-            _nextCharIndex++;
-            return new Token(Decrement, _currentLineIndex, startCharIndex);
-        }
+        if (ch == '-') return TokenAt(Decrement, startCharIndex);
         return new Token(Minus, _currentLineIndex, startCharIndex);
     }
 
@@ -430,11 +426,7 @@ public class Tokenizer
         int startCharIndex = _nextCharIndex;
         _nextCharIndex++;
         char ch = CurrentChar();
-        if (ch == '&')
-        {
-            _nextCharIndex++;
-            return new Token(LogicAnd, _currentLineIndex, startCharIndex);
-        }
+        if (ch == '&') return TokenAt(LogicAnd, startCharIndex);
         throw new ArgumentException("& parse wrong!");
     }
 
@@ -443,11 +435,7 @@ public class Tokenizer
         int startCharIndex = _nextCharIndex;
         _nextCharIndex++;
         char ch = CurrentChar();
-        if (ch == '|')
-        {
-            _nextCharIndex++;
-            return new Token(LogicOr, _currentLineIndex, startCharIndex);
-        }
+        if (ch == '|') return TokenAt(LogicOr, startCharIndex);
         throw new ArgumentException("| parse wrong!");
     }
 
@@ -456,11 +444,7 @@ public class Tokenizer
         int startCharIndex = _nextCharIndex;
         _nextCharIndex++;
         char ch = CurrentChar();
-        if (ch == '=')
-        {
-            _nextCharIndex++;
-            return new Token(Comparator, _currentLineIndex, startCharIndex);
-        }
+        if (ch == '=') return TokenAt(Comparator, startCharIndex);
         return new Token(Less, _currentLineIndex, startCharIndex);
     }
 
@@ -469,17 +453,15 @@ public class Tokenizer
         int startCharIndex = _nextCharIndex;
         _nextCharIndex++;
         char ch = CurrentChar();
-        if (ch == '>')
-        {
-            _nextCharIndex++;
-            return new Token(FatArrow, _currentLineIndex, startCharIndex);
-        }
-        else if (ch == '=')
-        {
-            _nextCharIndex++;
-            return new Token(Comparator, _currentLineIndex, startCharIndex);
-        }
+        if (ch == '>') return TokenAt(FatArrow, startCharIndex);
+        else if (ch == '=') return TokenAt(Comparator, startCharIndex);
         return new Token(Assign, _currentLineIndex, startCharIndex);
+    }
+
+    private Token TokenAt(TokenType tokenType, int startCharIndex)
+    {
+        _nextCharIndex++;
+        return new Token(tokenType, _currentLineIndex, startCharIndex);
     }
 
     private Token GetGreaterTypeToken()
@@ -487,11 +469,7 @@ public class Tokenizer
         int startCharIndex = _nextCharIndex;
         _nextCharIndex++;
         char ch = CurrentChar();
-        if (ch == '=')
-        {
-            _nextCharIndex++;
-            return new Token(Comparator, _currentLineIndex, startCharIndex);
-        }
+        if (ch == '=') return TokenAt(Comparator, startCharIndex);
         return new Token(Greater, _currentLineIndex, startCharIndex);
     }
 
@@ -560,7 +538,8 @@ public class Tokenizer
         return (true, isEscapeMode, tokenType, startCharIndex);
     }
 
-    private (TokenType tokenType, int startCharIndex) HandleInterpolatedBraceOpen(int startCharIndex, StringBuilder result, TokenType tokenType)
+    private (TokenType tokenType, int startCharIndex)
+        HandleInterpolatedBraceOpen(int startCharIndex, StringBuilder result, TokenType tokenType)
     {
         char ch = CurrentChar();
         if (_lines[_currentLineIndex][_nextCharIndex + 1] == '{')
