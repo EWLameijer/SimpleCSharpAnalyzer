@@ -56,7 +56,7 @@ public class CommentAnalyzer
         string precedingContext = new PrecedingContextGetter().Previous3Lines(commentStartPosition, _tokens, _filePath);
         (string comment, int commentEndPosition) = ExtractComment(commentStartPosition);
         (commentEndPosition, string followingContext) =
-            new FollowingContextGetter().Next3Lines(commentEndPosition, _tokens, _filePath);
+            new FollowingContextGetter().Next3Lines(commentEndPosition + 1, _tokens, _filePath);
         CommentData commentData = new(_contextedFilename, comment, precedingContext, followingContext);
         _report.Comments.Add(commentData);
         return commentEndPosition;
@@ -91,6 +91,7 @@ public class CommentAnalyzer
         public (int i, string following) Next3Lines(int i,
             IReadOnlyList<Token> tokens, string filePath)
         {
+            if (i >= tokens.Count) return (i, "");
             int afterCommentIndex = i;
             for (; afterCommentIndex < tokens.Count && !_sufficientLines; afterCommentIndex++)
             {
