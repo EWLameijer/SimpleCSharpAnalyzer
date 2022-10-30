@@ -2,13 +2,11 @@
 
 namespace CommentChecker;
 
-internal record CommentContext(string Filepath, string PrecedingContext, string FollowingContext);
-
 internal static class CommentMerger
 {
     public static void Merge(Report report, string pathName)
     {
-        Dictionary<string, List<CommentContext>> mergedComments = MergeComments(report);
+        Dictionary<string, List<CommentData>> mergedComments = MergeComments(report);
         List<string> toStorage = new();
         List<string> ignoredLines = CommentArchiver.GetFromStorage(pathName);
         HandleEachMergedComment(mergedComments, toStorage, ignoredLines);
@@ -18,9 +16,9 @@ internal static class CommentMerger
     }
 
     private static void HandleEachMergedComment(Dictionary<string,
-        List<CommentContext>> mergedComments, List<string> toStorage, List<string> ignoredLines)
+        List<CommentData>> mergedComments, List<string> toStorage, List<string> ignoredLines)
     {
-        foreach (KeyValuePair<string, List<CommentContext>> entry in mergedComments)
+        foreach (KeyValuePair<string, List<CommentData>> entry in mergedComments)
         {
             string storageFormat = CommentArchiver.ToStorageFormat(entry.Key);
             if (ignoredLines.Contains(storageFormat)) continue;
@@ -39,23 +37,23 @@ internal static class CommentMerger
         if (answer == 'a') toStorage.Add(key);
     }
 
-    private static void DisplayMergedComment(KeyValuePair<string, List<CommentContext>> entry)
+    private static void DisplayMergedComment(KeyValuePair<string, List<CommentData>> entry)
     {
         Console.WriteLine("\n************************************************************\n");
-        IEnumerable<IGrouping<string, CommentContext>> occurrences = entry.Value.GroupBy(p => p.Filepath);
+        IEnumerable<IGrouping<string, CommentData>> occurrences = entry.Value.GroupBy(p => p.Path);
         string result = string.Join(", ", occurrences.Select(o => $"{o.Count()}x {o.Key}"));
-        CommentContext commentWithContext = entry.Value[0];
+        CommentData commentWithContext = entry.Value[0];
         Console.Write(commentWithContext.PrecedingContext);
         Console.ForegroundColor = ConsoleColor.Green;
-        Console.Write(entry.Key);
+        Console.Write(commentWithContext.Comment);
         Console.ForegroundColor = ConsoleColor.White;
         Console.WriteLine(commentWithContext.FollowingContext);
         Console.WriteLine($"\n[{result}]\n");
     }
 
-    private static Dictionary<string, List<CommentContext>> MergeComments(Report report)
+    private static Dictionary<string, List<CommentData>> MergeComments(Report report)
     {
-        Dictionary<string, List<CommentContext>> mergedComments = new();
+        Dictionary<string, List<CommentData>> mergedComments = new();
         foreach (CommentData commentData in report.Comments)
         {
             MergeCommentIntoResult(mergedComments, commentData);
@@ -65,15 +63,14 @@ internal static class CommentMerger
     }
 
     private static void MergeCommentIntoResult(Dictionary<string,
-        List<CommentContext>> mergedComments, CommentData commentData)
+        List<CommentData>> mergedComments, CommentData commentData)
     {
         string path = commentData.Path;
-        string comment = commentData.Comment;
-        if (!mergedComments.ContainsKey(comment))
+        string trimmedComment = commentData.Comment.Trim();
+        if (!mergedComments.ContainsKey(trimmedComment))
         {
-            mergedComments[comment] = new List<CommentContext>();
+            mergedComments[trimmedComment] = new List<CommentData>();
         }
-        mergedComments[comment].Add(new CommentContext(path,
-            commentData.PrecedingContext, commentData.FollowingContext));
+        mergedComments[trimmedComment].Add(commentData);
     }
 }
