@@ -76,7 +76,7 @@ public class CommentAnalyzer
     private void WarnForMissingSpace(string comment)
     {
         if ((comment.StartsWith("///") && comment.Length > 3 && comment[3] != ' ') ||
-            (comment.Length > 2 && comment[2] != ' ' && comment[2] != '/'))
+            (comment.Length > 2 && !char.IsWhiteSpace(comment[2]) && comment[2] != '/'))
             _report.Warnings.Add($"Need space after comment in {_contextedFilename}: {comment}");
     }
 

@@ -4,6 +4,7 @@ na elke feature of debug: ruim eigen code op
 
 // Can release (nicer comments)
 
+Spend 4x15 checking student code (esp of phase 1). Also ask 2nd phase for tryout and feedback...
 
 IDEAS:
 7? allow removal of comments? Or opening via notepad or any user-specified program?
