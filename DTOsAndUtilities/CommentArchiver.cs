@@ -8,7 +8,7 @@ public class CommentArchiver
         return comments.Contains(ToStorageFormat(comment));
     }
 
-    public static string ToStorageFormat(string input) => input.Replace("\n", "-\\n");
+    public static string ToStorageFormat(string input) => input.Trim().Replace("\n", "-\\n");
 
     public static List<string> GetFromStorage(string pathName)
     {

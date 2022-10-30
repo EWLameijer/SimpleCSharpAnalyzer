@@ -22,7 +22,7 @@ public class GetSingle : Base
         // arrange
         (FileAsTokens fileTokenData, Report report) = Utilities.Setup(InvalidMethodName);
 
-        //act
+        // act
         new IdentifierAndMethodLengthAnalyzer(fileTokenData, report).AddWarnings();
 
         // assert
@@ -48,7 +48,7 @@ namespace PhoneShop.WinForms
         // arrange
         (FileAsTokens fileTokenData, Report report) = Utilities.Setup(DoublyReportedMethodName);
 
-        //act
+        // act
         new IdentifierAndMethodLengthAnalyzer(fileTokenData, report).AddWarnings();
 
         // assert

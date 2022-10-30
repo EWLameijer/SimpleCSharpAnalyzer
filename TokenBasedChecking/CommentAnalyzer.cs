@@ -65,10 +65,19 @@ public class CommentAnalyzer
     private int WarnForCommentsIfNeeded(int commentStartIndex)
     {
         (string comment, int lastCommentIndex) = ExtractComment(commentStartIndex);
+        if (comment.Trim().Length == 2) _report.Warnings.Add($"Empty comment in {_contextedFilename}");
+        WarnForMissingSpace(comment);
         if (comment.Contains("todo", StringComparison.InvariantCultureIgnoreCase))
             _report.Warnings.Add($"TODO comment in {_contextedFilename}: {comment}");
         if (!CommentArchiver.ContainsComment(_basePath, comment)) _unapprovedComments++;
         return lastCommentIndex;
+    }
+
+    private void WarnForMissingSpace(string comment)
+    {
+        if ((comment.StartsWith("///") && comment.Length > 3 && comment[3] != ' ') ||
+            (comment.Length > 2 && comment[2] != ' ' && comment[2] != '/'))
+            _report.Warnings.Add($"Need space after comment in {_contextedFilename}: {comment}");
     }
 
     private (string comment, int lastCommentIndex) ExtractComment(int commentStartPosition)

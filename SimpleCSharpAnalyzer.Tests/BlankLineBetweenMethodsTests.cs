@@ -24,7 +24,7 @@ public class GetSingle : Base
         // arrange
         (FileAsTokens fileTokenData, Report report) = Utilities.Setup(LackOfBlankLineBetweenMethods);
 
-        //act
+        // act
         new IdentifierAndMethodLengthAnalyzer(fileTokenData, report).AddWarnings();
 
         // assert
@@ -51,7 +51,7 @@ namespace Phoneshop.WinForms
         // arrange
         (FileAsTokens fileTokenData, Report report) = Utilities.Setup(BlankLineAlsoNeededBeforeConstructor);
 
-        //act
+        // act
         new IdentifierAndMethodLengthAnalyzer(fileTokenData, report).AddWarnings();
 
         // assert

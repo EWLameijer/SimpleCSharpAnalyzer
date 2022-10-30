@@ -41,7 +41,7 @@ internal static class CommentMerger
         // arrange
         (FileAsTokens fileTokenData, Report report) = Utilities.Setup(MethodOf16Lines);
 
-        //act
+        // act
         new IdentifierAndMethodLengthAnalyzer(fileTokenData, report).AddWarnings();
 
         // assert

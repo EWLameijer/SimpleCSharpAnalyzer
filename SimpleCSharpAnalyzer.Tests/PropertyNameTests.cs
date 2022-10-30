@@ -19,7 +19,7 @@ internal static class Services
         // arrange
         (FileAsTokens fileTokenData, Report report) = Utilities.Setup(ErroneousPropertyName);
 
-        //act
+        // act
         new IdentifierAndMethodLengthAnalyzer(fileTokenData, report).AddWarnings();
 
         // assert
@@ -39,7 +39,7 @@ public enum LogLevel : byte {
         // arrange
         (FileAsTokens fileTokenData, Report report) = Utilities.Setup(EnumPossiblySeenAsPropert);
 
-        //act
+        // act
         new IdentifierAndMethodLengthAnalyzer(fileTokenData, report).AddWarnings();
 
         // assert

@@ -19,7 +19,7 @@ void DrawPhoneInformation(Phone selectedPhone, int PressedKey)
         // arrange
         (FileAsTokens fileTokenData, Report report) = Utilities.Setup(DetectWrongParameter);
 
-        //act
+        // act
         new IdentifierAndMethodLengthAnalyzer(fileTokenData, report).AddWarnings();
 
         // assert
@@ -40,7 +40,7 @@ public interface IBrandService
         // arrange
         (FileAsTokens fileTokenData, Report report) = Utilities.Setup(SingleDetectionInInterfaces);
 
-        //act
+        // act
         new IdentifierAndMethodLengthAnalyzer(fileTokenData, report).AddWarnings();
 
         // assert
