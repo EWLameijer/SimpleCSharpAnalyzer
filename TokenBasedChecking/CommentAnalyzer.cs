@@ -51,27 +51,34 @@ public class CommentAnalyzer
         }
     }
 
-    private int HandleComment(int i)
+    private int HandleComment(int commentStartPosition)
     {
-        int originalI = i;
-        string precedingContext = new PrecedingContextGetter().Previous3Lines(i, _tokens, _filePath);
-        while (_tokens[i].TokenType.IsCommentType() || _tokens[i].TokenType == Newline) i++;
-        string comment = GetStringFromFile(_filePath, _tokens[originalI], _tokens[i]);
-        (i, string followingContext) = new FollowingContextGetter().Next3Lines(i, _tokens, _filePath);
+        string precedingContext = new PrecedingContextGetter().Previous3Lines(commentStartPosition, _tokens, _filePath);
+        (string comment, int commentEndPosition) = ExtractComment(commentStartPosition);
+        (commentEndPosition, string followingContext) =
+            new FollowingContextGetter().Next3Lines(commentEndPosition, _tokens, _filePath);
         CommentData commentData = new(_contextedFilename, comment, precedingContext, followingContext);
         _report.Comments.Add(commentData);
-        return i;
+        return commentEndPosition;
     }
 
-    private int WarnForCommentsIfNeeded(int i)
+    private int WarnForCommentsIfNeeded(int commentStartIndex)
     {
-        int originalI = i;
-        while (_tokens[i].TokenType.IsCommentType() || _tokens[i].TokenType == Newline) i++;
-        string comment = GetStringFromFile(_filePath, _tokens[originalI], _tokens[i]);
+        (string comment, int lastCommentIndex) = ExtractComment(commentStartIndex);
         if (comment.Contains("todo", StringComparison.InvariantCultureIgnoreCase))
             _report.Warnings.Add($"TODO comment in {_contextedFilename}: {comment}");
         if (!CommentArchiver.ContainsComment(_basePath, comment)) _unapprovedComments++;
-        return i;
+        return lastCommentIndex;
+    }
+
+    private (string comment, int lastCommentIndex) ExtractComment(int commentStartPosition)
+    {
+        int currentPos = commentStartPosition;
+        while (currentPos < _tokens.Count && (_tokens[currentPos].TokenType.IsCommentType() ||
+            _tokens[currentPos].TokenType == Newline)) currentPos++;
+        Token? endToken = currentPos == _tokens.Count ? null : _tokens[currentPos];
+        string comment = GetStringFromFile(_filePath, _tokens[commentStartPosition], endToken);
+        return (comment, currentPos - 1);
     }
 
     private class FollowingContextGetter
@@ -142,18 +149,18 @@ public class CommentAnalyzer
         }
     }
 
-    private static string GetStringFromFile(string filePath, Token startToken, Token endToken)
+    private static string GetStringFromFile(string filePath, Token startToken, Token? endToken)
     {
-        if (startToken.LineNumber == endToken.LineNumber &&
-            startToken.CharacterIndex == endToken.CharacterIndex) return "";
+        if (startToken.LineNumber == endToken?.LineNumber &&
+            startToken.CharacterIndex == endToken?.CharacterIndex) return "";
         string[] lines = File.ReadAllLines(filePath);
         StringBuilder result = new();
         result.Append(lines[startToken.LineNumber][startToken.CharacterIndex..] + '\n');
-        for (int i = startToken.LineNumber + 1; i < endToken.LineNumber; i++)
+        for (int i = startToken.LineNumber + 1; i < (endToken?.LineNumber ?? lines.Length); i++)
         {
             result.Append(lines[i] + '\n');
         }
-        result.Append(lines[endToken.LineNumber][..endToken.CharacterIndex]);
+        if (endToken != null) result.Append(lines[endToken.LineNumber][..endToken.CharacterIndex]);
         return result.ToString();
     }
 }
