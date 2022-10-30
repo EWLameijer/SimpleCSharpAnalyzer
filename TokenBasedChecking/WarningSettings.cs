@@ -5,9 +5,16 @@ public static class WarningSettings
     public static int MaxMethodLength { get; }
     public static int MaxLineLength { get; }
 
+    private const string DefaultSettingsText = @"
+MaxMethodLength = 15 # Visser asks 15, 42 finds 25 enough
+MaxLineLength = 120 # 100 is very showable on most windows without horizontal scrolling, 150 not";
+
+    private const string SettingsFilename = "settings.txt";
+
     static WarningSettings()
     {
-        string[] lines = File.ReadAllLines("settings.txt");
+        if (!File.Exists(SettingsFilename)) File.WriteAllText(SettingsFilename, DefaultSettingsText);
+        string[] lines = File.ReadAllLines(SettingsFilename);
         MaxMethodLength = Get("MaxMethodLength", lines, 15);
         MaxLineLength = Get("MaxLineLength", lines, 120);
     }
