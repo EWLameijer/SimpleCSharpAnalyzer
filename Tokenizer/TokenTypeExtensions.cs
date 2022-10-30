@@ -49,7 +49,7 @@ public static class TokenTypeExtensions
 
     public static bool IsTypeType(this TokenType tokenType)
     {
-        List<TokenType> typeTypes = new() { Class, Record, Struct };
+        List<TokenType> typeTypes = new() { Class, Enum, Record, Struct };
         return typeTypes.Contains(tokenType);
     }
 }

@@ -18,6 +18,13 @@ public class IdentifierAndMethodLengthAnalyzer
     private readonly List<Scope> _scopes = new();
     private readonly IReadOnlyList<Token> _tokens;
     private int _currentIndex = 0;
+    private readonly FileModus _fileModus;
+    private bool _warningsOn = true;
+
+    private void AddWarning(string warning)
+    {
+        if (_warningsOn) _report.Warnings.Add(warning);
+    }
 
     protected TokenType CurrentTokenType() => _tokens[_currentIndex].TokenType;
 
@@ -25,9 +32,104 @@ public class IdentifierAndMethodLengthAnalyzer
 
     protected void Proceed() => _currentIndex++;
 
+    public IdentifierAndMethodLengthAnalyzer(FileAsTokens fileData, Report report)
+    {
+        _contextedFilename = fileData.ContextedFilename;
+        _report = report;
+        _tokens = fileData.Tokens;
+        _fileModus = GetFileModus();
+        Console.WriteLine($"{_contextedFilename} is {GetFileModus()}.");
+    }
+
     public void AddWarnings()
     {
+        if (_fileModus == FileModus.TopLevel)
+        {
+            _warningsOn = false; // to use method detection without duplicate calls
+            new TopLevelScanner(_tokens, _contextedFilename, _report, this).PerformTopLevelScan();
+            _warningsOn = true;
+        }
         Scan();
+    }
+
+    private void Scan()
+    {
+        List<Token> currentStatement = new();
+
+        while (_currentIndex < _tokens.Count)
+        {
+            TokenType currentTokenType = CurrentTokenType();
+            if (currentTokenType == BracesClose) return;
+            HandleRegularToken(currentStatement, currentTokenType);
+            Proceed();
+        }
+    }
+
+    private sealed class TopLevelScanner
+    {
+        private int _linesSoFar = 0;
+
+        private readonly List<Token> _currentLine = new();
+        private readonly IReadOnlyList<Token> _tokens;
+        private readonly string _contextedFilename;
+        private readonly Report _report;
+        private readonly IdentifierAndMethodLengthAnalyzer _outer;
+
+        public TopLevelScanner(IReadOnlyList<Token> tokens, string contextedFilename,
+            Report report, IdentifierAndMethodLengthAnalyzer outer)
+        {
+            _tokens = tokens;
+            _contextedFilename = contextedFilename;
+            _report = report;
+            _outer = outer;
+        }
+
+        public void PerformTopLevelScan()
+        {
+            int index = 0;
+            for (; index < _tokens.Count; index++)
+            {
+                Token token = _tokens[index];
+                bool shouldBreak = HandleToken(token);
+                if (shouldBreak) break;
+            }
+            if (index == _tokens.Count && _currentLine.Count != 0) _linesSoFar++;
+            if (_linesSoFar > WarningSettings.MaxMethodLength) Warn();
+        }
+
+        private bool HandleToken(Token token)
+        {
+            TokenType tokenType = token.TokenType;
+            if (tokenType == Newline)
+            {
+                bool methodFound = HandleNewline();
+                if (methodFound) return true;
+            }
+            else if (!tokenType.IsCommentType())
+            {
+                _currentLine.Add(token);
+                if (tokenType.IsTypeType()) return true;
+            }
+            return false;
+        }
+
+        private void Warn()
+        {
+            _report.Warnings.Add($"Top-level statement in {_contextedFilename} is too long " +
+                $"- {_linesSoFar} lines.");
+        }
+
+        private bool HandleNewline()
+        {
+            if (_currentLine.Count > 3 && _outer.CanBeMethod(_currentLine) != null) return true;
+            if (!IsUsingOrBlankLine(_currentLine)) _linesSoFar++;
+            _currentLine.Clear();
+            return false;
+        }
+
+        private static bool IsUsingOrBlankLine(List<Token> lineSoFar) =>
+            lineSoFar.Select(t => t.TokenType).All(
+                tt => tt is Using or Period or Semicolon or Identifier);
     }
 
     private FileModus GetFileModus()
@@ -42,18 +144,6 @@ public class IdentifierAndMethodLengthAnalyzer
             nextTokenType = _tokens[indexToScan].TokenType;
         } while (nextTokenType != BracesOpen && nextTokenType != Semicolon);
         return nextTokenType == BracesOpen ? FileModus.Traditional : FileModus.FileScoped;
-    }
-
-    private void Scan()
-    {
-        List<Token> currentStatement = new();
-        while (_currentIndex < _tokens.Count)
-        {
-            TokenType currentTokenType = CurrentTokenType();
-            if (currentTokenType == BracesClose) return;
-            HandleRegularToken(currentStatement, currentTokenType);
-            Proceed();
-        }
     }
 
     private void HandleRegularToken(List<Token> currentStatement, TokenType currentTokenType)
@@ -114,7 +204,7 @@ public class IdentifierAndMethodLengthAnalyzer
             int lineCount = new MethodLineCounter(tokenIndex, _currentIndex, _tokens).Count();
             if (lineCount > maxLineLength)
             {
-                _report.Warnings.Add($"Too long method: {methodName} " +
+                AddWarning($"Too long method: {methodName} " +
                     $"(in {_contextedFilename}) is {lineCount} lines long.");
                 _report.ExtraCodeLines += lineCount - maxLineLength;
             }
@@ -228,14 +318,6 @@ public class IdentifierAndMethodLengthAnalyzer
             _currentIndex++;
             currentTokenType = _tokens[_currentIndex].TokenType;
         }
-    }
-
-    public IdentifierAndMethodLengthAnalyzer(FileAsTokens fileData, Report report)
-    {
-        _contextedFilename = fileData.ContextedFilename;
-        _report = report;
-        _tokens = fileData.Tokens;
-        Console.WriteLine($"{_contextedFilename} is {GetFileModus()}.");
     }
 
     internal static bool IsCall(List<Token> currentStatement, int i)
@@ -378,7 +460,7 @@ public class IdentifierAndMethodLengthAnalyzer
         {
             string methodName = ((ComplexToken)currentStatement[i]).Info;
             if (DoShow) Console.WriteLine($"Candidate method: {methodName}");
-            if (!char.IsUpper(methodName[0])) _report.Warnings.Add(
+            if (!char.IsUpper(methodName[0])) AddWarning(
                 $"Invalid method name: {methodName} (in {_contextedFilename}).");
             int methodIndex = _currentIndex - currentStatement.Count + furtherI;
             CheckBlankLineBeforeMethod(methodName, methodIndex);
@@ -407,7 +489,7 @@ public class IdentifierAndMethodLengthAnalyzer
         if (currentTokenType == BracesOpen) return (true, subsequentNewlines, lastWasNewline);
         if (currentTokenType is Semicolon or BracesClose)
         {
-            if (!subsequentNewlines) _report.Warnings.Add(
+            if (!subsequentNewlines) AddWarning(
                 $"Missing blank line before {methodName} in {_contextedFilename}.");
             return (true, subsequentNewlines, lastWasNewline);
         }
@@ -608,7 +690,7 @@ public class IdentifierAndMethodLengthAnalyzer
             string warning = $"Invalid {varType} name: " +
                 $"{((ComplexToken)currentStatement[i]).Info} (in {_contextedFilename} - " +
                 $"{PrettyPrint(currentScope)}).";
-            _report.Warnings.Add(warning);
+            AddWarning(warning);
         }
     }
 
@@ -635,7 +717,7 @@ public class IdentifierAndMethodLengthAnalyzer
             string normalName = identifierName[1..];
             if (!AllCSharpKeywords.KeyWords.Contains(normalName))
             {
-                _report.Warnings.Add($"Unnecessary '@' in front of {identifierName} " +
+                AddWarning($"Unnecessary '@' in front of {identifierName} " +
                     $"(in {_contextedFilename}).");
                 return true; // don't give second warning
             }
@@ -719,7 +801,7 @@ public class IdentifierAndMethodLengthAnalyzer
         (bool isFinished, char startChar) = GetStartCharAndName(paramName);
 
         if (!isFinished && !char.IsLower(startChar))
-            _report.Warnings.Add($"Invalid parameter name: " +
+            AddWarning($"Invalid parameter name: " +
                 $"{paramName} (in {_contextedFilename}).");
     }
 
@@ -731,7 +813,7 @@ public class IdentifierAndMethodLengthAnalyzer
             string normalName = paramName[1..];
             if (!AllCSharpKeywords.KeyWords.Contains(normalName))
             {
-                _report.Warnings.Add($"Unnecessary '@' in front of {paramName} " +
+                AddWarning($"Unnecessary '@' in front of {paramName} " +
                     $"(in {_contextedFilename}).");
                 return (true, startChar);
             }

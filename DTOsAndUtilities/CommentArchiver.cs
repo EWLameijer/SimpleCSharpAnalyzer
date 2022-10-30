@@ -21,7 +21,6 @@ public class CommentArchiver
     {
         string drivelessPathname = pathName[1] == ':' ? pathName[2..] : pathName;
         string fileName = FileUtils.ExecutablePath() + "\\" + drivelessPathname.Replace("\\", "_") + ".txt";
-        Console.WriteLine("Filename " + fileName);
         return fileName;
     }
 
