@@ -26,7 +26,6 @@ public class CommentAnalyzer
         _basePath = fileData.BasePath;
     }
 
-    //  $"Commented-out code in {_contextedFilename}: {context}");
     public void AddWarnings()
     {
         for (int i = 0; i < _tokens.Count; i++)
