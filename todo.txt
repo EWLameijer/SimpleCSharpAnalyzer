@@ -1,17 +1,21 @@
-1/ fundament 2/ read[=1] 3/ debug
 !! doe crashtest na elke verbetering
 na elke feature of debug: ruim eigen code op 
 
-// Can release (nicer comments)
+// Can release > 2022/10/30-17:00: top level statements help!
 
-Spend 4x15 checking student code (esp of phase 1). Also ask 2nd phase for tryout and feedback...
+
+1. Spend 4x15 checking student code (esp of phase 1). Also ask 2nd phase for tryout and feedback...
+	DONE: 0 min
 
 IDEAS:
-te lang blok in program.cs
-blank lines tussen properties.
-7? allow removal of comments? Or opening via notepad or any user-specified program?
-? magic constants? Probleem: redelijk vaak!
-Als aantal parameters groter is dan ??? Probleem - zelden [bij business code]
-Tarzan: gebrek aan ?? ?. etc.
-? McCabe complexity
-? repeated code?  / DRY?
+5		300/60 Tarzan: gebrek aan ?? ?. += ++ -- record, tuple, etc.
+1.7		500/360 ? repeated code?  / DRY?
+1.3		80/60 7? allow removal of comments? Or opening via notepad or any user-specified program?
+0.75	90/120 magic constants? Probleem: redelijk vaak!
+0.6		50/80 ? McCabe complexity
+0.4		50 / 120 blank lines tussen properties.
+0.25	20/80 Als aantal parameters groter is dan ??? Probleem - zelden [bij business code]
+0.02	3/180 ~ too long block in Program.cs works kind of. Ideally I would want to also detect code BETWEEN the
+		methods in a top-level file, but practically that is only rarely a problem.
+
+
