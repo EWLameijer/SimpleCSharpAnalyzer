@@ -13,3 +13,5 @@ Detects usage of String/Char/Int32 instead of string/char/int.
 Also detects methods that are longer than Visser's ["Maintainable" software standards](https://www.softwareimprovementgroup.com/wp-content/uploads/Building_Maintainable_Software_C_Sharp_SIG.compressed.pdf) of 15 lines of code.
 
 Detects when a method or constructor is not separated from previous declarations by a blank line.
+
+Will also detect badly formatted comments and TODO comments; can ask you to vet comments to check for commented-out code and other problems.
