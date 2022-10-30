@@ -36,16 +36,16 @@ public class Tokenizer
 
     private Token StoreTokenWithConsume(TokenType tokenType)
     {
-        _nextCharIndex++;
-        Token token = new() { TokenType = tokenType };
+        Token token = new(tokenType, _currentLineIndex, _nextCharIndex);
         _parsedTokens.Add(token);
+        _nextCharIndex++;
         return token;
     }
 
-    private Token StoreTokenWithoutConsume(TokenType tokenType, string? contents = null)
+    private Token StoreTokenWithoutConsume(TokenType tokenType, int charIndex, string? contents = null)
     {
-        Token token = contents == null ? new Token { TokenType = tokenType } :
-            new ComplexToken { TokenType = tokenType, Info = contents };
+        Token token = contents == null ? new Token(tokenType, _currentLineIndex, charIndex) :
+            new ComplexToken(tokenType, _currentLineIndex, charIndex, contents);
         _parsedTokens.Add(token);
         return token;
     }
@@ -76,11 +76,12 @@ public class Tokenizer
 
     private Token HandlePossibleComment()
     {
+        int startCharIndex = _nextCharIndex;
         _nextCharIndex++;
         char nextChar = CurrentChar();
         if (nextChar == '/') return HandleLineOrDocComment();
         else if (nextChar == '*') return StoreTokenWithoutConsume(GetBlockComment());
-        else return StoreTokenWithoutConsume(Division);
+        else return StoreTokenWithoutConsume(Division, startCharIndex);
     }
 
     private Token HandleLineOrDocComment()
@@ -93,30 +94,32 @@ public class Tokenizer
             commentType = DocComment;
         }
         string contents = _lines[_currentLineIndex][_nextCharIndex..].Trim();
+        int startingIndex = _nextCharIndex;
         _nextCharIndex = _lines[_currentLineIndex].Length - 1; // don't skip newline!
-        return StoreTokenWithoutConsume(commentType, contents);
+        return StoreTokenWithoutConsume(commentType, startingIndex, contents);
     }
 
     private Token GetIdentifierOrKeyword(char currentChar)
     {
-        string identifier = GetIdentifier(currentChar);
+        (string identifier, int startingPos) = GetIdentifier(currentChar);
         if (Keywords._dict.ContainsKey(identifier))
         {
-            Token target = new() { TokenType = Keywords._dict[identifier] };
+            Token target = new(Keywords._dict[identifier], _currentLineIndex, startingPos);
             _parsedTokens.Add(target);
             return target;
         }
         else
         {
-            Token token = new ComplexToken { TokenType = Identifier, Info = identifier };
+            Token token = new ComplexToken(Identifier, _currentLineIndex, startingPos, identifier);
             _parsedTokens.Add(token);
             return token;
         }
     }
 
-    private string GetIdentifier(char currentChar)
+    private (string identifier, int startingPos) GetIdentifier(char currentChar)
     {
         StringBuilder result = new();
+        int startingPos = _nextCharIndex;
         result.Append(currentChar);
         do
         {
@@ -125,7 +128,7 @@ public class Tokenizer
             if (char.IsLetterOrDigit(ch) || ch == '_') result.Append(ch); else break;
         } while (true);
 
-        return result.ToString();
+        return (result.ToString(), startingPos);
     }
 
     private void GoToFirstNonWhiteSpace()
@@ -138,7 +141,7 @@ public class Tokenizer
                 char ch = _lines[_currentLineIndex][_nextCharIndex];
                 if (!char.IsWhiteSpace(ch)) return;
                 if (ch == '\n')
-                    _parsedTokens.Add(new Token { TokenType = Newline });
+                    _parsedTokens.Add(new Token(Newline, _currentLineIndex, _nextCharIndex));
                 _nextCharIndex++;
             }
         }
@@ -190,6 +193,7 @@ public class Tokenizer
     private Token GetPragmaToken()
     {
         StringBuilder pragma = new();
+        int startPosition = _nextCharIndex;
         _nextCharIndex++;
         char ch = CurrentChar();
         while (ch != '\n')
@@ -199,33 +203,34 @@ public class Tokenizer
             ch = CurrentChar();
         }
         _nextCharIndex--; // reset so newline will be read
-        return new ComplexToken { TokenType = Pragma, Info = pragma.ToString() };
+        return new ComplexToken(Pragma, _currentLineIndex, startPosition, pragma.ToString());
     }
 
     private Token GetBlockComment()
     {
         // starts at *
         StringBuilder result = new();
-        Token? oneLineBlockComment = GetBlockCommentLine(result, BlockCommentWhole,
+        Token? oneLineBlockComment = GetBlockCommentLine(_nextCharIndex - 1, result, BlockCommentWhole,
             BlockCommentStart);
         if (oneLineBlockComment != null) return oneLineBlockComment;
         do
         {
             result.Clear();
-            Token? furtherLineBlockComment = GetBlockCommentLine(result, BlockCommentEnd,
+            Token? furtherLineBlockComment = GetBlockCommentLine(0, result, BlockCommentEnd,
                 BlockCommentMiddle);
             if (furtherLineBlockComment != null) return furtherLineBlockComment;
         } while (true);
     }
 
-    private Token? GetBlockCommentLine(StringBuilder result, TokenType finishType,
+    private Token? GetBlockCommentLine(int startIndex, StringBuilder result, TokenType finishType,
         TokenType nonFinishType)
     {
         do
         {
             _nextCharIndex++;
             char ch = CurrentChar();
-            (Token? finalToken, bool startNewLine) = ProcessBlockCommentChar(ch, result, finishType, nonFinishType);
+            (Token? finalToken, bool startNewLine) = ProcessBlockCommentChar(ch, startIndex, result,
+                finishType, nonFinishType);
             if (finalToken != null) return finalToken;
             if (startNewLine) break;
         } while (true);
@@ -233,29 +238,33 @@ public class Tokenizer
     }
 
     private (Token? finalToken, bool startNewLine) ProcessBlockCommentChar(char ch,
-        StringBuilder result, TokenType finishType, TokenType nonFinishType)
+        int startIndex, StringBuilder result, TokenType finishType, TokenType nonFinishType)
     {
         if (ch == '*' && NextChar() == '/')
         {
             _nextCharIndex += 2;
-            Token finalToken = new ComplexToken { TokenType = finishType, Info = result.ToString() };
+            Token finalToken = new ComplexToken(finishType, _currentLineIndex, startIndex,
+                result.ToString());
             return (finalToken, false);
         }
         if (ch == '\n')
         {
-            StoreNextBlockCommentLine(result, nonFinishType);
+            StoreNextBlockCommentLine(result, startIndex, nonFinishType);
             return (null, true);
         }
         result.Append(ch);
         return (null, false);
     }
 
-    private void StoreNextBlockCommentLine(StringBuilder result, TokenType nonFinishType)
+    private void StoreNextBlockCommentLine(StringBuilder result, int startCharIndex,
+        TokenType nonFinishType)
     {
+        _parsedTokens.Add(new ComplexToken(nonFinishType, _currentLineIndex, startCharIndex,
+            result.ToString()));
+        _parsedTokens.Add(new Token(Newline, _currentLineIndex,
+            _lines[_currentLineIndex].Length - 1));
         _currentLineIndex++;
         _nextCharIndex = -1; // will soon need to start at 0
-        _parsedTokens.Add(new ComplexToken { TokenType = nonFinishType, Info = result.ToString() });
-        _parsedTokens.Add(new Token { TokenType = Newline });
     }
 
     private Token GetDollarToken()
@@ -277,6 +286,7 @@ public class Tokenizer
 
     private Token GetAtToken()
     {
+        int startCharIndex = _nextCharIndex;
         _nextCharIndex++;
         char ch = CurrentChar();
         Token? possibleVerbatimStringToken = GetPossibleVerbatimStringToken(ch);
@@ -284,7 +294,7 @@ public class Tokenizer
         if (char.IsLetter(ch)) // @lock and such, for people who want a reserved word as identifier.
         {
             string atIdentifier = ExtractAtStartingIdentifier(ref ch);
-            return new ComplexToken { TokenType = Identifier, Info = atIdentifier };
+            return new ComplexToken(Identifier, _currentLineIndex, startCharIndex, atIdentifier);
         }
         throw new ArgumentException("@ parsing error");
     }
@@ -319,26 +329,26 @@ public class Tokenizer
     private Token GetVerbatimStringToken()
     {
         StringBuilder result = new();
-        Token? finishedToken = GetVerbatimStringLine(result, VerbatimStringWhole,
+        Token? finishedToken = GetVerbatimStringLine(_nextCharIndex, result, VerbatimStringWhole,
             VerbatimStringStart);
         if (finishedToken != null) return finishedToken;
 
         do
         {
             result.Clear();
-            finishedToken = GetVerbatimStringLine(result, VerbatimStringEnd,
+            finishedToken = GetVerbatimStringLine(0, result, VerbatimStringEnd,
             VerbatimStringMiddle);
             if (finishedToken != null) return finishedToken;
         } while (true);
     }
 
-    private Token? GetVerbatimStringLine(StringBuilder result, TokenType finalTokenType,
+    private Token? GetVerbatimStringLine(int startCharIndex, StringBuilder result, TokenType finalTokenType,
         TokenType nonFinalTokenType)
     {
         do
         {
             _nextCharIndex++;
-            (Token? finalToken, bool isBreak) = HandleVerbatimChar(result, finalTokenType,
+            (Token? finalToken, bool isBreak) = HandleVerbatimChar(startCharIndex, result, finalTokenType,
                 nonFinalTokenType);
             if (finalToken != null) return finalToken;
             if (isBreak) break;
@@ -346,40 +356,39 @@ public class Tokenizer
         return null;
     }
 
-    private void HandleVerbatimLineEnd(StringBuilder result, TokenType nonFinalTokenType)
+    private void HandleVerbatimLineEnd(int startCharIndex, StringBuilder result, TokenType nonFinalTokenType)
     {
+        _parsedTokens.Add(new ComplexToken(nonFinalTokenType, _currentLineIndex, startCharIndex,
+            result.ToString()));
+        _parsedTokens.Add(new Token(Newline, _currentLineIndex, _lines[_currentLineIndex].Length - 1));
         _currentLineIndex++;
         _nextCharIndex = -1; // will soon need to start at 0
-        _parsedTokens.Add(new ComplexToken { TokenType = nonFinalTokenType, Info = result.ToString() });
-        _parsedTokens.Add(new Token { TokenType = Newline });
     }
 
-    private (Token? finalToken, bool isBreak) HandleVerbatimChar(StringBuilder result,
+    private (Token? finalToken, bool isBreak) HandleVerbatimChar(int startCharIndex,
+        StringBuilder result,
         TokenType finalTokenType, TokenType nonFinalTokenType)
     {
         char ch = CurrentChar();
         if (ch == '"')
         {
-            Token? finalToken = HandleDoubleQuotes(result, finalTokenType);
+            Token? finalToken = HandleDoubleQuotes(startCharIndex, result, finalTokenType);
             if (finalToken != null) return (finalToken, false);
         }
         else if (ch == '\n')
         {
-            HandleVerbatimLineEnd(result, nonFinalTokenType);
+            HandleVerbatimLineEnd(startCharIndex, result, nonFinalTokenType);
             return (null, true);
         }
         result.Append(ch);
         return (null, false);
     }
 
-    private Token? HandleDoubleQuotes(StringBuilder result, TokenType finalTokenType)
+    private Token? HandleDoubleQuotes(int startCharIndex, StringBuilder result, TokenType finalTokenType)
     {
         _nextCharIndex++;
-        return CurrentChar() != '"' ? new ComplexToken
-        {
-            TokenType = finalTokenType,
-            Info = result.ToString()
-        } : null;
+        return CurrentChar() != '"' ? new ComplexToken(finalTokenType, _currentLineIndex,
+            startCharIndex, result.ToString()) : null;
     }
 
     // note: is a copy of verbatim processing.
@@ -392,96 +401,104 @@ public class Tokenizer
 
     private Token GetPlusToken()
     {
+        int startCharIndex = _nextCharIndex;
         _nextCharIndex++;
         char ch = CurrentChar();
         if (ch == '+')
         {
             _nextCharIndex++;
-            return new Token { TokenType = Increment };
+            return new Token(Increment, _currentLineIndex, startCharIndex);
         }
-        return new Token { TokenType = Plus };
+        return new Token(Plus, _currentLineIndex, startCharIndex);
     }
 
     private Token GetMinusToken()
     {
+        int startCharIndex = _nextCharIndex;
         _nextCharIndex++;
         char ch = CurrentChar();
         if (ch == '-')
         {
             _nextCharIndex++;
-            return new Token { TokenType = Decrement };
+            return new Token(Decrement, _currentLineIndex, startCharIndex);
         }
-        return new Token { TokenType = Minus };
+        return new Token(Minus, _currentLineIndex, startCharIndex);
     }
 
     private Token GetLogicAndToken()
     {
+        int startCharIndex = _nextCharIndex;
         _nextCharIndex++;
         char ch = CurrentChar();
         if (ch == '&')
         {
             _nextCharIndex++;
-            return new Token { TokenType = LogicAnd };
+            return new Token(LogicAnd, _currentLineIndex, startCharIndex);
         }
         throw new ArgumentException("& parse wrong!");
     }
 
     private Token GetLogicOrToken()
     {
+        int startCharIndex = _nextCharIndex;
         _nextCharIndex++;
         char ch = CurrentChar();
         if (ch == '|')
         {
             _nextCharIndex++;
-            return new Token { TokenType = LogicOr };
+            return new Token(LogicOr, _currentLineIndex, startCharIndex);
         }
         throw new ArgumentException("| parse wrong!");
     }
 
     private Token GetLessTypeToken()
     {
+        int startCharIndex = _nextCharIndex;
         _nextCharIndex++;
         char ch = CurrentChar();
         if (ch == '=')
         {
             _nextCharIndex++;
-            return new Token { TokenType = Comparator };
+            return new Token(Comparator, _currentLineIndex, startCharIndex);
         }
-        return new Token { TokenType = Less };
+        return new Token(Less, _currentLineIndex, startCharIndex);
     }
 
     private Token GetAssignToken()
     {
+        int startCharIndex = _nextCharIndex;
         _nextCharIndex++;
         char ch = CurrentChar();
         if (ch == '>')
         {
             _nextCharIndex++;
-            return new Token { TokenType = FatArrow };
+            return new Token(FatArrow, _currentLineIndex, startCharIndex);
         }
         else if (ch == '=')
         {
             _nextCharIndex++;
-            return new Token { TokenType = Comparator };
+            return new Token(Comparator, _currentLineIndex, startCharIndex);
         }
-        return new Token { TokenType = Assign };
+        return new Token(Assign, _currentLineIndex, startCharIndex);
     }
 
     private Token GetGreaterTypeToken()
     {
+        int startCharIndex = _nextCharIndex;
         _nextCharIndex++;
         char ch = CurrentChar();
         if (ch == '=')
         {
             _nextCharIndex++;
-            return new Token { TokenType = Comparator };
+            return new Token(Comparator, _currentLineIndex, startCharIndex);
         }
-        return new Token { TokenType = Greater };
+        return new Token(Greater, _currentLineIndex, startCharIndex);
     }
 
     private Token GetNumberToken()
     {
         StringBuilder result = new();
+        int startCharIndex = _nextCharIndex;
         result.Append(CurrentChar());
         do
         {
@@ -490,7 +507,7 @@ public class Tokenizer
             if (!char.IsDigit(ch) && ch != '_' && ch != '.') break;
             result.Append(ch);
         } while (true);
-        return new ComplexToken { TokenType = Number, Info = result.ToString() };
+        return new ComplexToken(Number, _currentLineIndex, startCharIndex, result.ToString());
     }
 
     private Token GetStringToken()
@@ -507,7 +524,7 @@ public class Tokenizer
         } while (true);
         _nextCharIndex++;
         string stringContents = _lines[_currentLineIndex].Substring(initCharIndex, _nextCharIndex - initCharIndex - 1);
-        return new ComplexToken { TokenType = TokenType.String, Info = stringContents };
+        return new ComplexToken(TokenType.String, _currentLineIndex, initCharIndex - 1, stringContents);
     }
 
     private Token GetInterpolatedStringToken()
@@ -516,46 +533,50 @@ public class Tokenizer
         bool isEscapeMode = false;
         bool shouldContinue;
         TokenType tokenType = InterpolatedStringStart;
+        int startCharIndex = _nextCharIndex;
         do
         {
-            (shouldContinue, isEscapeMode, tokenType) =
-                ParseInterpolatedStringChar(result, isEscapeMode, tokenType);
+            (shouldContinue, isEscapeMode, tokenType, startCharIndex) =
+                ParseInterpolatedStringChar(startCharIndex, result, isEscapeMode, tokenType);
         } while (shouldContinue);
         _nextCharIndex++;
-        return new ComplexToken { TokenType = InterpolatedStringEnd, Info = result.ToString() };
+        return new ComplexToken(InterpolatedStringEnd, _currentLineIndex, startCharIndex, result.ToString());
     }
 
-    private (bool shouldContinue, bool escapeMode, TokenType tokenType)
-        ParseInterpolatedStringChar(StringBuilder result, bool isEscapeMode, TokenType tokenType)
+    private (bool shouldContinue, bool escapeMode, TokenType tokenType, int startCharIndex)
+        ParseInterpolatedStringChar(int startCharIndex, StringBuilder result, bool isEscapeMode, TokenType tokenType)
     {
         _nextCharIndex++;
         char ch = _lines[_currentLineIndex][_nextCharIndex];
         if (ch == '\\') isEscapeMode = !isEscapeMode;
-        else if (ch == '"' && !isEscapeMode) return (false, isEscapeMode, tokenType);
-        else if (ch == '{' && !isEscapeMode) tokenType = HandleInterpolatedBraceOpen(result, tokenType);
+        else if (ch == '"' && !isEscapeMode) return (false, isEscapeMode, tokenType, startCharIndex);
+        else if (ch == '{' && !isEscapeMode) (tokenType, startCharIndex) =
+                HandleInterpolatedBraceOpen(startCharIndex, result, tokenType);
         else
         {
             isEscapeMode = false;
             result.Append(ch);
         }
-        return (true, isEscapeMode, tokenType);
+        return (true, isEscapeMode, tokenType, startCharIndex);
     }
 
-    private TokenType HandleInterpolatedBraceOpen(StringBuilder result, TokenType tokenType)
+    private (TokenType tokenType, int startCharIndex) HandleInterpolatedBraceOpen(int startCharIndex, StringBuilder result, TokenType tokenType)
     {
         char ch = CurrentChar();
         if (_lines[_currentLineIndex][_nextCharIndex + 1] == '{')
         {
             _nextCharIndex += 2;
             result.Append(ch);
-            return tokenType;
+            return (tokenType, startCharIndex);
         }
-        return ParseEmbeddedCode(result, tokenType);
+        return ParseEmbeddedCode(startCharIndex, result, tokenType);
     }
 
-    private TokenType ParseEmbeddedCode(StringBuilder result, TokenType tokenType)
+    private (TokenType tokenType, int startCharIndex) ParseEmbeddedCode(int startCharIndex,
+        StringBuilder result, TokenType tokenType)
     {
-        _parsedTokens.Add(new ComplexToken { TokenType = tokenType, Info = result.ToString() });
+        _parsedTokens.Add(new ComplexToken(tokenType, _currentLineIndex, startCharIndex,
+            result.ToString()));
         result.Clear();
         tokenType = InterpolatedStringMiddle;
         _nextCharIndex++;
@@ -566,7 +587,7 @@ public class Tokenizer
         } while (nextToken.TokenType != BracesClose);
         _parsedTokens.RemoveAt(_parsedTokens.Count - 1); // get rid of }
         _nextCharIndex--; // so won't skip " or such
-        return tokenType;
+        return (tokenType, _nextCharIndex);
     }
 
     private Token GetSingleQuotedStringToken()
@@ -583,7 +604,7 @@ public class Tokenizer
         } while (true);
         _nextCharIndex++;
         string stringContents = _lines[_currentLineIndex].Substring(initCharIndex, _nextCharIndex - initCharIndex - 1);
-        return new ComplexToken { TokenType = SingleQuotedString, Info = stringContents };
+        return new ComplexToken(SingleQuotedString, _currentLineIndex, initCharIndex - 1, stringContents);
     }
 
     private sealed class TextPosition

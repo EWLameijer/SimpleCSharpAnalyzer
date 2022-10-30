@@ -4,9 +4,6 @@ na elke feature of debug: ruim eigen code op
 
 // Za-av: maak nieuwe release wegens bugfixes
 
-NOW:
-
-1. provide all tokens with anchor coordinates
 2. use the anchor coordinates to easily display the code correctly in the preview
 3. if those are okay, check 20 comments for new improvements
 4. if those are okay, make the comments green, for example, to focus on them more easily

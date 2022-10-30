@@ -152,7 +152,7 @@ public class CommentAnalyzer
             for (int beforeCommentIndex = i - 1; beforeCommentIndex >= 0 && !_sufficientLines; beforeCommentIndex--)
             {
                 Token currentToken = tokens[beforeCommentIndex];
-                if (currentToken.TokenType == TokenType.Newline) HandleNewline();
+                if (currentToken.TokenType == Newline) HandleNewline();
                 else _newlineMode = false;
                 _result.Insert(0, NiceDisplay(currentToken) + Spacing(currentToken.TokenType, _followingTokenType));
                 _followingTokenType = currentToken.TokenType;

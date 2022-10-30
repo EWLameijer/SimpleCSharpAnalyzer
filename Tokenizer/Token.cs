@@ -6,6 +6,11 @@ public class Token
 {
     public TokenType TokenType { get; set; }
 
+    public int LineNumber { get; init; }
+
+    // for starting character
+    public int CharacterIndex { get; set; }
+
     private readonly Dictionary<TokenType, string> _tokenTypeRepresentations = new()
     {
         [Assign] = "=",
@@ -27,6 +32,13 @@ public class Token
         [Semicolon] = ";"
     };
 
+    public Token(TokenType tokenType, int lineNumber, int characterIndex)
+    {
+        TokenType = tokenType;
+        LineNumber = lineNumber;
+        CharacterIndex = characterIndex;
+    }
+
     public virtual string PrettyPrint() =>
         _tokenTypeRepresentations.GetValueOrDefault(TokenType, TokenType.ToString());
 
@@ -38,6 +50,12 @@ public class Token
 
 public class ComplexToken : Token
 {
+    public ComplexToken(TokenType tokenType, int lineNumber, int characterIndex, string info) :
+        base(tokenType, lineNumber, characterIndex)
+    {
+        Info = info;
+    }
+
     public string Info { get; init; } = null!;
 
     public override string PrettyPrint()
