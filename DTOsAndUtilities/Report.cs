@@ -1,10 +1,43 @@
-﻿namespace DTOsAndUtilities;
+﻿using static DTOsAndUtilities.AttentionCategory;
+
+namespace DTOsAndUtilities;
 
 public record CommentData(string Path, string Comment, string PrecedingContext,
     string FollowingContext);
 
+public class Scoring
+{
+    public int Correct { get; set; }
+    public int NotYetCorrect { get; set; }
+
+    public void Merge(Scoring other)
+    {
+        Correct += other.Correct;
+        NotYetCorrect += other.NotYetCorrect;
+    }
+}
+
+public enum AttentionCategory
+{ AttentionCategoryNotSet, DefaultIdentifierNaming }
+
 public class Report
 {
+    private readonly Dictionary<AttentionCategory, string> _translation = new()
+    {
+        [DefaultIdentifierNaming] = "Default identifier naming"
+    };
+
+    public void ScoreCorrect(AttentionCategory category) =>
+        _scoresFor[category].Correct++;
+
+    public void ScoreNotYetCorrect(AttentionCategory category) =>
+        _scoresFor[category].NotYetCorrect++;
+
+    private readonly Dictionary<AttentionCategory, Scoring> _scoresFor = new()
+    {
+        [DefaultIdentifierNaming] = new()
+    };
+
     public int SetupLines { get; set; }
     public int EmptyLines { get; set; }
     public int BraceLines { get; set; }
@@ -29,6 +62,15 @@ public class Report
         ExtraCodeLines += other.ExtraCodeLines;
         Warnings.AddRange(other.Warnings);
         Comments.AddRange(other.Comments);
+        MergeScores(other);
+    }
+
+    private void MergeScores(Report other)
+    {
+        foreach (string key in _scoresFor.Keys)
+        {
+            _scoresFor[key].Merge(other._scoresFor[key]);
+        }
     }
 
     public void Show()
