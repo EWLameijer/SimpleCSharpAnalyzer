@@ -37,8 +37,8 @@ Console.WriteLine(16);";
         new IdentifierAndMethodLengthAnalyzer(fileTokenData, report).AddWarnings();
 
         // assert
-        Assert.Single(report.Warnings);
-        Assert.Equal(16, int.Parse(report.Warnings[0].Split()[8]));
+        Assert.Single(report.GetWarnings());
+        Assert.Equal(16, int.Parse(report.GetWarnings()[0].Text.Split()[8]));
     }
 
     private const string MethodOf16Lines = @"
@@ -81,7 +81,7 @@ internal static class CommentMerger
         new IdentifierAndMethodLengthAnalyzer(fileTokenData, report).AddWarnings();
 
         // assert
-        Assert.Single(report.Warnings);
-        Assert.Equal(16, int.Parse(report.Warnings[0].Split()[7]));
+        Assert.Single(report.GetWarnings());
+        Assert.Equal(16, int.Parse(report.GetWarnings()[0].Text.Split()[7]));
     }
 }

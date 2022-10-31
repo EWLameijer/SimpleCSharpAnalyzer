@@ -26,7 +26,7 @@ public class GetSingle : Base
         new IdentifierAndMethodLengthAnalyzer(fileTokenData, report).AddWarnings();
 
         // assert
-        Assert.Single(report.Warnings);
+        Assert.Single(report.GetWarnings());
     }
 
     private const string DoublyReportedMethodName = @"
@@ -52,6 +52,6 @@ namespace PhoneShop.WinForms
         new IdentifierAndMethodLengthAnalyzer(fileTokenData, report).AddWarnings();
 
         // assert
-        Assert.Single(report.Warnings);
+        Assert.Single(report.GetWarnings());
     }
 }

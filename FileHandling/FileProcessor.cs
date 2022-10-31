@@ -61,7 +61,7 @@ public class FileProcessor
         LineLengthChecker.AddWarnings(fileData, report);
 
         List<string> warnings = InappropriateAtsHandler.GetWarnings(fileTokenData);
-        report.Warnings.AddRange(warnings);
+        report.AddNonScoredWarnings(warnings);
         new CommentAnalyzer(fileTokenData, report).AddWarnings();
         new IdentifierAndMethodLengthAnalyzer(fileTokenData, report).AddWarnings();
         new MalapropAnalyzer(fileTokenData, report).AddWarnings();

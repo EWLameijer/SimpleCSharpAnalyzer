@@ -23,7 +23,7 @@ void DrawPhoneInformation(Phone selectedPhone, int PressedKey)
         new IdentifierAndMethodLengthAnalyzer(fileTokenData, report).AddWarnings();
 
         // assert
-        Assert.Single(report.Warnings);
+        Assert.Single(report.GetWarnings());
     }
 
     private const string SingleDetectionInInterfaces = @"
@@ -44,6 +44,6 @@ public interface IBrandService
         new IdentifierAndMethodLengthAnalyzer(fileTokenData, report).AddWarnings();
 
         // assert
-        Assert.Single(report.Warnings);
+        Assert.Single(report.GetWarnings());
     }
 }

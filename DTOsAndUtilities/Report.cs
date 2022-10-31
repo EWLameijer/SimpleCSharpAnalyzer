@@ -66,6 +66,8 @@ public class Report
 
     private List<Warning> Warnings { get; set; } = new();
 
+    public IReadOnlyList<Warning> GetWarnings() => Warnings;
+
     public void AddNonScoredWarning(string warning)
     {
         Warnings.Add(new Warning(warning, AttentionCategoryNotSet));
@@ -75,6 +77,11 @@ public class Report
     {
         Warnings.Add(new Warning(warning, category));
         ScoreNotYetCorrect(category);
+    }
+
+    public void AddNonScoredWarnings(IEnumerable<string> warnings)
+    {
+        Warnings.AddRange(warnings.Select(w => new Warning(w, AttentionCategoryNotSet)));
     }
 
     public List<CommentData> Comments { get; set; } = new();

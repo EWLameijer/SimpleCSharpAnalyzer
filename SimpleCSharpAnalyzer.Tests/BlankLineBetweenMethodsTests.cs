@@ -28,7 +28,7 @@ public class GetSingle : Base
         new IdentifierAndMethodLengthAnalyzer(fileTokenData, report).AddWarnings();
 
         // assert
-        Assert.Single(report.Warnings);
+        Assert.Single(report.GetWarnings());
     }
 
     private const string BlankLineAlsoNeededBeforeConstructor = @"
@@ -55,6 +55,6 @@ namespace Phoneshop.WinForms
         new IdentifierAndMethodLengthAnalyzer(fileTokenData, report).AddWarnings();
 
         // assert
-        Assert.Single(report.Warnings);
+        Assert.Single(report.GetWarnings());
     }
 }

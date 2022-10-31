@@ -23,7 +23,7 @@ internal static class Services
         new IdentifierAndMethodLengthAnalyzer(fileTokenData, report).AddWarnings();
 
         // assert
-        Assert.Single(report.Warnings);
+        Assert.Single(report.GetWarnings());
     }
 
     private const string EnumPossiblySeenAsProperty = @"
@@ -43,6 +43,6 @@ public enum LogLevel : byte {
         new IdentifierAndMethodLengthAnalyzer(fileTokenData, report).AddWarnings();
 
         // assert
-        Assert.Empty(report.Warnings);
+        Assert.Empty(report.GetWarnings());
     }
 }
