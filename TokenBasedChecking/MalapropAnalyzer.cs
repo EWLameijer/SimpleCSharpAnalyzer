@@ -36,7 +36,7 @@ public class MalapropAnalyzer
             && _tokens[i - 1].TokenType != TokenType.Period
             && _tokens[i + 1].TokenType != TokenType.Comma)
         {
-            _report.Warnings.Add(
+            _report.AddWarning(AttentionCategory.WrongSynonyms, 
                 $"In {_contextedFilename} use regular type instead of '{identifierContents}'");
         }
     }

@@ -27,6 +27,11 @@ public class IdentifierAndMethodLengthAnalyzer
         if (_warningsOn) _report.AddWarning(category, warning);
     }
 
+    private void AddCorrect(AttentionCategory category)
+    {
+        if (_warningsOn) _report.ScoreCorrect(category);
+    }
+
     protected TokenType CurrentTokenType() => _tokens[_currentIndex].TokenType;
 
     protected Token CurrentToken() => _tokens[_currentIndex];
@@ -206,10 +211,12 @@ public class IdentifierAndMethodLengthAnalyzer
             int lineCount = new MethodLineCounter(tokenIndex, _currentIndex, _tokens).Count();
             if (lineCount > maxLineLength)
             {
-                AddWarning($"Too long method: {methodName} " +
+                AttentionCategory category = lineCount > 25 ? VeryVeryLongMethods : VeryLongMethods;
+                AddWarning(category, $"Too long method: {methodName} " +
                     $"(in {_contextedFilename}) is {lineCount} lines long.");
                 _report.ExtraCodeLines += lineCount - maxLineLength;
             }
+            else AddCorrect(VeryLongMethods);
         }
         _methodNames.RemoveAt(_methodNames.Count - 1);
     }
@@ -462,8 +469,9 @@ public class IdentifierAndMethodLengthAnalyzer
         {
             string methodName = ((ComplexToken)currentStatement[i]).Info;
             if (DoShow) Console.WriteLine($"Candidate method: {methodName}");
-            if (!char.IsUpper(methodName[0])) AddWarning(
+            if (!char.IsUpper(methodName[0])) AddWarning(DefaultIdentifierNaming,
                 $"Invalid method name: {methodName} (in {_contextedFilename}).");
+            else AddCorrect(DefaultIdentifierNaming);
             int methodIndex = _currentIndex - currentStatement.Count + furtherI;
             CheckBlankLineBeforeMethod(methodName, methodIndex);
             ProcessParameter(currentStatement, furtherI + 1);
@@ -491,8 +499,9 @@ public class IdentifierAndMethodLengthAnalyzer
         if (currentTokenType == BracesOpen) return (true, subsequentNewlines, lastWasNewline);
         if (currentTokenType is Semicolon or BracesClose)
         {
-            if (!subsequentNewlines) AddWarning(
+            if (!subsequentNewlines) AddWarning(MissingBlankLines,
                 $"Missing blank line before {methodName} in {_contextedFilename}.");
+            else AddCorrect(MissingBlankLines);
             return (true, subsequentNewlines, lastWasNewline);
         }
         if (currentTokenType == Newline)
@@ -692,7 +701,10 @@ public class IdentifierAndMethodLengthAnalyzer
             string warning = $"Invalid {varType} name: " +
                 $"{((ComplexToken)currentStatement[i]).Info} (in {_contextedFilename} - " +
                 $"{PrettyPrint(currentScope)}).";
-            AddWarning(warning);
+            AddWarning(DefaultIdentifierNaming, warning);
+        } else
+        {
+            AddCorrect(DefaultIdentifierNaming);
         }
     }
 
@@ -719,7 +731,7 @@ public class IdentifierAndMethodLengthAnalyzer
             string normalName = identifierName[1..];
             if (!AllCSharpKeywords.KeyWords.Contains(normalName))
             {
-                AddWarning($"Unnecessary '@' in front of {identifierName} " +
+                AddWarning(DefaultIdentifierNaming, $"Unnecessary '@' in front of {identifierName} " +
                     $"(in {_contextedFilename}).");
                 return true; // don't give second warning
             }
@@ -802,9 +814,14 @@ public class IdentifierAndMethodLengthAnalyzer
         string paramName = ((ComplexToken)parameter).Info;
         (bool isFinished, char startChar) = GetStartCharAndName(paramName);
 
-        if (!isFinished && !char.IsLower(startChar))
-            AddWarning($"Invalid parameter name: " +
-                $"{paramName} (in {_contextedFilename}).");
+        if (!isFinished)
+        {
+            if (!char.IsLower(startChar))
+                AddWarning(DefaultIdentifierNaming, $"Invalid parameter name: " +
+                    $"{paramName} (in {_contextedFilename}).");
+            else AddCorrect(DefaultIdentifierNaming);
+        }
+       
     }
 
     private (bool isFinished, char startChar) GetStartCharAndName(string paramName)
@@ -815,7 +832,7 @@ public class IdentifierAndMethodLengthAnalyzer
             string normalName = paramName[1..];
             if (!AllCSharpKeywords.KeyWords.Contains(normalName))
             {
-                AddWarning($"Unnecessary '@' in front of {paramName} " +
+                AddWarning(DefaultIdentifierNaming, "Unnecessary '@' in front of {paramName} " +
                     $"(in {_contextedFilename}).");
                 return (true, startChar);
             }
