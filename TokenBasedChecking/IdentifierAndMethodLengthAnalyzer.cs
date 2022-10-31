@@ -3,6 +3,7 @@ using DTOsAndUtilities;
 using Tokenizing;
 using static Tokenizing.TokenType;
 using Scope = DTOsAndUtilities.Scope;
+using static DTOsAndUtilities.AttentionCategory;
 
 namespace TokenBasedChecking;
 
@@ -115,7 +116,8 @@ public class IdentifierAndMethodLengthAnalyzer
 
         private void Warn()
         {
-            _report.Warnings.Add($"Top-level statement in {_contextedFilename} is too long " +
+            AttentionCategory category = _linesSoFar > 25 ? VeryVeryLongMethods : VeryLongMethods;
+            _outer.AddWarning(category, $"Top-level statement in {_contextedFilename} is too long " +
                 $"- {_linesSoFar} lines.");
         }
 

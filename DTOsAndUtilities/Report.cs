@@ -1,5 +1,4 @@
-﻿using System.Numerics;
-using static DTOsAndUtilities.AttentionCategory;
+﻿using static DTOsAndUtilities.AttentionCategory;
 
 namespace DTOsAndUtilities;
 
@@ -22,20 +21,16 @@ public enum AttentionCategory
 {
     AttentionCategoryNotSet = 0,
     DefaultIdentifierNaming = 1, // 1) identifier names + inappropriate ats
-    VeryLongLines = 2, // lines not too long (140)
-    MissingBlankLines = 3,
-    BadlyFormattedComments, ToDoComments
+    VeryVeryLongLines = 2, // lines not too long (140)
+    VeryVeryLongMethods = 3,
+    MissingBlankLines = 4,
+    BadlyFormattedComments = 5,
+    WrongSynonyms = 6,
+    UncheckedComments = 7,
+    VeryLongLines = 8,
+    VeryLongMethods = 9,
+    ToDoComments = 10
 }
-
-2)
-3) method lengths(max 25)
-4) blank lines
-5) space missing at comments && empty comments
-6) malaprop
-7) unstudied comments
-8) lines not too long (120)
-9) method lengths
-10) TODO comments
 
 public record Warning(string Text, AttentionCategory Category);
 
@@ -52,14 +47,12 @@ public class Report
     public void ScoreNotYetCorrect(AttentionCategory category) =>
         _scoresFor[category].NotYetCorrect++;
 
-    private readonly Dictionary<AttentionCategory, Scoring> _scoresFor = new()
+    private readonly Dictionary<AttentionCategory, Scoring> _scoresFor = new();
+
+    public Report()
     {
-        [BadlyFormattedComments] = new(),
-        [DefaultIdentifierNaming] = new(),
-        [MissingBlankLines] = new(),
-        [ToDoComments] = new(),
-        [VeryLongLines] = new()
-    };
+        Enum.GetValues<AttentionCategory>().Select(v => _scoresFor[v] = new());
+    }
 
     public int SetupLines { get; set; }
     public int EmptyLines { get; set; }
