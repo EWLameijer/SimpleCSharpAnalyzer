@@ -20,15 +20,14 @@ public class Scoring
 
 public enum AttentionCategory
 {
-    AttentionCategoryNotSet = 0, 
+    AttentionCategoryNotSet = 0,
     DefaultIdentifierNaming = 1, // 1) identifier names + inappropriate ats
     VeryLongLines = 2, // lines not too long (140)
     MissingBlankLines = 3,
     BadlyFormattedComments, ToDoComments
 }
 
-
-2) 
+2)
 3) method lengths(max 25)
 4) blank lines
 5) space missing at comments && empty comments
@@ -60,7 +59,6 @@ public class Report
         [MissingBlankLines] = new(),
         [ToDoComments] = new(),
         [VeryLongLines] = new()
-        
     };
 
     public int SetupLines { get; set; }
