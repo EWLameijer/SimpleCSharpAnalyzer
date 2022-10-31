@@ -1,7 +1,11 @@
 !! doe crashtest na elke verbetering
 na elke feature of debug: ruim eigen code op 
 
-// Can release > 2022/10/30-17:00: top level statements help!
+// Can release: NO (after 1.11.0)
+7:05 23 errors
+
+And then yet to score correct!
+
 
 // max 7 
 1) identifier names + inappropriate ats

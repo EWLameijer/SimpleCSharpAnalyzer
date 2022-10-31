@@ -21,9 +21,9 @@ public class IdentifierAndMethodLengthAnalyzer
     private readonly FileModus _fileModus;
     private bool _warningsOn = true;
 
-    private void AddWarning(string warning)
+    private void AddWarning(AttentionCategory category, string warning)
     {
-        if (_warningsOn) _report.Warnings.Add(warning);
+        if (_warningsOn) _report.AddWarning(category, warning);
     }
 
     protected TokenType CurrentTokenType() => _tokens[_currentIndex].TokenType;

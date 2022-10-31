@@ -35,7 +35,7 @@ public class CommentAnalyzer
                 i = WarnForCommentsIfNeeded(i);
             }
         }
-        if (_unapprovedComments > 0) _report.Warnings.Add(
+        if (_unapprovedComments > 0) _report.AddNonScoredWarning(
             $"Unapproved comments in {_contextedFilename}, please use the CommentChecker tool.");
     }
 
@@ -64,10 +64,12 @@ public class CommentAnalyzer
     private int WarnForCommentsIfNeeded(int commentStartIndex)
     {
         (string comment, int lastCommentIndex) = ExtractComment(commentStartIndex);
-        if (comment.Trim().Length == 2) _report.Warnings.Add($"Empty comment in {_contextedFilename}");
+        if (comment.Trim().Length == 2) _report.AddWarning(
+            AttentionCategory.BadlyFormattedComments, $"Empty comment in {_contextedFilename}");
         WarnForMissingSpace(comment);
         if (comment.Contains("todo", StringComparison.InvariantCultureIgnoreCase))
-            _report.Warnings.Add($"TODO comment in {_contextedFilename}: {comment}");
+            _report.AddWarning(AttentionCategory.ToDoComments,
+                $"TODO comment in {_contextedFilename}: {comment}");
         if (!CommentArchiver.ContainsComment(_basePath, comment)) _unapprovedComments++;
         return lastCommentIndex;
     }
@@ -76,7 +78,8 @@ public class CommentAnalyzer
     {
         if ((comment.StartsWith("///") && comment.Length > 3 && comment[3] != ' ') ||
             (comment.Length > 2 && !char.IsWhiteSpace(comment[2]) && comment[2] != '/'))
-            _report.Warnings.Add($"Need space after comment in {_contextedFilename}: {comment}");
+            _report.AddWarning(AttentionCategory.BadlyFormattedComments,
+                $"Need space after comment in {_contextedFilename}: {comment}");
     }
 
     private (string comment, int lastCommentIndex) ExtractComment(int commentStartPosition)

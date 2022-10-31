@@ -1,4 +1,5 @@
-﻿using static DTOsAndUtilities.AttentionCategory;
+﻿using System.Numerics;
+using static DTOsAndUtilities.AttentionCategory;
 
 namespace DTOsAndUtilities;
 
@@ -18,7 +19,26 @@ public class Scoring
 }
 
 public enum AttentionCategory
-{ AttentionCategoryNotSet, DefaultIdentifierNaming }
+{
+    AttentionCategoryNotSet = 0, 
+    DefaultIdentifierNaming = 1, // 1) identifier names + inappropriate ats
+    VeryLongLines = 2, // lines not too long (140)
+    MissingBlankLines = 3,
+    BadlyFormattedComments, ToDoComments
+}
+
+
+2) 
+3) method lengths(max 25)
+4) blank lines
+5) space missing at comments && empty comments
+6) malaprop
+7) unstudied comments
+8) lines not too long (120)
+9) method lengths
+10) TODO comments
+
+public record Warning(string Text, AttentionCategory Category);
 
 public class Report
 {
@@ -35,7 +55,12 @@ public class Report
 
     private readonly Dictionary<AttentionCategory, Scoring> _scoresFor = new()
     {
-        [DefaultIdentifierNaming] = new()
+        [BadlyFormattedComments] = new(),
+        [DefaultIdentifierNaming] = new(),
+        [MissingBlankLines] = new(),
+        [ToDoComments] = new(),
+        [VeryLongLines] = new()
+        
     };
 
     public int SetupLines { get; set; }
@@ -48,7 +73,18 @@ public class Report
 
     public int ExtraCodeLines { get; set; }
 
-    public List<string> Warnings { get; set; } = new();
+    private List<Warning> Warnings { get; set; } = new();
+
+    public void AddNonScoredWarning(string warning)
+    {
+        Warnings.Add(new Warning(warning, AttentionCategoryNotSet));
+    }
+
+    public void AddWarning(AttentionCategory category, string warning)
+    {
+        Warnings.Add(new Warning(warning, category));
+        ScoreNotYetCorrect(category);
+    }
 
     public List<CommentData> Comments { get; set; } = new();
 
