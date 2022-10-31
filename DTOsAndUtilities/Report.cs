@@ -67,7 +67,7 @@ public class Report
 
     private void MergeScores(Report other)
     {
-        foreach (string key in _scoresFor.Keys)
+        foreach (AttentionCategory key in _scoresFor.Keys)
         {
             _scoresFor[key].Merge(other._scoresFor[key]);
         }

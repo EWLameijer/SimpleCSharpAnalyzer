@@ -3,8 +3,17 @@ na elke feature of debug: ruim eigen code op
 
 // Can release > 2022/10/30-17:00: top level statements help!
 
-1) identifier names 
-
+// max 7 
+1) identifier names + inappropriate ats
+2) lines not too long (140)
+3) method lengths (max 25)
+4) blank lines 
+5) space missing at comments && empty comments
+6) malaprop
+7) unstudied comments
+8) lines not too long (120)
+9) method lengths 
+10) TODO comments 
 
 
 1. Spend 4x15 checking student code (esp of phase 1). Also ask 2nd phase for tryout and feedback...
