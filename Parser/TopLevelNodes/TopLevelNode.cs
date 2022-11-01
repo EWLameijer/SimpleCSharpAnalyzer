@@ -4,6 +4,7 @@ namespace Parser.TopLevelNodes;
 
 internal class TopLevelNode : Node
 {
+    // pubic static class ...
     public static TopLevelNode Get(ParsePosition position)
     {
         position.SkipWhitespace();
@@ -15,7 +16,7 @@ internal class TopLevelNode : Node
         }
         return position.CurrentTokenType() switch
         {
-            TokenType.Class => ClassNode.Get(position),
+            TokenType.Class => ClassNode.Get(position, modifiers),
             _ => throw new ArgumentException("TopLevelNode.Get: illegal data structure to parse!")
         };
     }

@@ -34,7 +34,7 @@ public class NamespaceNode : Node
                 TopLevelNode newNode = TopLevelNode.Get(position);
                 if (newNode == null) break;
                 topLevelNodes.Add(newNode);
-            } while (true);
+            } while (false); // TODO: make true...
             return new NamespaceNode(identifierTokens, isFileScoped, topLevelNodes);
         }
         else

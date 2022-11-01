@@ -7,11 +7,13 @@ internal class ClassNode : TopLevelNode
 {
     private readonly string _name;
     private readonly List<Token> _ancestors;
+    private readonly List<Token> _modifiers; // public / internal / static
 
-    public ClassNode(string name, List<Token> ancestors)
+    public ClassNode(string name, List<Token> ancestors, List<Token> modifiers)
     {
         _name = name;
         _ancestors = ancestors;
+        _modifiers = modifiers;
     }
 
     // first token is "class"
@@ -19,12 +21,21 @@ internal class ClassNode : TopLevelNode
     {
         position.Proceed(); // skip "class" token
         string className = ((ComplexToken)position.CurrentToken()).Info;
-        position.Proceed(); // expect : or {
+        position.Proceed(); // expect ':' or '{'
         List<Token> ancestors = GetAncestors(position);
         position.SkipWhitespace();
         Debug.Assert(position.CurrentTokenType() == TokenType.BracesOpen);
         position.SkipWhitespace();
-        return new ClassNode(className, ancestors);
+
+        position.Proceed(); // skip '{'
+        List<ClassLevelNode> classLevelNodes = new();
+        do
+        {
+            ClassLevelNode classLevelNode = ClassLevelNode.Get(position);
+            if (classLevelNode == null) break;
+            classLevelNodes.Add(classLevelNode);
+        } while (true);
+        return new ClassNode(className, ancestors, modifiers);
     }
 
     private static List<Token> GetAncestors(ParsePosition position)
