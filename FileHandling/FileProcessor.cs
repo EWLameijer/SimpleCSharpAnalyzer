@@ -10,18 +10,16 @@ public enum AnalysisMode
 
 public class FileProcessor
 {
-    private readonly List<string> _filenames;
     private readonly Report _globalReport = new();
+
+    private readonly IReadOnlyList<string> _filenames;
 
     public string PathName { get; private set; } = null!;
 
-    public FileProcessor(string[] args, string query)
+    public FileProcessor(FileRepository fileRepository)
     {
-        GetPathName(args, query);
-        List<string> csFiles = Directory.GetFiles(PathName, "*.cs", SearchOption.AllDirectories).ToList();
-        _filenames = csFiles.Where(
-            fn => !fn.Contains(@"\Debug\") && !fn.Contains(@"\Release\") &&
-            !fn.Contains(@"\Migrations\") && !fn.Contains(@".Designer.cs")).ToList();
+        _filenames = fileRepository.Filenames;
+        PathName = fileRepository.PathName;
     }
 
     public Report Process(AnalysisMode analysisMode)
@@ -65,18 +63,5 @@ public class FileProcessor
         new CommentAnalyzer(fileTokenData, report).AddWarnings();
         new IdentifierAndMethodLengthAnalyzer(fileTokenData, report).AddWarnings();
         new MalapropAnalyzer(fileTokenData, report).AddWarnings();
-    }
-
-    public void GetPathName(string[] args, string query)
-    {
-        if (args.Length == 0)
-        {
-            Console.Write(query);
-            PathName = Console.ReadLine()!;
-        }
-        else
-        {
-            PathName = args[0];
-        }
     }
 }

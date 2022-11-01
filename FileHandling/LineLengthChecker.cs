@@ -1,5 +1,4 @@
 ﻿using DTOsAndUtilities;
-using TokenBasedChecking;
 
 namespace FileHandling;
 
@@ -12,14 +11,20 @@ internal static class LineLengthChecker
             string line = fileData.Lines[i];
             if (!fileData.ContextedFilename.Contains("Test"))
             {
-                if (line.Length > 15)
-                {
-                    AttentionCategory category = line.Length > 25 ? AttentionCategory.VeryVeryLongLines : AttentionCategory.VeryLongLines;
-                    report.AddWarning(category, $"Too long line in {fileData.ContextedFilename} at line {i + 1}: '{line}'");
-                }
-                else report.ScoreCorrect(AttentionCategory.VeryLongLines);
+                ScoreLineLength(fileData, report, i, line);
             }
-                
         }
+    }
+
+    private static void ScoreLineLength(FileAsLines fileData, Report report, int i, string line)
+    {
+        if (line.Length > 120)
+        {
+            AttentionCategory category = line.Length > 140 ?
+                AttentionCategory.VeryVeryLongLines : AttentionCategory.VeryLongLines;
+            report.AddWarning(category,
+                $"Too long line in {fileData.ContextedFilename} at line {i + 1}: '{line}'");
+        }
+        else report.ScoreCorrect(AttentionCategory.VeryLongLines);
     }
 }

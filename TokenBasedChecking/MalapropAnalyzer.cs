@@ -6,6 +6,7 @@ namespace TokenBasedChecking;
 public class MalapropAnalyzer
 {
     private readonly List<string> _malapropisms = new() { "String", "Decimal", "Char", "Int32", "Double" };
+    private readonly List<string> _propisms = new() { "string", "decimal", "char", "int", "double" };
     private readonly IReadOnlyList<Token> _tokens;
     private readonly string _contextedFilename;
     private readonly Report _report;
@@ -32,12 +33,19 @@ public class MalapropAnalyzer
     private void WarnIfIdentifierHasWrongTypeName(ComplexToken ct, int i)
     {
         string identifierContents = ct.Info;
-        if (_malapropisms.Contains(identifierContents)
-            && _tokens[i - 1].TokenType != TokenType.Period
-            && _tokens[i + 1].TokenType != TokenType.Comma)
+        if (CanBeMalapropInList(_malapropisms, identifierContents, i))
         {
-            _report.AddWarning(AttentionCategory.WrongSynonyms, 
+            _report.AddWarning(AttentionCategory.WrongSynonyms,
                 $"In {_contextedFilename} use regular type instead of '{identifierContents}'");
         }
+        else if (CanBeMalapropInList(_propisms, identifierContents, i))
+        {
+            _report.ScoreCorrect(AttentionCategory.WrongSynonyms);
+        }
     }
+
+    private bool CanBeMalapropInList(List<string> collection, string identifierContents, int i) =>
+        collection.Contains(identifierContents)
+            && _tokens[i - 1].TokenType != TokenType.Period
+            && _tokens[i + 1].TokenType != TokenType.Comma;
 }

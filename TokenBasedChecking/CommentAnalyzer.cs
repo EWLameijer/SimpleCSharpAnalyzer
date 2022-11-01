@@ -14,7 +14,7 @@ public class CommentAnalyzer
     private readonly Report _report;
     private readonly IReadOnlyList<Token> _tokens;
     private readonly string _filePath;
-    private int _unapprovedComments = 0;
+    private readonly int _unapprovedComments = 0;
     private readonly string _basePath;
 
     public CommentAnalyzer(FileAsTokens fileData, Report report)
@@ -64,23 +64,50 @@ public class CommentAnalyzer
     private int WarnForCommentsIfNeeded(int commentStartIndex)
     {
         (string comment, int lastCommentIndex) = ExtractComment(commentStartIndex);
-        if (comment.Trim().Length == 2) _report.AddWarning(
-            AttentionCategory.BadlyFormattedComments, $"Empty comment in {_contextedFilename}");
+
         WarnForMissingSpace(comment);
         if (comment.Contains("todo", StringComparison.InvariantCultureIgnoreCase))
             _report.AddWarning(AttentionCategory.ToDoComments,
                 $"TODO comment in {_contextedFilename}: {comment}");
-        if (!CommentArchiver.ContainsComment(_basePath, comment)) _unapprovedComments++;
+        else _report.ScoreCorrect(AttentionCategory.ToDoComments);
+        if (!CommentArchiver.ContainsComment(_basePath, comment)) _report.AddWarning(
+            AttentionCategory.UncheckedComments,
+            $"Unapproved comments in {_contextedFilename}, please use the CommentChecker tool.");
+        else _report.ScoreCorrect(AttentionCategory.UncheckedComments);
         return lastCommentIndex;
     }
 
     private void WarnForMissingSpace(string comment)
     {
-        if ((comment.StartsWith("///") && comment.Length > 3 && comment[3] != ' ') ||
-            (comment.Length > 2 && !char.IsWhiteSpace(comment[2]) && comment[2] != '/'))
-            _report.AddWarning(AttentionCategory.BadlyFormattedComments,
-                $"Need space after comment in {_contextedFilename}: {comment}");
+        bool isCorrect = true;
+        if (comment.Trim().Length == 2)
+        {
+            WarnForEmptyComment();
+            isCorrect = false;
+        }
+        if (NoSpaceAfterCommentOpeningMark(comment))
+        {
+            WarnForCommentWithoutOpeningSpace(comment);
+            isCorrect = false;
+        }
+        if (isCorrect) _report.ScoreCorrect(AttentionCategory.BadlyFormattedComments);
     }
+
+    private void WarnForCommentWithoutOpeningSpace(string comment)
+    {
+        _report.AddWarning(AttentionCategory.BadlyFormattedComments,
+            $"Need space after comment in {_contextedFilename}: {comment}");
+    }
+
+    private void WarnForEmptyComment()
+    {
+        _report.AddWarning(
+            AttentionCategory.BadlyFormattedComments, $"Empty comment in {_contextedFilename}");
+    }
+
+    private static bool NoSpaceAfterCommentOpeningMark(string comment) =>
+        (comment.StartsWith("///") && comment.Length > 3 && comment[3] != ' ') ||
+                     (comment.Length > 2 && !char.IsWhiteSpace(comment[2]) && comment[2] != '/');
 
     private (string comment, int lastCommentIndex) ExtractComment(int commentStartPosition)
     {

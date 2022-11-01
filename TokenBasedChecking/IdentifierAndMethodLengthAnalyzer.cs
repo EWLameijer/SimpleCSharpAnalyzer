@@ -1,9 +1,9 @@
 ﻿using System.Diagnostics;
 using DTOsAndUtilities;
 using Tokenizing;
+using static DTOsAndUtilities.AttentionCategory;
 using static Tokenizing.TokenType;
 using Scope = DTOsAndUtilities.Scope;
-using static DTOsAndUtilities.AttentionCategory;
 
 namespace TokenBasedChecking;
 
@@ -209,16 +209,21 @@ public class IdentifierAndMethodLengthAnalyzer
         if (methodName != "none")
         {
             int lineCount = new MethodLineCounter(tokenIndex, _currentIndex, _tokens).Count();
-            if (lineCount > maxLineLength)
-            {
-                AttentionCategory category = lineCount > 25 ? VeryVeryLongMethods : VeryLongMethods;
-                AddWarning(category, $"Too long method: {methodName} " +
-                    $"(in {_contextedFilename}) is {lineCount} lines long.");
-                _report.ExtraCodeLines += lineCount - maxLineLength;
-            }
-            else AddCorrect(VeryLongMethods);
+            ScoreLineCount(methodName, maxLineLength, lineCount);
         }
         _methodNames.RemoveAt(_methodNames.Count - 1);
+    }
+
+    private void ScoreLineCount(string methodName, int maxLineLength, int lineCount)
+    {
+        if (lineCount > maxLineLength)
+        {
+            AttentionCategory category = lineCount > 25 ? VeryVeryLongMethods : VeryLongMethods;
+            AddWarning(category, $"Too long method: {methodName} " +
+                $"(in {_contextedFilename}) is {lineCount} lines long.");
+            _report.ExtraCodeLines += lineCount - maxLineLength;
+        }
+        else AddCorrect(VeryLongMethods);
     }
 
     private sealed class MethodLineCounter
@@ -499,9 +504,7 @@ public class IdentifierAndMethodLengthAnalyzer
         if (currentTokenType == BracesOpen) return (true, subsequentNewlines, lastWasNewline);
         if (currentTokenType is Semicolon or BracesClose)
         {
-            if (!subsequentNewlines) AddWarning(MissingBlankLines,
-                $"Missing blank line before {methodName} in {_contextedFilename}.");
-            else AddCorrect(MissingBlankLines);
+            ScoreNewlineBeforeMethod(subsequentNewlines, methodName);
             return (true, subsequentNewlines, lastWasNewline);
         }
         if (currentTokenType == Newline)
@@ -510,6 +513,13 @@ public class IdentifierAndMethodLengthAnalyzer
             lastWasNewline = true;
         }
         return (false, subsequentNewlines, lastWasNewline);
+    }
+
+    private void ScoreNewlineBeforeMethod(bool subsequentNewlines, string methodName)
+    {
+        if (!subsequentNewlines) AddWarning(MissingBlankLines,
+            $"Missing blank line before {methodName} in {_contextedFilename}.");
+        else AddCorrect(MissingBlankLines);
     }
 
     private static int GetFirstIdentifier(List<Token> currentStatement, int i)
@@ -702,7 +712,8 @@ public class IdentifierAndMethodLengthAnalyzer
                 $"{((ComplexToken)currentStatement[i]).Info} (in {_contextedFilename} - " +
                 $"{PrettyPrint(currentScope)}).";
             AddWarning(DefaultIdentifierNaming, warning);
-        } else
+        }
+        else
         {
             AddCorrect(DefaultIdentifierNaming);
         }
@@ -821,7 +832,6 @@ public class IdentifierAndMethodLengthAnalyzer
                     $"{paramName} (in {_contextedFilename}).");
             else AddCorrect(DefaultIdentifierNaming);
         }
-       
     }
 
     private (bool isFinished, char startChar) GetStartCharAndName(string paramName)
