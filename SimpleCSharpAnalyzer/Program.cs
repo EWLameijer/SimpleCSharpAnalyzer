@@ -1,5 +1,6 @@
 ﻿using DTOsAndUtilities;
 using FileHandling;
+using TokenBasedChecking;
 
 FileRepository fileRepository = new(args,
     @"Code-analyzer (edit 'settings.txt' to adjust its sensitivity)
@@ -13,7 +14,15 @@ do
 
     Console.WriteLine($"\n***TOTAL ({fileRepository.PathName})***");
 
-    shouldContinue = totalReport.ShowTotal();
+    if (WarningSettings.UseLevels)
+    {
+        shouldContinue = totalReport.ShowTotal();
+    }
+    else
+    {
+        totalReport.Show();
+        break;
+    }
 } while (shouldContinue);
 Console.WriteLine("\nThank you for using the SimpleCSharpAnalyzer. Happy coding!");
 Environment.Exit(0);
