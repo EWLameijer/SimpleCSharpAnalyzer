@@ -1,5 +1,5 @@
-﻿using System.Diagnostics;
-using DTOsAndUtilities;
+﻿using DTOsAndUtilities;
+using System.Diagnostics;
 using Tokenizing;
 using static DTOsAndUtilities.AttentionCategory;
 using static Tokenizing.TokenType;

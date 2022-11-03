@@ -19,11 +19,9 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "DTOsAndUtilities", "DTOsAnd
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "SimpleCSharpAnalyzer.Tests", "SimpleCSharpAnalyzer.Tests\SimpleCSharpAnalyzer.Tests.csproj", "{B1049A70-0CE4-4E67-B436-50FE26663AC2}"
 EndProject
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "ResultComparer", "ResultComparer\ResultComparer.csproj", "{C07A5D46-4CCE-4165-A563-087860305D1D}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "CommentChecker", "CommentChecker\CommentChecker.csproj", "{39CE163A-712C-40E6-ABCB-633107800906}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "CommentChecker", "CommentChecker\CommentChecker.csproj", "{39CE163A-712C-40E6-ABCB-633107800906}"
-EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "FileHandling", "FileHandling\FileHandling.csproj", "{5C2AB477-12F4-4365-874E-B506095F68B9}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "FileHandling", "FileHandling\FileHandling.csproj", "{5C2AB477-12F4-4365-874E-B506095F68B9}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -51,10 +49,6 @@ Global
 		{B1049A70-0CE4-4E67-B436-50FE26663AC2}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{B1049A70-0CE4-4E67-B436-50FE26663AC2}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{B1049A70-0CE4-4E67-B436-50FE26663AC2}.Release|Any CPU.Build.0 = Release|Any CPU
-		{C07A5D46-4CCE-4165-A563-087860305D1D}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{C07A5D46-4CCE-4165-A563-087860305D1D}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{C07A5D46-4CCE-4165-A563-087860305D1D}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{C07A5D46-4CCE-4165-A563-087860305D1D}.Release|Any CPU.Build.0 = Release|Any CPU
 		{39CE163A-712C-40E6-ABCB-633107800906}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
 		{39CE163A-712C-40E6-ABCB-633107800906}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{39CE163A-712C-40E6-ABCB-633107800906}.Release|Any CPU.ActiveCfg = Release|Any CPU
