@@ -1,8 +1,8 @@
 !! doe crashtest na elke verbetering
 na elke feature of debug: ruim eigen code op 
 
-// Can release: NO (after 1.11.0)
-7:05 23 errors
+1. Invalid variable name: Get (in SimpleCSharpAnalyzer\DTOsAndUtilities\WarningSettings.cs - class/record/struct).
+2. Invalid variable name: Brand 
 
 And then yet to score correct!
 
