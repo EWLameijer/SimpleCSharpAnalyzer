@@ -47,14 +47,17 @@ public class Report
     {
         [AttentionCategoryNotSet] = "PLEASE REPORT THIS BUG",
         [DefaultIdentifierNaming] = "Identifier names according to standards",
-        [VeryVeryLongLines] = "Non-test-file lines under 140 characters long",
-        [VeryVeryLongMethods] = "Methods under 26 lines long",
+        [VeryVeryLongLines] = $"Non-test-file lines under {WarningSettings.BasicMaxLineLength} " +
+            "characters long",
+        [VeryVeryLongMethods] = $"Methods under {WarningSettings.BasicMaxMethodLength + 1} " +
+            "lines long",
         [MissingBlankLines] = "Blank lines before method definitions",
         [BadlyFormattedComments] = "Properly formatted comments",
         [WrongSynonyms] = "Proper type synonyms",
         [UncheckedComments] = "Comments checked and approved",
-        [VeryLongLines] = "Non-test-file lines under 120 characters long",
-        [VeryLongMethods] = "Methods under 16 lines long",
+        [VeryLongLines] = $"Non-test-file lines under {WarningSettings.IdealMaxLineLength} " +
+            "characters long",
+        [VeryLongMethods] = $"Methods under {WarningSettings.IdealMaxMethodLength + 1} lines long",
         [ToDoComments] = "TODO comments left of total"
     };
 

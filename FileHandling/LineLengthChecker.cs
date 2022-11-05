@@ -18,9 +18,9 @@ internal static class LineLengthChecker
 
     private static void ScoreLineLength(FileAsLines fileData, Report report, int i, string line)
     {
-        if (line.Length > 120)
+        if (line.Length > WarningSettings.IdealMaxLineLength)
         {
-            AttentionCategory category = line.Length > 140 ?
+            AttentionCategory category = line.Length > WarningSettings.BasicMaxLineLength ?
                 AttentionCategory.VeryVeryLongLines : AttentionCategory.VeryLongLines;
             report.AddWarning(category,
                 $"Too long line in {fileData.ContextedFilename} at line {i + 1}: '{line}'");

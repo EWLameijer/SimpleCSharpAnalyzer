@@ -1,7 +1,8 @@
-﻿using DTOsAndUtilities;
-using System.Diagnostics;
+﻿using System.Diagnostics;
+using DTOsAndUtilities;
 using Tokenizing;
 using static DTOsAndUtilities.AttentionCategory;
+using static DTOsAndUtilities.WarningSettings;
 using static Tokenizing.TokenType;
 using Scope = DTOsAndUtilities.Scope;
 
@@ -78,7 +79,6 @@ public class IdentifierAndMethodLengthAnalyzer
         private readonly List<Token> _currentLine = new();
         private readonly IReadOnlyList<Token> _tokens;
         private readonly string _contextedFilename;
-        private readonly Report _report;
         private readonly IdentifierAndMethodLengthAnalyzer _outer;
 
         public TopLevelScanner(IReadOnlyList<Token> tokens, string contextedFilename,
@@ -86,7 +86,6 @@ public class IdentifierAndMethodLengthAnalyzer
         {
             _tokens = tokens;
             _contextedFilename = contextedFilename;
-            _report = report;
             _outer = outer;
         }
 
@@ -100,7 +99,7 @@ public class IdentifierAndMethodLengthAnalyzer
                 if (shouldBreak) break;
             }
             if (index == _tokens.Count && _currentLine.Count != 0) _linesSoFar++;
-            if (_linesSoFar > WarningSettings.MaxMethodLength) Warn();
+            if (_linesSoFar > IdealMaxMethodLength) Warn();
         }
 
         private bool HandleToken(Token token)
@@ -121,7 +120,8 @@ public class IdentifierAndMethodLengthAnalyzer
 
         private void Warn()
         {
-            AttentionCategory category = _linesSoFar > 25 ? VeryVeryLongMethods : VeryLongMethods;
+            AttentionCategory category = _linesSoFar > BasicMaxMethodLength ?
+                VeryVeryLongMethods : VeryLongMethods;
             _outer.AddWarning(category, $"Top-level statement in {_contextedFilename} is too long " +
                 $"- {_linesSoFar} lines.");
         }
@@ -205,23 +205,23 @@ public class IdentifierAndMethodLengthAnalyzer
     private void IfMethodScopeEndsCheckMethodLength()
     {
         (string methodName, int tokenIndex) = _methodNames[^1];
-        int maxLineLength = WarningSettings.MaxMethodLength;
         if (methodName != "none")
         {
             int lineCount = new MethodLineCounter(tokenIndex, _currentIndex, _tokens).Count();
-            ScoreLineCount(methodName, maxLineLength, lineCount);
+            ScoreLineCount(methodName, lineCount);
         }
         _methodNames.RemoveAt(_methodNames.Count - 1);
     }
 
-    private void ScoreLineCount(string methodName, int maxLineLength, int lineCount)
+    private void ScoreLineCount(string methodName, int lineCount)
     {
-        if (lineCount > maxLineLength)
+        if (lineCount > IdealMaxMethodLength)
         {
-            AttentionCategory category = lineCount > 25 ? VeryVeryLongMethods : VeryLongMethods;
+            AttentionCategory category = lineCount > BasicMaxMethodLength ?
+                VeryVeryLongMethods : VeryLongMethods;
             AddWarning(category, $"Too long method: {methodName} " +
                 $"(in {_contextedFilename}) is {lineCount} lines long.");
-            _report.ExtraCodeLines += lineCount - maxLineLength;
+            _report.ExtraCodeLines += lineCount - IdealMaxMethodLength;
         }
         else AddCorrect(VeryLongMethods);
     }
