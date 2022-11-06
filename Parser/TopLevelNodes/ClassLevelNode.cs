@@ -1,4 +1,6 @@
-﻿namespace Parser.TopLevelNodes;
+﻿using Tokenizing;
+
+namespace Parser.TopLevelNodes;
 
 internal class ClassLevelNode
 {
@@ -7,7 +9,12 @@ internal class ClassLevelNode
     //                                                 "=ReadWrite;MultiSubnetFailover=False");
     public static ClassLevelNode Get(ParsePosition position)
     {
-        ParsePosition originalPosition = ne
-        if ()
+        List<Token> modifiers = new();
+        while (position.CurrentTokenType().IsModifier())
+        {
+            modifiers.Add(position.CurrentToken());
+            position.Proceed();
+        }
+        TypeNode typeNode = TypeNode.Get(position)
     }
 }

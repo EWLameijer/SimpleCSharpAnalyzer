@@ -1,0 +1,23 @@
+// Console.WriteLine("b. Handle: remove it from the file(s)");-\n        
+// *** If the same comment-\n// occurs multiple times, put it like [file1, file2, file3: 3x] // arrange-\n//      FileProcessor with option of commentmode: ONLY instead of SIDE-\n//      Warnings-\n-\n// 2. give options:-\n// 2a. approve (store) [all arrange]-\n// 2b. remove [if opened]-\n// 2c. skip (if require further action, typically todo-comments)-\n-\n// NOTE: scanner should remark new comments that have not yet been resolved. Also all TODOs..-\n// done  goal:-\n// 1. List the comments found (ALL of them, including one-liners). DONE-\n-\n
+// start at 1(!), as m must always be preceded by number-\n        
+// index of ']'-\n    
+// use Parse instead of typeof(AnalyzerWarning) - not using reflection is a lot simpler-\n    
+// arrange-\n        
+// assert-\n        
+//  $"Commented-out code in {_contextedFilename}: {context}");-\n    
+// should be }-\n        
+// something like "Assert.True(a>b)"-\n        
+// should handle simple types like int as well as List<T> or (int x, bool y)-\n    
+// can be empty through "return {..;"-\n        
+// CAN be A<T>( method)-\n            
+// is property-\n            
+// don't give second warning-\n            
+// for starting character-\n    
+// don't skip newline!-\n        
+// reset so newline will be read-\n        
+// starts at *-\n        
+// will soon need to start at 0-\n    
+// @lock and such, for people who want a reserved word as identifier.-\n        
+// note: is a copy of verbatim processing.-\n    // if necessary, improve it so it will properly process interpolated verbatim strings-\n    // for now, may work well enough, though...-\n    
+// get rid of }-\n        
