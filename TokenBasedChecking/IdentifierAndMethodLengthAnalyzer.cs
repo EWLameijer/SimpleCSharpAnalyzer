@@ -123,7 +123,7 @@ public class IdentifierAndMethodLengthAnalyzer
             AttentionCategory category = _linesSoFar > BasicMaxMethodLength ?
                 VeryVeryLongMethods : VeryLongMethods;
             // NOTE: a regular _outer.AddWarning won't work, as all warnings are disabled when
-            // the top level is scanned 
+            // the top level is scanned
             _outer._report.AddWarning(category, $"Top-level statement in {_contextedFilename} is too long " +
                 $"- {_linesSoFar} lines.");
         }
