@@ -202,7 +202,6 @@ public class Tokenizer
             _nextCharIndex++;
             ch = CurrentChar();
         }
-        _nextCharIndex--; // reset so newline will be read
         return new ComplexToken(Pragma, _currentLineIndex, startPosition, pragma.ToString());
     }
 
